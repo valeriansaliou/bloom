@@ -15,23 +15,23 @@ Bloom relies on `memcached` to store cached data. It is built in Rust and focuse
 
 ## Features
 
-* Cache is stored by buckets, specified in your REST API responses.
-* Cache clustered by authentication token, no cache leak across users is possible.
-* Cache can be expired directly from your REST API workers.
+* Cache is stored on buckets, specified in your REST API responses using HTTP header `Bloom-Strategy-Bucket`.
+* Cache clustered by authentication token, no cache leak across users is possible, using the standard `Authorization` HTTP header.
+* Cache can be expired directly from your REST API workers (by hitting against `memcached`).
 * Configurable per-route / per-response caching strategy, using `Bloom-Strategy-*` HTTP headers in your API responses.
-  * Disable all cache for an API route with `Bloom-Strategy-Ignore`
-  * Specify caching bucket for an API route with `Bloom-Strategy-Bucket`
-  * Specify caching TTL for an API route with `Bloom-Strategy-TTL` (other than default TTL)
-* Serve 304 Not Modified to non-modified route contents, lowering bandwidth usage and speeding up requests.
+  * Disable all cache for an API route with `Bloom-Strategy-Ignore`.
+  * Specify caching bucket for an API route with `Bloom-Strategy-Bucket`.
+  * Specify caching TTL in seconds for an API route with `Bloom-Strategy-TTL` (other than default TTL).
+* Serve `304 Not Modified` to non-modified route contents, lowering bandwidth usage and speeding up requests to your users.
 * (more coming...)
 
-## Philosophy
+## The Bloom Approach
 
 Bloom can be hot-plugged to sit between your existing Load Balancers (eg. NGINX), and your API workers (eg. NodeJS). It has been initially built to reduce the workload and drastically reduce CPU usage in case of API traffic spike, or DOS / DDoS attacks.
 
 A simpler caching approach could have been to enable caching at the Load Balancer level for HTTP read methods (GET, HEAD, OPTIONS). Although simple as a solution, it would not work with a REST API. REST API serve dynamic content by nature, that rely heavily on Authorization headers. Also, any cache needs to be purged at some point, if the content in cache becomes stale due to data updates in some database.
 
-NGINX Lua scripts could do that job, you say! Well, I firmly believe Load Balancers should be simple, and be configuration only, no scripting. As Load Balancers are the entry point to all your HTTP / WebSocket services, you'd want to avoid frequent deployments there, and handoff that caching complexity to a middleware component.
+NGINX Lua scripts could do that job just fine, you say! Well, I firmly believe Load Balancers should be simple, and be based on configuration only, without scripting. As Load Balancers are the entry point to all your HTTP / WebSocket services, you'd want to avoid frequent deployments and custom code there, and handoff that caching complexity to a dedicated middleware component.
 
 ## How does it work?
 
@@ -39,7 +39,9 @@ Bloom is installed on the same box as each of your API workers. As seen from you
 
 Bloom acts as a Reverse Proxy of its own, and caches read HTTP methods (GET, HEAD, OPTIONS), while directly proxying HTTP write methods (POST, PATCH, PUT and others). All Bloom instances share the same cache storage on a common `memcached` instance available on the LAN.
 
-Bloom has minimal static configuration, and relies on HTTP response headers served by your API workers to configure caching per-response. Those HTTP headers are intercepted by Bloom and not served to your Load Balancer responses. Those headers are formatted as `Bloom-Strategy-*`. Upon serving response to your Load Balancers, Bloom sets a cache status header, namely `Bloom-Status` which can be seen publicly in HTTP responses (either with value `HIT`, `MISS` or `DIRECT`).
+Bloom is built in Rust for memory safety, code elegance and especially performance. Bloom can be compiled to native code for your server architecture.
+
+Bloom has minimal static configuration, and relies on HTTP response headers served by your API workers to configure caching on a per-response basis. Those HTTP headers are intercepted by Bloom and not served to your Load Balancer responses. Those headers are formatted as `Bloom-Strategy-*`. Upon serving response to your Load Balancers, Bloom sets a cache status header, namely `Bloom-Status` which can be seen publicly in HTTP responses (either with value `HIT`, `MISS` or `DIRECT` — it helps debug your cache configuration).
 
 ![Bloom Schema](https://valeriansaliou.github.io/bloom/docs/models/schema.png)
 
