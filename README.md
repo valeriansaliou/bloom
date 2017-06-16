@@ -16,7 +16,7 @@ Bloom relies on `memcached` to store cached data.
 * Cache is stored by buckets, specified in your REST API responses.
 * Cache clustered by authentication token, no cache leak across users is possible.
 * Cache can be expired directly from your REST API workers.
-* Configurable caching strategies, using `X-Bloom` HTTP headers in your API responses.
+* Configurable per-route / per-response caching strategy, using `X-Bloom-*` HTTP headers in your API responses.
   * Disable all cache for an API route with `X-Bloom-Ignore`
   * Specify caching bucket for an API route with `X-Bloom-Bucket`
   * Specify caching TTL for an API route with `X-Bloom-TTL` (other than default TTL)
