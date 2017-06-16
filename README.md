@@ -1,9 +1,9 @@
-:cherry_blossom: Bloom
-======================
+Bloom
+=====
 
 [![Build Status](https://travis-ci.org/valeriansaliou/bloom.svg?branch=master)](https://travis-ci.org/valeriansaliou/bloom)
 
-**Bloom is a REST API caching middleware, acting as a reverse proxy between your load balancers and your REST API workers.**
+**:cherry_blossom: Bloom is a REST API caching middleware, acting as a reverse proxy between your load balancers and your REST API workers.**
 
 It is completely agnostic of your API implementation, and requires minimal changes to your existing API code to work.
 
@@ -13,10 +13,14 @@ Bloom relies on `memcached` to store cached data.
 
 ## Features
 
-* x
-* x
-* x
-* x
+* Cache is stored by buckets, specified in your REST API responses.
+* Cache clustered by authentication token, no cache leak across users is possible.
+* Cache can be expired directly from your REST API workers.
+* Configurable caching strategies, using `X-Bloom` HTTP headers in your API responses.
+  * Disable all cache for an API route with `X-Bloom-Ignore`
+  * Specify caching bucket for an API route with `X-Bloom-Bucket`
+  * Specify caching TTL for an API route with `X-Bloom-TTL` (other than default TTL)
+* (more coming...)
 
 ## How does it work?
 
