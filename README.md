@@ -7,7 +7,9 @@ Bloom
 
 It is completely agnostic of your API implementation, and requires minimal changes to your existing API code to work.
 
-Bloom relies on `memcached` to store cached data.
+Bloom relies on `memcached` to store cached data. It is built in Rust and focuses on performance and low resource usage.
+
+**Important: Bloom works great if your API implements REST conventions. Your API needs to use HTTP read methods, namely GET, HEAD, OPTIONS solely as read methods (do not use HTTP GET parameters as a way to update data).**
 
 **🚨 Currently Work In Progress (WIP)**.
 
@@ -16,20 +18,36 @@ Bloom relies on `memcached` to store cached data.
 * Cache is stored by buckets, specified in your REST API responses.
 * Cache clustered by authentication token, no cache leak across users is possible.
 * Cache can be expired directly from your REST API workers.
-* Configurable per-route / per-response caching strategy, using `X-Bloom-*` HTTP headers in your API responses.
-  * Disable all cache for an API route with `X-Bloom-Ignore`
-  * Specify caching bucket for an API route with `X-Bloom-Bucket`
-  * Specify caching TTL for an API route with `X-Bloom-TTL` (other than default TTL)
+* Configurable per-route / per-response caching strategy, using `Bloom-Strategy-*` HTTP headers in your API responses.
+  * Disable all cache for an API route with `Bloom-Strategy-Ignore`
+  * Specify caching bucket for an API route with `Bloom-Strategy-Bucket`
+  * Specify caching TTL for an API route with `Bloom-Strategy-TTL` (other than default TTL)
+* Serve 304 Not Modified to non-modified route contents, lowering bandwidth usage and speeding up requests.
 * (more coming...)
+
+## Philosophy
+
+Bloom can be hot-plugged to sit between your existing Load Balancers (eg. NGINX), and your API workers (eg. NodeJS). It has been initially built to reduce the workload and drastically reduce CPU usage in case of API traffic spike, or DOS / DDoS attacks.
+
+A simpler caching approach could have been to enable caching at the Load Balancer level for HTTP read methods (GET, HEAD, OPTIONS). Although simple as a solution, it would not work with a REST API. REST API serve dynamic content by nature, that rely heavily on Authorization headers. Also, any cache needs to be purged at some point, if the content in cache becomes stale due to data updates in some database.
+
+NGINX Lua scripts could do that job, you say! Well, I firmly believe Load Balancers should be simple, and be configuration only, no scripting. As Load Balancers are the entry point to all your HTTP / WebSocket services, you'd want to avoid frequent deployments there, and handoff that caching complexity to a middleware component.
 
 ## How does it work?
 
-**TODO**
-**(schema coming...)**
+Bloom is installed on the same box as each of your API workers. As seen from your Load Balancers, there is a Bloom instance per API worker. This way, your Load Balancing strategy (eg. Round-Robin with health checks) is not broken. Each Bloom instance can be set to be visible from its own LAN IP your Load Balancers can point to, and then those Bloom instances can point to your API worker listeners on the local loopback.
 
-## How to use?
+Bloom acts as a Reverse Proxy of its own, and caches read HTTP methods (GET, HEAD, OPTIONS), while directly proxying HTTP write methods (POST, PATCH, PUT and others). All Bloom instance share the same cache storage on a common `memcached` instance available on the LAN.
 
-**TODO**
+Bloom has minimal configuration, and relies on HTTP response headers served by your API workers to configure caching per-response. Those HTTP headers are intercepted by Bloom and not served to your Load Balancer responses. Those headers are formatted as `Bloom-Strategy-*`. Upon serving response to your Load Balancers, Bloom sets a cache status header, namely `Bloom-Status`.
+
+![Bloom Schema](https://raw.githubusercontent.com/valeriansaliou/bloom/master/docs/models/schema.png)
+
+## How to use it?
+
+**TODO: install**
+**TODO: configure API**
+**TODO: expiring cache**
 
 ## How fast is it?
 
