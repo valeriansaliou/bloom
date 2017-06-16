@@ -37,9 +37,9 @@ NGINX Lua scripts could do that job, you say! Well, I firmly believe Load Balanc
 
 Bloom is installed on the same box as each of your API workers. As seen from your Load Balancers, there is a Bloom instance per API worker. This way, your Load Balancing strategy (eg. Round-Robin with health checks) is not broken. Each Bloom instance can be set to be visible from its own LAN IP your Load Balancers can point to, and then those Bloom instances can point to your API worker listeners on the local loopback.
 
-Bloom acts as a Reverse Proxy of its own, and caches read HTTP methods (GET, HEAD, OPTIONS), while directly proxying HTTP write methods (POST, PATCH, PUT and others). All Bloom instance share the same cache storage on a common `memcached` instance available on the LAN.
+Bloom acts as a Reverse Proxy of its own, and caches read HTTP methods (GET, HEAD, OPTIONS), while directly proxying HTTP write methods (POST, PATCH, PUT and others). All Bloom instances share the same cache storage on a common `memcached` instance available on the LAN.
 
-Bloom has minimal configuration, and relies on HTTP response headers served by your API workers to configure caching per-response. Those HTTP headers are intercepted by Bloom and not served to your Load Balancer responses. Those headers are formatted as `Bloom-Strategy-*`. Upon serving response to your Load Balancers, Bloom sets a cache status header, namely `Bloom-Status`.
+Bloom has minimal static configuration, and relies on HTTP response headers served by your API workers to configure caching per-response. Those HTTP headers are intercepted by Bloom and not served to your Load Balancer responses. Those headers are formatted as `Bloom-Strategy-*`. Upon serving response to your Load Balancers, Bloom sets a cache status header, namely `Bloom-Status` which can be seen publicly in HTTP responses (either with value `HIT`, `MISS` or `DIRECT`).
 
 ![Bloom Schema](https://valeriansaliou.github.io/bloom/docs/models/schema.png)
 
