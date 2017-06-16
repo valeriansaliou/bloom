@@ -3,7 +3,14 @@ Bloom
 
 [![Build Status](https://travis-ci.org/valeriansaliou/bloom.svg?branch=master)](https://travis-ci.org/valeriansaliou/bloom)
 
-Bloom. WIP.
+Bloom is a REST API caching middleware, acting as a reverse proxy between your load balancers and your REST API workers.
+
+It is completely agnostic of your API implementation, and requires minimal changes to your existing API code to work.
+
+Bloom relies on `memcached` to store cached data.
+
+**TODO: (schema coming...)**
+**TODO: (benchmark coming...)**
 
 **Currently Work In Progress (WIP)**.
 
