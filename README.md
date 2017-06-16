@@ -41,7 +41,7 @@ Bloom acts as a Reverse Proxy of its own, and caches read HTTP methods (GET, HEA
 
 Bloom has minimal configuration, and relies on HTTP response headers served by your API workers to configure caching per-response. Those HTTP headers are intercepted by Bloom and not served to your Load Balancer responses. Those headers are formatted as `Bloom-Strategy-*`. Upon serving response to your Load Balancers, Bloom sets a cache status header, namely `Bloom-Status`.
 
-![Bloom Schema](https://raw.githubusercontent.com/valeriansaliou/bloom/master/docs/models/schema.png)
+![Bloom Schema](https://valeriansaliou.github.io/bloom/docs/models/schema.png)
 
 ## How to use it?
 
