@@ -9,7 +9,7 @@ It is completely agnostic of your API implementation, and requires minimal chang
 
 Bloom relies on `memcached` to store cached data.
 
-**Currently Work In Progress (WIP)**.
+**🚨 Currently Work In Progress (WIP)**.
 
 ## Features
 
