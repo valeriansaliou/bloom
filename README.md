@@ -11,8 +11,6 @@ Bloom relies on `memcached` to store cached data. It is built in Rust and focuse
 
 **Important: Bloom works great if your API implements REST conventions. Your API needs to use HTTP read methods, namely `GET`, `HEAD`, `OPTIONS` solely as read methods (do not use HTTP GET parameters as a way to update data).**
 
-**🚨 Currently Work In Progress (WIP)**.
-
 ![Bloom](https://valeriansaliou.github.io/bloom/images/bloom.jpg)
 
 ## Who uses it?
@@ -71,7 +69,7 @@ Bloom is built in Rust, which can be compiled to native code for your architectu
 
 Benchmarks are performed and updated upon major code changes, to measure Bloom performance and try to get the highest throughput for the lowest pressure on system resources (CPU / RAM). You can find them below.
 
-**(benchmark coming...)**
+**TODO: benchmark**
 
 ## How does it deal with authenticated routes?
 
@@ -89,6 +87,6 @@ Bloom can be configured to listen on a TCP socket to expose a cache control inte
 
 **Bloom Control Libraries:**
 
-* **NodeJS**: **TODO**
+* **NodeJS**: **TODO: link to NPM**
 
 👉 Cannot find the library for your programming language? Build your own and be referenced here! ([contact me](https://valeriansaliou.name/))
