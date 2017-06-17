@@ -61,9 +61,9 @@ Bloom has minimal static configuration, and relies on HTTP response headers serv
 
 ## How to use it?
 
-**TODO: install**
-**TODO: configure API**
-**TODO: expiring cache**
+* **TODO: install**
+* **TODO: configure API**
+* **TODO: expiring cache**
 
 ## How fast is it?
 
