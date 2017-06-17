@@ -13,6 +13,8 @@ Bloom relies on `memcached` to store cached data. It is built in Rust and focuse
 
 **🚨 Currently Work In Progress (WIP)**.
 
+![Bloom](https://valeriansaliou.github.io/bloom/images/bloom.jpg)
+
 ## Who uses it?
 
 <table>
