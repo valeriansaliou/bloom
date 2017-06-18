@@ -83,7 +83,12 @@ As your HTTP `Authorization` header contains sensitive authentication data (ie. 
 
 Yes. As your existing API workers perform the database updates on their end, they are already well aware of when data - _that might be cached by Bloom_ - gets stale. Therefore, Bloom provides an efficient way to tell it to expire cache for a given bucket. This system is called **Bloom Control**.
 
-Bloom can be configured to listen on a TCP socket to expose a cache control interface. Bloom implements a basic Command-ACK protocol. This way, your API worker (or any other worker in your infrastructure) can tell Bloom to expire cache for a given bucket. Note that as a given bucket may contain variations of cache for different HTTP `Authorization` headers, cache for all authentication tokens is purged at the same time when you purge cache for a bucket.
+Bloom can be configured to listen on a TCP socket to expose a cache control interface. Bloom implements a basic Command-ACK protocol.
+
+This way, your API worker (or any other worker in your infrastructure) can either tell Bloom to:
+
+* **Expire cache for a given bucket.** Note that as a given bucket may contain variations of cache for different HTTP `Authorization` headers, cache for all authentication tokens is purged at the same time when you purge cache for a bucket.
+* **Expire cache for a given HTTP `Authorization` header.** Useful if an user logs-out and revokes their authentication token.
 
 **Bloom Control Libraries:**
 
