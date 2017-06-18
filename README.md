@@ -3,7 +3,7 @@ Bloom
 
 [![Build Status](https://travis-ci.org/valeriansaliou/bloom.svg?branch=master)](https://travis-ci.org/valeriansaliou/bloom) [![Coverage Status](https://coveralls.io/repos/github/valeriansaliou/bloom/badge.svg?branch=master)](https://coveralls.io/github/valeriansaliou/bloom?branch=master)
 
-**:cherry_blossom: Bloom is a REST API caching middleware, acting as a reverse proxy between your load balancers and your REST API workers.**
+**Bloom is a REST API caching middleware, acting as a reverse proxy between your load balancers and your REST API workers.**
 
 It is completely agnostic of your API implementation, and requires minimal changes to your existing API code to work.
 
