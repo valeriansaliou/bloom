@@ -90,7 +90,7 @@ This way, your API worker (or any other worker in your infrastructure) can eithe
 * **Expire cache for a given bucket.** Note that as a given bucket may contain variations of cache for different HTTP `Authorization` headers, bucket cache for all authentication tokens is purged at the same time when you purge cache for a bucket.
 * **Expire cache for a given HTTP `Authorization` header.** Useful if an user logs-out and revokes their authentication token.
 
-**Bloom Control Libraries:**
+**📦 Bloom Control Libraries:**
 
 * **NodeJS**: **TODO: link to NPM**
 
