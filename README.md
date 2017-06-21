@@ -92,6 +92,6 @@ This way, your API worker (or any other worker in your infrastructure) can eithe
 
 **📦 Bloom Control Libraries:**
 
-* **NodeJS**: **TODO: link to NPM**
+* **NodeJS**: **[node-bloom-control](https://www.npmjs.com/package/bloom-control)**
 
 👉 Cannot find the library for your programming language? Build your own and be referenced here! ([contact me](https://valeriansaliou.name/))
