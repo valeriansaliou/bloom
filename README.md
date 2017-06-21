@@ -28,11 +28,13 @@ _👋 You use Bloom and you want to be listed there? [Contact me](https://valeri
 
 ## Features
 
+* **The same Bloom server can be used for different API workers at once**, using HTTP header `Bloom-Strategy-Shard` (eg. Main API uses shard `0`, Search API uses shard `1`)
 * **Cache stored on buckets**, specified in your REST API responses using HTTP header `Bloom-Strategy-Bucket`.
 * **Cache clustered by authentication token**, no cache leak across users is possible, using the standard `Authorization` HTTP header.
 * **Cache can be expired directly from your REST API workers** (by hitting against `memcached`).
 * **Configurable per-route / per-response caching strategy**, using `Bloom-Strategy-*` HTTP headers in your API responses.
   * Disable all cache for an API route with `Bloom-Strategy-Ignore`.
+  * Specify caching shard for an API system with `Bloom-Strategy-Shard`.
   * Specify caching bucket for an API route with `Bloom-Strategy-Bucket`.
   * Specify caching TTL in seconds for an API route with `Bloom-Strategy-TTL` (other than default TTL).
 * **Serve `304 Not Modified` to non-modified route contents**, lowering bandwidth usage and speeding up requests to your users.
@@ -83,7 +85,7 @@ As your HTTP `Authorization` header contains sensitive authentication data (ie. 
 
 Yes. As your existing API workers perform the database updates on their end, they are already well aware of when data - _that might be cached by Bloom_ - gets stale. Therefore, Bloom provides an efficient way to tell it to expire cache for a given bucket. This system is called **Bloom Control**.
 
-Bloom can be configured to listen on a TCP socket to expose a cache control interface. Bloom implements a basic Command-ACK protocol.
+Bloom can be configured to listen on a TCP socket to expose a cache control interface. The default TCP port is 811. Bloom implements a basic Command-ACK protocol.
 
 This way, your API worker (or any other worker in your infrastructure) can either tell Bloom to:
 
