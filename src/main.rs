@@ -8,9 +8,12 @@
 extern crate log;
 
 mod config;
+mod server;
+mod cache;
 
 use config::logger::Logger;
 use config::reader::ReaderBuilder;
+use server::listen::ServerListenBuilder;
 
 static MODULE: &'static str = "main";
 
@@ -21,7 +24,11 @@ fn main() {
 
     let conf = ReaderBuilder::new().read("config.cfg");
 
+    // Connect to cache backend
     // TODO
+
+    // Run server (in main thread)
+    ServerListenBuilder::new(conf.listen).run();
 
     error!("[{}] could not start", MODULE);
 }

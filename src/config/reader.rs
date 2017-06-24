@@ -6,6 +6,8 @@
 
 extern crate ini;
 
+// use std::str::FromStr;
+// use std::fmt::Display;
 use std::net::IpAddr;
 use std::net::SocketAddr;
 
@@ -14,6 +16,7 @@ use self::ini::Ini;
 use super::defaults;
 use super::config::Config;
 use super::config::ConfigListen;
+use super::config::ConfigProxy;
 use super::config::ConfigMemcached;
 
 pub struct ReaderBuilder;
@@ -45,6 +48,15 @@ impl Reader {
                 inet: ReaderGetter::get_inet(&conf, "listen", "inet",
                 "host", "port", defaults::LISTEN_HOST,
                 defaults::LISTEN_PORT)
+            },
+
+            proxy: ConfigProxy {
+                shard: ReaderGetter::get_u8(&conf, "proxy",
+                "shard", defaults::PROXY_SHARD),
+
+                inet: ReaderGetter::get_inet(&conf, "proxy", "inet",
+                "host", "port", defaults::PROXY_HOST,
+                defaults::PROXY_PORT)
             },
 
             memcached: ConfigMemcached {
@@ -90,6 +102,18 @@ impl ReaderGetter {
 
         value_inet
     }
+
+    // fn get_generic<T>(
+    //     conf: &Ini, group: &'static str, key: &'static str,
+    //     default: &'static str
+    // ) -> T where T: FromStr + Display {
+    //     let value = (*conf).get_from_or(Some(group), key,
+    //         default).parse::<T>().unwrap();
+
+    //     debug!("[{}] parsed @{}:{} <T> => {}", MODULE, group, key, value);
+
+    //     value
+    // }
 
     fn get_u8(
         conf: &Ini, group: &'static str, key: &'static str,

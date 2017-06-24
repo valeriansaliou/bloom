@@ -7,6 +7,10 @@
 pub static LISTEN_HOST: &'static str = "::1";
 pub static LISTEN_PORT: &'static str = "811";
 
+pub static PROXY_SHARD: &'static str = "0";
+pub static PROXY_HOST: &'static str = "::1";
+pub static PROXY_PORT: &'static str = "3000";
+
 pub static MEMCACHED_HOST: &'static str = "::1";
 pub static MEMCACHED_PORT: &'static str = "11211";
 pub static MEMCACHED_MAX_KEY_SIZE: &'static str = "250";

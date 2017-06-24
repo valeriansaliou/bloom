@@ -28,13 +28,11 @@ _👋 You use Bloom and you want to be listed there? [Contact me](https://valeri
 
 ## Features
 
-* **The same Bloom server can be used for different API workers at once**, using HTTP header `Bloom-Strategy-Shard` (eg. Main API uses shard `0`, Search API uses shard `1`)
 * **Cache stored on buckets**, specified in your REST API responses using HTTP header `Bloom-Strategy-Bucket`.
 * **Cache clustered by authentication token**, no cache leak across users is possible, using the standard `Authorization` HTTP header.
 * **Cache can be expired directly from your REST API workers** (by hitting against `memcached`).
 * **Configurable per-route / per-response caching strategy**, using `Bloom-Strategy-*` HTTP headers in your API responses.
   * Disable all cache for an API route with `Bloom-Strategy-Ignore`.
-  * Specify caching shard for an API system with `Bloom-Strategy-Shard`.
   * Specify caching bucket for an API route with `Bloom-Strategy-Bucket`.
   * Specify caching TTL in seconds for an API route with `Bloom-Strategy-TTL` (other than default TTL).
 * **Serve `304 Not Modified` to non-modified route contents**, lowering bandwidth usage and speeding up requests to your users.

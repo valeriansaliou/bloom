@@ -8,10 +8,16 @@ use std::net::SocketAddr;
 
 pub struct Config {
     pub listen: ConfigListen,
+    pub proxy: ConfigProxy,
     pub memcached: ConfigMemcached
 }
 
 pub struct ConfigListen {
+    pub inet: SocketAddr
+}
+
+pub struct ConfigProxy {
+    pub shard: u8,
     pub inet: SocketAddr
 }
 
