@@ -6,10 +6,8 @@
 
 extern crate ini;
 
-use std::env;
 use std::net::IpAddr;
 use std::net::SocketAddr;
-use std::path::PathBuf;
 
 use self::ini::Ini;
 

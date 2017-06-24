@@ -5,7 +5,6 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::net::SocketAddr;
-use std::path::PathBuf;
 
 pub struct Config {
     pub listen: ConfigListen,
