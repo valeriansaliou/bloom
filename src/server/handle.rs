@@ -14,7 +14,17 @@ use self::hyper::server::{Service, Request, Response};
 use proxy::serve::ServeFuture;
 use proxy::serve::Serve;
 
-pub struct RequestHandle;
+pub struct RequestHandle {
+    serve: Serve
+}
+
+impl RequestHandle {
+    pub fn new(serve: Serve) -> RequestHandle {
+        RequestHandle {
+            serve: serve
+        }
+    }
+}
 
 impl Service for RequestHandle {
     type Request = Request;

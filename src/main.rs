@@ -47,7 +47,7 @@ fn main() {
     let serve = ServeBuilder::new(conf.proxy);
 
     // Run server (in main thread)
-    ListenBuilder::new(conf.listen).run();
+    ListenBuilder::new(conf.listen).run(serve);
 
     error!("could not start");
 }

@@ -11,6 +11,7 @@ use self::hyper::server::Http;
 use super::handle::RequestHandle;
 
 use config::config::ConfigListen;
+use proxy::serve::Serve;
 
 pub struct ListenBuilder;
 pub struct Listen {
@@ -26,10 +27,10 @@ impl ListenBuilder {
 }
 
 impl Listen {
-    pub fn run(&self) {
+    pub fn run(&self, serve: Serve) {
         let addr = self.config_listen.inet;
-        let server = Http::new().bind(&addr, move || {
-            Ok(RequestHandle)
+        let server = Http::new().bind(&addr, || {
+            Ok(RequestHandle::new(serve))
         }).unwrap();
 
         info!("listening on http://{}", server.local_addr().unwrap());
