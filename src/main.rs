@@ -9,6 +9,7 @@ extern crate log;
 
 mod config;
 mod server;
+mod proxy;
 mod cache;
 
 use config::logger::Logger;
