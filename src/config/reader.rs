@@ -23,8 +23,6 @@ pub struct ReaderBuilder;
 pub struct Reader;
 struct ReaderGetter;
 
-static MODULE: &'static str = "config:reader";
-
 impl ReaderBuilder {
     pub fn new() -> Reader {
         Reader {}
@@ -32,12 +30,12 @@ impl ReaderBuilder {
 }
 
 impl Reader {
-    pub fn read(&self, path: &'static str) -> Config {
-        debug!("[{}] reading config file: {}", MODULE, path);
+    pub fn read(&self, path: &str) -> Config {
+        debug!("reading config file: {}", path);
 
         let conf = Ini::load_from_file(path).unwrap();
 
-        debug!("[{}] read config file: {}", MODULE, path);
+        debug!("read config file: {}", path);
 
         self.make(&conf)
     }
@@ -97,7 +95,7 @@ impl ReaderGetter {
 
         let value_inet = SocketAddr::new(value_host, value_port);
 
-        debug!("[{}] parsed @{}:{} <inet> => {}", MODULE, group, key,
+        debug!("parsed @{}:{} <inet> => {}", group, key,
             value_inet);
 
         value_inet
@@ -110,7 +108,7 @@ impl ReaderGetter {
     //     let value = (*conf).get_from_or(Some(group), key,
     //         default).parse::<T>().unwrap();
 
-    //     debug!("[{}] parsed @{}:{} <T> => {}", MODULE, group, key, value);
+    //     debug!("parsed @{}:{} <T> => {}", group, key, value);
 
     //     value
     // }
@@ -122,7 +120,7 @@ impl ReaderGetter {
         let value_u8 = (*conf).get_from_or(Some(group), key,
             default).parse::<u8>().unwrap();
 
-        debug!("[{}] parsed @{}:{} <u8> => {}", MODULE, group, key, value_u8);
+        debug!("parsed @{}:{} <u8> => {}", group, key, value_u8);
 
         value_u8
     }
@@ -134,7 +132,7 @@ impl ReaderGetter {
         let value_u16 = (*conf).get_from_or(Some(group), key,
             default).parse::<u16>().unwrap();
 
-        debug!("[{}] parsed @{}:{} <u16> => {}", MODULE, group, key, value_u16);
+        debug!("parsed @{}:{} <u16> => {}", group, key, value_u16);
 
         value_u16
     }
@@ -146,7 +144,7 @@ impl ReaderGetter {
         let value_u32 = (*conf).get_from_or(Some(group), key,
             default).parse::<u32>().unwrap();
 
-        debug!("[{}] parsed @{}:{} <u32> => {}", MODULE, group, key, value_u32);
+        debug!("parsed @{}:{} <u32> => {}", group, key, value_u32);
 
         value_u32
     }

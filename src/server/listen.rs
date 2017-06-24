@@ -12,27 +12,27 @@ use super::handle::RequestHandle;
 
 use config::config::ConfigListen;
 
-pub struct ServerListenBuilder;
-pub struct ServerListen {
+pub struct ListenBuilder;
+pub struct Listen {
     config_listen: ConfigListen
 }
 
-static MODULE: &'static str = "server:listen";
-
-impl ServerListenBuilder {
-    pub fn new(config_listen: ConfigListen) -> ServerListen {
-        ServerListen {
+impl ListenBuilder {
+    pub fn new(config_listen: ConfigListen) -> Listen {
+        Listen {
             config_listen: config_listen
         }
     }
 }
 
-impl ServerListen {
+impl Listen {
     pub fn run(&self) {
         let addr = self.config_listen.inet;
-        let server = Http::new().bind(&addr, || Ok(RequestHandle)).unwrap();
+        let server = Http::new().bind(&addr, move || {
+            Ok(RequestHandle)
+        }).unwrap();
 
-        info!("[{}] listening on http://{}", MODULE, server.local_addr().unwrap());
+        info!("listening on http://{}", server.local_addr().unwrap());
 
         server.run().unwrap();
     }

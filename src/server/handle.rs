@@ -9,14 +9,12 @@ extern crate futures;
 
 use self::futures::future::FutureResult;
 
-use self::hyper::header::{ContentLength, ContentType};
 use self::hyper::server::{Service, Request, Response};
 
+use proxy::serve::ServeFuture;
+use proxy::serve::Serve;
+
 pub struct RequestHandle;
-
-static MODULE: &'static str = "server:handle";
-
-static DEFAULT_TEXT: &'static [u8] = b"{}";
 
 impl Service for RequestHandle {
     type Request = Request;
@@ -24,15 +22,14 @@ impl Service for RequestHandle {
     type Error = hyper::Error;
     type Future = FutureResult<Response, hyper::Error>;
 
-    fn call(&self, req: Request) -> Self::Future {
-        info!("[{}] handled request: {} on {}", MODULE, req.method(),
-            req.path());
+    fn call(&self, req: Request) -> ServeFuture {
+        let method = req.method();
+        let path = req.path();
+
+        info!("handled request: {} on {}", method, path);
 
         futures::future::ok(
             Response::new()
-                .with_header(ContentLength(DEFAULT_TEXT.len() as u64))
-                .with_header(ContentType::plaintext())
-                .with_body(DEFAULT_TEXT)
         )
     }
 }

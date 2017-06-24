@@ -7,29 +7,47 @@
 #[macro_use]
 extern crate log;
 
+#[macro_use]
+extern crate clap;
+
 mod config;
 mod server;
 mod proxy;
 mod cache;
 
+use clap::{App, Arg};
 use config::logger::Logger;
 use config::reader::ReaderBuilder;
-use server::listen::ServerListenBuilder;
-
-static MODULE: &'static str = "main";
+use proxy::serve::ServeBuilder;
+use server::listen::ListenBuilder;
 
 fn main() {
     let _logger = Logger::init();
 
-    info!("[{}] starting up", MODULE);
+    info!("starting up");
 
-    let conf = ReaderBuilder::new().read("config.cfg");
+    let app = App::new(crate_name!())
+                .version(crate_version!())
+                .author(crate_authors!("\n"))
+                .about(crate_description!())
+                .arg(Arg::with_name("config")
+                    .short("c")
+                    .long("config")
+                    .help("Path to configuration file")
+                    .default_value("./config.cfg")
+                    .takes_value(true));
+
+    let args = app.get_matches();
+    let conf = ReaderBuilder::new().read(args.value_of("config").unwrap());
 
     // Connect to cache backend
     // TODO
 
-    // Run server (in main thread)
-    ServerListenBuilder::new(conf.listen).run();
+    // Create serve manager
+    let serve = ServeBuilder::new(conf.proxy);
 
-    error!("[{}] could not start", MODULE);
+    // Run server (in main thread)
+    ListenBuilder::new(conf.listen).run();
+
+    error!("could not start");
 }
