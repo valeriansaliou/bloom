@@ -6,8 +6,9 @@
 
 extern crate ini;
 
-// use std::str::FromStr;
-// use std::fmt::Display;
+use std::str::FromStr;
+use std::fmt::Debug;
+use std::fmt::Display;
 use std::net::IpAddr;
 use std::net::SocketAddr;
 
@@ -49,7 +50,7 @@ impl Reader {
             },
 
             proxy: ConfigProxy {
-                shard: ReaderGetter::get_u8(&conf, "proxy",
+                shard: ReaderGetter::get_generic(&conf, "proxy",
                 "shard", defaults::PROXY_SHARD),
 
                 inet: ReaderGetter::get_inet(&conf, "proxy", "inet",
@@ -62,19 +63,20 @@ impl Reader {
                 "host", "port", defaults::MEMCACHED_HOST,
                 defaults::MEMCACHED_PORT),
 
-                max_key_size: ReaderGetter::get_u32(&conf, "memcached",
+                max_key_size: ReaderGetter::get_generic(&conf, "memcached",
                 "max_key_size", defaults::MEMCACHED_MAX_KEY_SIZE),
 
-                max_key_expiration: ReaderGetter::get_u32(&conf, "memcached",
-                "max_key_expiration", defaults::MEMCACHED_MAX_KEY_EXPIRATION),
+                max_key_expiration: ReaderGetter::get_generic(&conf,
+                    "memcached", "max_key_expiration",
+                    defaults::MEMCACHED_MAX_KEY_EXPIRATION),
 
-                pool_size: ReaderGetter::get_u8(&conf, "memcached",
+                pool_size: ReaderGetter::get_generic(&conf, "memcached",
                 "pool_size", defaults::MEMCACHED_POOL_SIZE),
 
-                reconnect: ReaderGetter::get_u16(&conf, "memcached",
+                reconnect: ReaderGetter::get_generic(&conf, "memcached",
                 "reconnect", defaults::MEMCACHED_RECONNECT),
 
-                timeout: ReaderGetter::get_u16(&conf, "memcached",
+                timeout: ReaderGetter::get_generic(&conf, "memcached",
                 "timeout", defaults::MEMCACHED_TIMEOUT)
             }
         }
@@ -95,57 +97,21 @@ impl ReaderGetter {
 
         let value_inet = SocketAddr::new(value_host, value_port);
 
-        debug!("parsed @{}:{} <inet> => {}", group, key,
+        debug!("parsed @{}:{} => {}", group, key,
             value_inet);
 
         value_inet
     }
 
-    // fn get_generic<T>(
-    //     conf: &Ini, group: &'static str, key: &'static str,
-    //     default: &'static str
-    // ) -> T where T: FromStr + Display {
-    //     let value = (*conf).get_from_or(Some(group), key,
-    //         default).parse::<T>().unwrap();
-
-    //     debug!("parsed @{}:{} <T> => {}", group, key, value);
-
-    //     value
-    // }
-
-    fn get_u8(
+    fn get_generic<T>(
         conf: &Ini, group: &'static str, key: &'static str,
         default: &'static str
-    ) -> u8 {
-        let value_u8 = (*conf).get_from_or(Some(group), key,
-            default).parse::<u8>().unwrap();
+    ) -> T where T: Display + FromStr, <T as FromStr>::Err: Debug {
+        let value = (*conf).get_from_or(Some(group), key,
+            default).parse::<T>().unwrap();
 
-        debug!("parsed @{}:{} <u8> => {}", group, key, value_u8);
+        debug!("parsed @{}:{} => {}", group, key, value);
 
-        value_u8
-    }
-
-    fn get_u16(
-        conf: &Ini, group: &'static str, key: &'static str,
-        default: &'static str
-    ) -> u16 {
-        let value_u16 = (*conf).get_from_or(Some(group), key,
-            default).parse::<u16>().unwrap();
-
-        debug!("parsed @{}:{} <u16> => {}", group, key, value_u16);
-
-        value_u16
-    }
-
-    fn get_u32(
-        conf: &Ini, group: &'static str, key: &'static str,
-        default: &'static str
-    ) -> u32 {
-        let value_u32 = (*conf).get_from_or(Some(group), key,
-            default).parse::<u32>().unwrap();
-
-        debug!("parsed @{}:{} <u32> => {}", group, key, value_u32);
-
-        value_u32
+        value
     }
 }
