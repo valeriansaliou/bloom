@@ -4,11 +4,13 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-#[macro_use]
-extern crate log;
-
-#[macro_use]
-extern crate clap;
+#[macro_use] extern crate log;
+#[macro_use] extern crate clap;
+extern crate ini;
+extern crate hyper;
+extern crate farmhash;
+extern crate tokio_core;
+extern crate futures;
 
 mod config;
 mod header;

@@ -4,16 +4,14 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-extern crate hyper;
-extern crate tokio_core;
-extern crate futures;
-
-use self::futures::future::FutureResult;
-use self::tokio_core::reactor::Core;
-use self::hyper::Client;
-use self::hyper::{Method, StatusCode};
-use self::hyper::header::Basic;
-use self::hyper::server::{Request, Response};
+use tokio_core::reactor::Core;
+use futures;
+use futures::future::FutureResult;
+use hyper;
+use hyper::Client;
+use hyper::{Method, StatusCode};
+use hyper::header::Basic;
+use hyper::server::{Request, Response};
 
 use super::header::ProxyHeader;
 use config::config::ConfigProxy;

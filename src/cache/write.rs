@@ -4,10 +4,8 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-extern crate hyper;
-
-use self::hyper::{Method, StatusCode};
-use self::hyper::server::{Request, Response};
+use hyper::{Method, StatusCode};
+use hyper::server::{Request, Response};
 
 pub struct CacheWrite;
 

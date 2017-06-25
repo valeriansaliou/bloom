@@ -4,11 +4,9 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-extern crate hyper;
-
 use std::str::from_utf8;
 
-use self::hyper::header::Headers;
+use hyper::header::Headers;
 
 use super::defaults;
 use header::request::HeaderRequestBloomRequestShard;

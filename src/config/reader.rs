@@ -4,15 +4,13 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-extern crate ini;
-
 use std::str::FromStr;
 use std::fmt::Debug;
 use std::fmt::Display;
 use std::net::IpAddr;
 use std::net::SocketAddr;
 
-use self::ini::Ini;
+use ini::Ini;
 
 use super::defaults;
 use super::config::Config;

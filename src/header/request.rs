@@ -4,12 +4,10 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-extern crate hyper;
-
 use std::fmt;
 
-use self::hyper::{Result, Error};
-use self::hyper::header::{Header, Raw, Formatter, parsing};
+use hyper::Result;
+use hyper::header::{Header, Raw, Formatter, parsing};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct HeaderRequestBloomRequestShard(pub u8);

@@ -4,9 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-extern crate hyper;
-
-use self::hyper::server::Http;
+use hyper::server::Http;
 
 use super::handle::ServerRequestHandle;
 

@@ -4,10 +4,8 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-extern crate hyper;
-extern crate farmhash;
-
-use self::hyper::{HttpVersion, Method};
+use hyper::{HttpVersion, Method};
+use farmhash;
 
 pub struct CacheRead;
 
