@@ -4,6 +4,6 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-pub mod store;
-pub mod read;
-pub mod write;
+pub mod status;
+pub mod strategy;
+

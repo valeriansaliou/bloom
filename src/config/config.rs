@@ -22,6 +22,7 @@ pub struct ConfigProxy {
     pub inet: SocketAddr
 }
 
+#[derive(Clone)]
 pub struct ConfigMemcached {
     pub inet: SocketAddr,
     pub max_key_size: u32,

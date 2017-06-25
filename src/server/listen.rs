@@ -8,30 +8,33 @@ extern crate hyper;
 
 use self::hyper::server::Http;
 
-use super::handle::RequestHandle;
+use super::handle::ServerRequestHandle;
 
 use config::config::ConfigListen;
-use proxy::serve::Serve;
+use cache::store::CacheStore;
+use proxy::serve::ProxyServe;
 
-pub struct ListenBuilder;
-pub struct Listen {
+pub struct ServerListenBuilder;
+pub struct ServerListen {
     config_listen: ConfigListen
 }
 
-impl ListenBuilder {
-    pub fn new(config_listen: ConfigListen) -> Listen {
-        Listen {
+impl ServerListenBuilder {
+    pub fn new(config_listen: ConfigListen) -> ServerListen {
+        ServerListen {
             config_listen: config_listen
         }
     }
 }
 
-impl Listen {
-    pub fn run(&self, serve: Serve) {
+impl ServerListen {
+    pub fn run(&self, proxy_serve: ProxyServe, cache_store: CacheStore) {
         let addr = self.config_listen.inet;
         let server = Http::new().bind(&addr, move || {
-            // TODO: solve this dirty clone?
-            Ok(RequestHandle::new(serve.clone()))
+            // TODO: solve those dirty clones?
+            Ok(ServerRequestHandle::new(
+                proxy_serve.clone(), cache_store.clone()
+            ))
         }).unwrap();
 
         info!("listening on http://{}", server.local_addr().unwrap());

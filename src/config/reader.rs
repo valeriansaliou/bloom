@@ -20,17 +20,17 @@ use super::config::ConfigListen;
 use super::config::ConfigProxy;
 use super::config::ConfigMemcached;
 
-pub struct ReaderBuilder;
-pub struct Reader;
-struct ReaderGetter;
+pub struct ConfigReaderBuilder;
+pub struct ConfigReader;
+struct ConfigReaderGetter;
 
-impl ReaderBuilder {
-    pub fn new() -> Reader {
-        Reader {}
+impl ConfigReaderBuilder {
+    pub fn new() -> ConfigReader {
+        ConfigReader {}
     }
 }
 
-impl Reader {
+impl ConfigReader {
     pub fn read(&self, path: &str) -> Config {
         debug!("reading config file: {}", path);
 
@@ -44,46 +44,47 @@ impl Reader {
     fn make(&self, conf: &Ini) -> Config {
         Config {
             listen: ConfigListen {
-                inet: ReaderGetter::get_inet(&conf, "listen", "inet",
+                inet: ConfigReaderGetter::get_inet(&conf, "listen", "inet",
                 "host", "port", defaults::LISTEN_HOST,
                 defaults::LISTEN_PORT)
             },
 
             proxy: ConfigProxy {
-                shard: ReaderGetter::get_generic(&conf, "proxy",
+                shard: ConfigReaderGetter::get_generic(&conf, "proxy",
                 "shard", defaults::PROXY_SHARD),
 
-                inet: ReaderGetter::get_inet(&conf, "proxy", "inet",
+                inet: ConfigReaderGetter::get_inet(&conf, "proxy", "inet",
                 "host", "port", defaults::PROXY_HOST,
                 defaults::PROXY_PORT)
             },
 
             memcached: ConfigMemcached {
-                inet: ReaderGetter::get_inet(&conf, "memcached", "inet",
+                inet: ConfigReaderGetter::get_inet(&conf, "memcached", "inet",
                 "host", "port", defaults::MEMCACHED_HOST,
                 defaults::MEMCACHED_PORT),
 
-                max_key_size: ReaderGetter::get_generic(&conf, "memcached",
-                "max_key_size", defaults::MEMCACHED_MAX_KEY_SIZE),
+                max_key_size: ConfigReaderGetter::get_generic(&conf,
+                    "memcached", "max_key_size",
+                    defaults::MEMCACHED_MAX_KEY_SIZE),
 
-                max_key_expiration: ReaderGetter::get_generic(&conf,
+                max_key_expiration: ConfigReaderGetter::get_generic(&conf,
                     "memcached", "max_key_expiration",
                     defaults::MEMCACHED_MAX_KEY_EXPIRATION),
 
-                pool_size: ReaderGetter::get_generic(&conf, "memcached",
+                pool_size: ConfigReaderGetter::get_generic(&conf, "memcached",
                 "pool_size", defaults::MEMCACHED_POOL_SIZE),
 
-                reconnect: ReaderGetter::get_generic(&conf, "memcached",
+                reconnect: ConfigReaderGetter::get_generic(&conf, "memcached",
                 "reconnect", defaults::MEMCACHED_RECONNECT),
 
-                timeout: ReaderGetter::get_generic(&conf, "memcached",
+                timeout: ConfigReaderGetter::get_generic(&conf, "memcached",
                 "timeout", defaults::MEMCACHED_TIMEOUT)
             }
         }
     }
 }
 
-impl ReaderGetter {
+impl ConfigReaderGetter {
     fn get_inet(
         conf: &Ini, group: &'static str, key: &'static str,
         key_host: &'static str, key_port: &'static str,

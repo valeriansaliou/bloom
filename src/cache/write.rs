@@ -9,15 +9,20 @@ extern crate hyper;
 use self::hyper::{Method, StatusCode};
 use self::hyper::server::{Request, Response};
 
-pub struct Write;
+pub struct CacheWrite;
 
-impl Write {
-    pub fn save(ns: &str, req: Request, res: Response) {
+impl CacheWrite {
+    pub fn save(ns: &str, req: Request, res: Response) -> bool {
         // TODO: Not implemented
 
         if Self::is_cacheable(req, res) == true {
             // TODO
+
+            return true
         }
+
+        // Not cacheable, ignore
+        false
     }
 
     fn is_cacheable(req: Request, res: Response) -> bool {
@@ -71,25 +76,25 @@ mod tests {
 
     #[test]
     fn it_asserts_valid_cacheable_method() {
-        assert_eq!(Write::is_cacheable_method(&Method::Get),
+        assert_eq!(CacheWrite::is_cacheable_method(&Method::Get),
             true, "GET");
-        assert_eq!(Write::is_cacheable_method(&Method::Head),
+        assert_eq!(CacheWrite::is_cacheable_method(&Method::Head),
             true, "HEAD");
-        assert_eq!(Write::is_cacheable_method(&Method::Options),
+        assert_eq!(CacheWrite::is_cacheable_method(&Method::Options),
             false, "OPTIONS");
-        assert_eq!(Write::is_cacheable_method(&Method::Post),
+        assert_eq!(CacheWrite::is_cacheable_method(&Method::Post),
             false, "POST");
     }
 
     #[test]
     fn it_asserts_valid_cacheable_status() {
-        assert_eq!(Write::is_cacheable_status(StatusCode::Ok),
+        assert_eq!(CacheWrite::is_cacheable_status(StatusCode::Ok),
             true, "200 OK");
-        assert_eq!(Write::is_cacheable_status(StatusCode::Unauthorized),
+        assert_eq!(CacheWrite::is_cacheable_status(StatusCode::Unauthorized),
             true, "401 OK");
-        assert_eq!(Write::is_cacheable_status(StatusCode::BadRequest),
+        assert_eq!(CacheWrite::is_cacheable_status(StatusCode::BadRequest),
             false, "400 Bad Request");
-        assert_eq!(Write::is_cacheable_status(StatusCode::InternalServerError),
+        assert_eq!(CacheWrite::is_cacheable_status(StatusCode::InternalServerError),
             false, "500 Internal Server Error");
     }
 }

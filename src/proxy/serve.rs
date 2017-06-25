@@ -15,27 +15,27 @@ use self::hyper::{Method, StatusCode};
 use self::hyper::server::{Request, Response};
 
 use config::config::ConfigProxy;
-use cache::read::Read;
+use cache::read::CacheRead;
 
-pub struct ServeBuilder;
+pub struct ProxyServeBuilder;
 
 #[derive(Clone)]
-pub struct Serve {
+pub struct ProxyServe {
     config_proxy: ConfigProxy
 }
 
-pub type ServeFuture = FutureResult<Response, hyper::Error>;
+pub type ProxyServeFuture = FutureResult<Response, hyper::Error>;
 
-impl ServeBuilder {
-    pub fn new(config_proxy: ConfigProxy) -> Serve {
-        Serve {
+impl ProxyServeBuilder {
+    pub fn new(config_proxy: ConfigProxy) -> ProxyServe {
+        ProxyServe {
             config_proxy: config_proxy
         }
     }
 }
 
-impl Serve {
-    pub fn handle(&self, req: Request) -> ServeFuture {
+impl ProxyServe {
+    pub fn handle(&self, req: Request) -> ProxyServeFuture {
         let method = req.method();
         let path = req.path();
 
@@ -70,9 +70,17 @@ impl Serve {
     }
 
     fn tunnel(&self, req: &Request, res: &mut Response) {
-        // TODO: authorization
-        // TODO: shard
-        let ns = Read::gen_ns(0, req.method(), req.path(), "anon");
+        // TODO: set param 'authorization'
+        // TODO: set param 'shard'
+        let ns = CacheRead::gen_ns(0, req.method(), req.path(), "anon");
+
+        // TODO: CacheRead::acquire()
+        // TODO -> if acquired, serve cached response
+            // TODO -> set 'Bloom-Status' as 'HIT'
+        // TODO -> else (not acquired); proxy connection
+            // TODO -> CacheWrite::save() (check return value)
+                // TODO -> return == true -> set 'Bloom-Status' as 'MISS'
+                // TODO -> return == false -> set 'Bloom-Status' as 'DIRECT'
 
         debug!("tunneling for ns = {}", ns);
     }

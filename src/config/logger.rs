@@ -8,9 +8,9 @@ extern crate log;
 
 use log::{LogRecord, LogLevel, LogMetadata, LogLevelFilter, SetLoggerError};
 
-pub struct Logger;
+pub struct ConfigLogger;
 
-impl log::Log for Logger {
+impl log::Log for ConfigLogger {
     fn enabled(&self, metadata: &LogMetadata) -> bool {
         metadata.level() <= LogLevel::Debug
     }
@@ -22,11 +22,11 @@ impl log::Log for Logger {
     }
 }
 
-impl Logger {
+impl ConfigLogger {
     pub fn init() -> Result<(), SetLoggerError> {
         log::set_logger(|max_log_level| {
             max_log_level.set(LogLevelFilter::Debug);
-            Box::new(Logger)
+            Box::new(ConfigLogger)
         })
     }
 }

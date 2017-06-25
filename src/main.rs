@@ -11,18 +11,20 @@ extern crate log;
 extern crate clap;
 
 mod config;
+mod header;
 mod server;
 mod proxy;
 mod cache;
 
 use clap::{App, Arg};
-use config::logger::Logger;
-use config::reader::ReaderBuilder;
-use proxy::serve::ServeBuilder;
-use server::listen::ListenBuilder;
+use config::logger::ConfigLogger;
+use config::reader::ConfigReaderBuilder;
+use cache::store::CacheStoreBuilder;
+use proxy::serve::ProxyServeBuilder;
+use server::listen::ServerListenBuilder;
 
 fn main() {
-    let _logger = Logger::init();
+    let _logger = ConfigLogger::init();
 
     info!("starting up");
 
@@ -38,16 +40,18 @@ fn main() {
                     .takes_value(true));
 
     let args = app.get_matches();
-    let conf = ReaderBuilder::new().read(args.value_of("config").unwrap());
+    let conf = ConfigReaderBuilder::new().read(
+        args.value_of("config").unwrap());
 
-    // Connect to cache backend
-    // TODO
+    // Bind to cache store
+    let cache_store = CacheStoreBuilder::new(conf.memcached);
+    cache_store.bind();
 
     // Create serve manager
-    let serve = ServeBuilder::new(conf.proxy);
+    let proxy_serve = ProxyServeBuilder::new(conf.proxy);
 
     // Run server (in main thread)
-    ListenBuilder::new(conf.listen).run(serve);
+    ServerListenBuilder::new(conf.listen).run(proxy_serve, cache_store);
 
     error!("could not start");
 }
