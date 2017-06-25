@@ -21,18 +21,19 @@ impl Write {
     }
 
     fn is_cacheable(req: Request, res: Response) -> bool {
-        Self::is_cacheable_method(req) && Self::is_cacheable_status(res)
+        Self::is_cacheable_method(req.method()) &&
+            Self::is_cacheable_status(res.status())
     }
 
-    fn is_cacheable_method(req: Request) -> bool {
-        match *req.method() {
+    fn is_cacheable_method(method: &Method) -> bool {
+        match *method {
             Method::Get | Method::Head => true,
             _ => false
         }
     }
 
-    fn is_cacheable_status(res: Response) -> bool {
-        match res.status() {
+    fn is_cacheable_status(status: StatusCode) -> bool {
+        match status {
             StatusCode::Ok
             | StatusCode::NonAuthoritativeInformation
             | StatusCode::NoContent
@@ -66,8 +67,29 @@ impl Write {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
-    fn it_works() {
-        // TODO
+    fn it_asserts_valid_cacheable_method() {
+        assert_eq!(Write::is_cacheable_method(&Method::Get),
+            true, "GET");
+        assert_eq!(Write::is_cacheable_method(&Method::Head),
+            true, "HEAD");
+        assert_eq!(Write::is_cacheable_method(&Method::Options),
+            false, "OPTIONS");
+        assert_eq!(Write::is_cacheable_method(&Method::Post),
+            false, "POST");
+    }
+
+    #[test]
+    fn it_asserts_valid_cacheable_status() {
+        assert_eq!(Write::is_cacheable_status(StatusCode::Ok),
+            true, "200 OK");
+        assert_eq!(Write::is_cacheable_status(StatusCode::Unauthorized),
+            true, "401 OK");
+        assert_eq!(Write::is_cacheable_status(StatusCode::BadRequest),
+            false, "400 Bad Request");
+        assert_eq!(Write::is_cacheable_status(StatusCode::InternalServerError),
+            false, "500 Internal Server Error");
     }
 }

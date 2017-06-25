@@ -7,7 +7,7 @@
 extern crate hyper;
 extern crate farmhash;
 
-use self::hyper::{Method, StatusCode};
+use self::hyper::Method;
 
 pub struct Read;
 
