@@ -29,8 +29,9 @@ impl ListenBuilder {
 impl Listen {
     pub fn run(&self, serve: Serve) {
         let addr = self.config_listen.inet;
-        let server = Http::new().bind(&addr, || {
-            Ok(RequestHandle::new(serve))
+        let server = Http::new().bind(&addr, move || {
+            // TODO: solve this dirty clone?
+            Ok(RequestHandle::new(serve.clone()))
         }).unwrap();
 
         info!("listening on http://{}", server.local_addr().unwrap());

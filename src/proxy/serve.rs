@@ -8,11 +8,14 @@ extern crate hyper;
 extern crate futures;
 
 use self::futures::future::FutureResult;
+use self::hyper::{Method, StatusCode};
 use self::hyper::server::{Request, Response};
 
 use config::config::ConfigProxy;
 
 pub struct ServeBuilder;
+
+#[derive(Clone)]
 pub struct Serve {
     config_proxy: ConfigProxy
 }
@@ -29,8 +32,36 @@ impl ServeBuilder {
 
 impl Serve {
     pub fn handle(&self, req: Request) -> ServeFuture {
-        futures::future::ok(
-            Response::new()
-        )
+        let method = req.method();
+        let path = req.path();
+
+        info!("handled request: {} on {}", method, path);
+
+        let mut res = Response::new();
+
+        match *method {
+            Method::Options
+            | Method::Head
+            | Method::Get
+            | Method::Post
+            | Method::Patch
+            | Method::Put
+            | Method::Delete => {
+                self.accept(&mut res)
+            }
+            _ => {
+                self.reject(&mut res)
+            }
+        }
+
+        futures::future::ok(res)
+    }
+
+    pub fn accept(&self, res: &mut Response) {
+        res.set_status(StatusCode::ServiceUnavailable);
+    }
+
+    pub fn reject(&self, res: &mut Response) {
+        res.set_status(StatusCode::MethodNotAllowed);
     }
 }

@@ -33,13 +33,6 @@ impl Service for RequestHandle {
     type Future = FutureResult<Response, hyper::Error>;
 
     fn call(&self, req: Request) -> ServeFuture {
-        let method = req.method();
-        let path = req.path();
-
-        info!("handled request: {} on {}", method, path);
-
-        futures::future::ok(
-            Response::new()
-        )
+        self.serve.handle(req)
     }
 }

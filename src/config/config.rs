@@ -16,6 +16,7 @@ pub struct ConfigListen {
     pub inet: SocketAddr
 }
 
+#[derive(Clone)]
 pub struct ConfigProxy {
     pub shard: u8,
     pub inet: SocketAddr
