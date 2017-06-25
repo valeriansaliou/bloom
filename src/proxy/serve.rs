@@ -15,6 +15,7 @@ use self::hyper::{Method, StatusCode};
 use self::hyper::server::{Request, Response};
 
 use config::config::ConfigProxy;
+use cache::read::Read;
 
 pub struct ServeBuilder;
 
@@ -69,6 +70,10 @@ impl Serve {
     }
 
     fn tunnel(&self, req: &Request, res: &mut Response) {
-        // TODO
+        // TODO: authorization
+        // TODO: shard
+        let ns = Read::gen_ns(0, req.method(), req.path(), "anon");
+
+        debug!("tunneling for ns = {}", ns);
     }
 }
