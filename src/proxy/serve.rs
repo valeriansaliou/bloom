@@ -5,9 +5,12 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 extern crate hyper;
+extern crate tokio_core;
 extern crate futures;
 
 use self::futures::future::FutureResult;
+use self::tokio_core::reactor::Core;
+use self::hyper::Client;
 use self::hyper::{Method, StatusCode};
 use self::hyper::server::{Request, Response};
 
@@ -47,21 +50,25 @@ impl Serve {
             | Method::Patch
             | Method::Put
             | Method::Delete => {
-                self.accept(&mut res)
+                self.accept(&req, &mut res)
             }
             _ => {
-                self.reject(&mut res)
+                self.reject(&req, &mut res)
             }
         }
 
         futures::future::ok(res)
     }
 
-    pub fn accept(&self, res: &mut Response) {
-        res.set_status(StatusCode::ServiceUnavailable);
+    fn accept(&self, req: &Request, res: &mut Response) {
+        self.tunnel(req, res);
     }
 
-    pub fn reject(&self, res: &mut Response) {
+    fn reject(&self, req: &Request, res: &mut Response) {
         res.set_status(StatusCode::MethodNotAllowed);
+    }
+
+    fn tunnel(&self, req: &Request, res: &mut Response) {
+        // TODO
     }
 }
