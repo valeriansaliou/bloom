@@ -16,7 +16,7 @@ use header::request::HeaderRequestBloomRequestShard;
 pub struct ProxyHeader;
 
 impl ProxyHeader {
-    pub fn parse_from_request(headers: &Headers) -> (String, u8) {
+    pub fn parse_from_request(headers: &Headers) -> (&str, u8) {
         // Request header: 'Authorization'
         let auth = match headers.get_raw("authorization") {
             None => defaults::REQUEST_AUTHORIZATION_DEFAULT,
@@ -30,6 +30,6 @@ impl ProxyHeader {
             Some(value) => value.0
         };
 
-        (String::from(auth), shard)
+        (auth, shard)
     }
 }

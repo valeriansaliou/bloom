@@ -7,15 +7,15 @@
 extern crate hyper;
 extern crate farmhash;
 
-use self::hyper::Method;
+use self::hyper::{HttpVersion, Method};
 
 pub struct CacheRead;
 
 impl CacheRead {
-    pub fn gen_ns(shard: u8, method: &Method, path: &str, authorization: String)
-        -> String {
-        let namespace_raw = format!("[{}][{}][{}]", method, path,
-            authorization);
+    pub fn gen_ns(shard: u8, version: HttpVersion, method: &Method, path: &str,
+                    query: Option<&str>, authorization: &str) -> String {
+        let namespace_raw = format!("[{}][{}][{}][{}][{}]", version, method,
+            path, query.unwrap_or(""), authorization);
         let namespace_hash = farmhash::hash64(namespace_raw.as_bytes());
 
         debug!("Generated namespace: {} with hash: {}", namespace_raw,
@@ -35,11 +35,17 @@ mod tests {
 
     #[test]
     fn it_generates_valid_ns() {
-        assert_eq!(CacheRead::gen_ns(0, &Method::Get, "/", ""),
-            "0.d1502b360785d097", "[shard=0][auth=anonymous] GET /");
-        assert_eq!(CacheRead::gen_ns(0, &Method::Post, "/login", ""),
-            "0.899c4e4e1578071f", "[shard=0][auth=anonymous] POST /login");
-        assert_eq!(CacheRead::gen_ns(7, &Method::Options, "/feed", "8ab"),
-            "7.fe47c58fc02f4efc", "[shard=7][auth=8ab] OPTIONS /feed");
+        assert_eq!(CacheRead::gen_ns(
+            0, HttpVersion::Http11, &Method::Get, "/", Some(""), ""),
+            "0.f8bb423988eb2814", "[shard=0][auth=no] HTTP/1.1 GET /");
+        assert_eq!(CacheRead::gen_ns(
+            0, HttpVersion::Http11, &Method::Post, "/login", Some(""), ""),
+            "0.9927a78b4d94dbf5", "[shard=0][auth=no] HTTP/1.1 POST /login");
+        assert_eq!(CacheRead::gen_ns(
+            7, HttpVersion::Http11, &Method::Options, "/feed", Some(""), "8ab"),
+            "7.2b5dc16d448eecb9", "[shard=7][auth=yes] HTTP/1.1 OPTIONS /feed");
+        assert_eq!(CacheRead::gen_ns(
+            80, HttpVersion::H2, &Method::Head, "/user", Some("u=1"), "2d"),
+            "80.7011223c059f2bfb", "[shard=80][auth=yes] h2 HEAD /feed");
     }
 }

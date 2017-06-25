@@ -74,7 +74,8 @@ impl ProxyServe {
     fn tunnel(&self, req: &Request, res: &mut Response) {
         let (auth, shard) = ProxyHeader::parse_from_request(req.headers());
 
-        let ns = CacheRead::gen_ns(shard, req.method(), req.path(), auth);
+        let ns = CacheRead::gen_ns(shard, req.version(), req.method(),
+            req.path(), req.query(), auth);
 
         // TODO: CacheRead::acquire()
         // TODO -> if acquired, serve cached response
