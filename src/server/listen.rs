@@ -32,6 +32,7 @@ impl ServerListen {
         let addr = self.config_listen.inet;
         let server = Http::new().bind(&addr, move || {
             // TODO: solve those dirty clones?
+            // CRITICAL, as this closure is called for EVERY HTTP request
             Ok(ServerRequestHandle::new(
                 proxy_serve.clone(), cache_store.clone()
             ))

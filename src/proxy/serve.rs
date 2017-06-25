@@ -12,8 +12,10 @@ use self::futures::future::FutureResult;
 use self::tokio_core::reactor::Core;
 use self::hyper::Client;
 use self::hyper::{Method, StatusCode};
+use self::hyper::header::Basic;
 use self::hyper::server::{Request, Response};
 
+use super::header::ProxyHeader;
 use config::config::ConfigProxy;
 use cache::read::CacheRead;
 
@@ -70,9 +72,9 @@ impl ProxyServe {
     }
 
     fn tunnel(&self, req: &Request, res: &mut Response) {
-        // TODO: set param 'authorization'
-        // TODO: set param 'shard'
-        let ns = CacheRead::gen_ns(0, req.method(), req.path(), "anon");
+        let (auth, shard) = ProxyHeader::parse_from_request(req.headers());
+
+        let ns = CacheRead::gen_ns(shard, req.method(), req.path(), auth);
 
         // TODO: CacheRead::acquire()
         // TODO -> if acquired, serve cached response

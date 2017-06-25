@@ -12,9 +12,14 @@ use self::hyper::Method;
 pub struct CacheRead;
 
 impl CacheRead {
-    pub fn gen_ns(shard: u8, method: &Method, path: &str, authorization: &str) -> String {
-        let namespace_raw = format!("{}:{}:{}", method, path, authorization);
+    pub fn gen_ns(shard: u8, method: &Method, path: &str, authorization: String)
+        -> String {
+        let namespace_raw = format!("[{}][{}][{}]", method, path,
+            authorization);
         let namespace_hash = farmhash::hash64(namespace_raw.as_bytes());
+
+        debug!("Generated namespace: {} with hash: {}", namespace_raw,
+            namespace_hash);
 
         format!("{}.{:x}", shard, namespace_hash)
     }
