@@ -14,6 +14,7 @@ use hyper::header::Basic;
 use hyper::server::{Request, Response};
 
 use super::header::ProxyHeader;
+use header::request::HeaderRequestBloomRequestShard;
 use config::config::ConfigProxy;
 use cache::read::CacheRead;
 
@@ -36,26 +37,27 @@ impl ProxyServeBuilder {
 
 impl ProxyServe {
     pub fn handle(&self, req: Request) -> ProxyServeFuture {
-        let method = req.method();
-        let path = req.path();
-
-        info!("handled request: {} on {}", method, path);
+        info!("handled request: {} on {}", req.method(), req.path());
 
         let mut res = Response::new();
 
-        match *method {
-            Method::Options
-            | Method::Head
-            | Method::Get
-            | Method::Post
-            | Method::Patch
-            | Method::Put
-            | Method::Delete => {
-                self.accept(&req, &mut res)
+        if req.headers().has::<HeaderRequestBloomRequestShard>() == true {
+            match *req.method() {
+                Method::Options
+                | Method::Head
+                | Method::Get
+                | Method::Post
+                | Method::Patch
+                | Method::Put
+                | Method::Delete => {
+                    self.accept(&req, &mut res)
+                }
+                _ => {
+                    self.reject(&req, &mut res, StatusCode::MethodNotAllowed)
+                }
             }
-            _ => {
-                self.reject(&req, &mut res)
-            }
+        } else {
+            self.reject(&req, &mut res, StatusCode::NotExtended)
         }
 
         futures::future::ok(res)
@@ -65,8 +67,15 @@ impl ProxyServe {
         self.tunnel(req, res);
     }
 
-    fn reject(&self, req: &Request, res: &mut Response) {
-        res.set_status(StatusCode::MethodNotAllowed);
+    fn reject(&self, req: &Request, res: &mut Response, status: StatusCode) {
+        res.set_status(status);
+
+        match *req.method() {
+            Method::Get | Method::Post | Method::Patch | Method::Put => {
+                res.set_body(format!("{}", status));
+            }
+            _ => {}
+        }
     }
 
     fn tunnel(&self, req: &Request, res: &mut Response) {
