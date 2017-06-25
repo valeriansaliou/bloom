@@ -5,5 +5,6 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 pub mod store;
+pub mod route;
 pub mod read;
 pub mod write;

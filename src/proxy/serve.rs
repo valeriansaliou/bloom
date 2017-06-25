@@ -13,7 +13,7 @@ use hyper::server::{Request, Response};
 use super::header::ProxyHeader;
 use header::request::HeaderRequestBloomRequestShard;
 use config::config::ConfigProxy;
-use cache::read::CacheRead;
+use cache::route::CacheRoute;
 
 pub struct ProxyServeBuilder;
 
@@ -78,7 +78,7 @@ impl ProxyServe {
     fn tunnel(&self, req: &Request, res: &mut Response) {
         let (auth, shard) = ProxyHeader::parse_from_request(req.headers());
 
-        let ns = CacheRead::gen_ns(shard, req.version(), req.method(),
+        let ns = CacheRoute::gen_ns(shard, req.version(), req.method(),
             req.path(), req.query(), auth);
 
         // TODO: CacheRead::acquire()

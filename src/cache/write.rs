@@ -16,11 +16,11 @@ impl CacheWrite {
         if Self::is_cacheable(req, res) == true {
             // TODO
 
-            return true
+            true
+        } else {
+            // Not cacheable, ignore
+            false
         }
-
-        // Not cacheable, ignore
-        false
     }
 
     fn is_cacheable(req: Request, res: Response) -> bool {
