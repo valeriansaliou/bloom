@@ -19,7 +19,10 @@ pub struct ConfigListen {
 #[derive(Clone)]
 pub struct ConfigProxy {
     pub shard: u8,
-    pub inet: SocketAddr
+    pub inet: SocketAddr,
+    pub connect_timeout: u16,
+    pub read_timeout: u16,
+    pub send_timeout: u16
 }
 
 #[derive(Clone)]

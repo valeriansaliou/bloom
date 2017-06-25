@@ -53,7 +53,16 @@ impl ConfigReader {
 
                 inet: ConfigReaderGetter::get_inet(&conf, "proxy", "inet",
                 "host", "port", defaults::PROXY_HOST,
-                defaults::PROXY_PORT)
+                defaults::PROXY_PORT),
+
+                connect_timeout: ConfigReaderGetter::get_generic(&conf, "proxy",
+                "connect_timeout", defaults::PROXY_CONNECT_TIMEOUT),
+
+                read_timeout: ConfigReaderGetter::get_generic(&conf, "proxy",
+                "read_timeout", defaults::PROXY_READ_TIMEOUT),
+
+                send_timeout: ConfigReaderGetter::get_generic(&conf, "proxy",
+                "send_timeout", defaults::PROXY_SEND_TIMEOUT),
             },
 
             memcached: ConfigMemcached {

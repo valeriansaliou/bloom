@@ -81,10 +81,18 @@ impl ProxyServe {
         let ns = CacheRoute::gen_ns(shard, req.version(), req.method(),
             req.path(), req.query(), auth);
 
+        // TODO: support for 304 Not Modified here (return empty content \
+        //   to ongoing specific client, but still read/populate cache normally)
+
         // TODO: CacheRead::acquire()
         // TODO -> if acquired, serve cached response
             // TODO -> set 'Bloom-Status' as 'HIT'
         // TODO -> else (not acquired); proxy connection
+            // TODO -> connect to API using ConfigProxy[:shard].inet
+                // TODO -> enforce timeouts:
+                    //   - ConfigProxy.connect_timeout
+                    //   - ConfigProxy.read_timeout
+                    //   - ConfigProxy.send_timeout
             // TODO -> CacheWrite::save() (check return value)
                 // TODO -> return == true -> set 'Bloom-Status' as 'MISS'
                 // TODO -> return == false -> set 'Bloom-Status' as 'DIRECT'

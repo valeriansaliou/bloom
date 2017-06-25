@@ -14,7 +14,15 @@ impl CacheWrite {
         // TODO: Not implemented
 
         if Self::is_cacheable(req, res) == true {
-            // TODO
+            // TODO: write cache (if memcached is down, ignore but throw a \
+            //         log error)
+            // TODO: implement support for Bloom-Response-TTL
+
+            // Later:
+            // TODO: implement support for Bloom-Response-Bucket
+            // CONCERN: how to link this to the gen_ns() utility? We dont \
+            //   know about which route is mapped to which bucket in advance. \
+            //   so maybe redesign this part.
 
             true
         } else {
@@ -25,7 +33,8 @@ impl CacheWrite {
 
     fn is_cacheable(req: Request, res: Response) -> bool {
         Self::is_cacheable_method(req.method()) &&
-            Self::is_cacheable_status(res.status())
+            Self::is_cacheable_status(res.status()) &&
+            Self::is_cacheable_response()
     }
 
     fn is_cacheable_method(method: &Method) -> bool {
@@ -65,6 +74,12 @@ impl CacheWrite {
                 false
             }
         }
+    }
+
+    fn is_cacheable_response() -> bool {
+        // TODO: implement support for Bloom-Response-Ignore
+
+        true
     }
 }
 
