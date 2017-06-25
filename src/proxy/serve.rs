@@ -4,13 +4,10 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use tokio_core::reactor::Core;
 use futures;
 use futures::future::FutureResult;
 use hyper;
-use hyper::Client;
 use hyper::{Method, StatusCode};
-use hyper::header::Basic;
 use hyper::server::{Request, Response};
 
 use super::header::ProxyHeader;

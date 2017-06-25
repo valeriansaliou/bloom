@@ -9,7 +9,6 @@
 extern crate ini;
 extern crate hyper;
 extern crate farmhash;
-extern crate tokio_core;
 extern crate futures;
 
 mod config;
