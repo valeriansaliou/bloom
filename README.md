@@ -102,7 +102,7 @@ proxy_pass http://(...)
 proxy_set_header Bloom-Request-Shard 0;
 ```
 
-**Notice: a shard is a number from 0 to 255 (8-bit unsigned number).**
+**Notice: a shard number is an integer from 0 to 255 (8-bit unsigned number).**
 
 ## How fast is it?
 
