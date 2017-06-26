@@ -62,9 +62,45 @@ Bloom has minimal static configuration, and relies on HTTP response headers serv
 
 ## How to use it?
 
-* **TODO: install**
-* **TODO: configure API**
-* **TODO: expiring cache**
+### Installation
+
+Bloom is built in Rust. To install it, either download pre-built binaries on the [Bloom releases](https://github.com/valeriansaliou/bloom/releases) page, or pull the source code and build it using `cargo`:
+
+```bash
+cargo build --release
+```
+
+You can find the built binaries in the `./target/release` directory.
+
+### Configuration
+
+Use the sample [config.cfg](https://github.com/valeriansaliou/bloom/blob/master/config.cfg) configuration file and adjust it to your own environment.
+
+Make sure to properly configure the `[proxy]` section so that Bloom points to your API worker host and port.
+
+### Run Bloom
+
+Bloom can be run as such:
+
+`./bloom -c /path/to/config.cfg`
+
+**Important: make sure to spin up a Bloom instance for each API worker running on your infrastructure. Bloom does not manage the Load Balancing logic, so you should have a Bloom instance per API worker instance (in case you scale your API horizontally).**
+
+### Configure Load Balancers
+
+Once Bloom is running and points to your API, you can configure your Load Balancers to point to Bloom IP and port instead of your API IP and port.
+
+Bloom requires the `Bloom-Request-Shard` HTTP header to be set by your Load Balancer upon proxying a client request to Bloom. This header tells Bloom which cache shard to use for storing data (this way, you can have a single Bloom instance for different API sub-systems listening on the same server).
+
+On NGINX, you may add the following rule to your existing proxy ruleset:
+
+```
+# Your existing ruleset goes here
+proxy_pass http://(...)
+
+# Adds the 'Bloom-Request-Shard' header for Bloom
+proxy_set_header Bloom-Request-Shard 0;
+```
 
 ## How fast is it?
 
@@ -72,7 +108,7 @@ Bloom is built in Rust, which can be compiled to native code for your architectu
 
 Benchmarks are performed and updated upon major code changes, to measure Bloom performance and try to get the highest throughput for the lowest pressure on system resources (CPU / RAM). You can find them below.
 
-**TODO: benchmark**
+🚨 **TODO: benchmark**
 
 ## How does it deal with authenticated routes?
 
