@@ -84,11 +84,11 @@ Bloom can be run as such:
 
 `./bloom -c /path/to/config.cfg`
 
-**Important: make sure to spin up a Bloom instance for each API worker running on your infrastructure. Bloom does not manage the Load Balancing logic, so you should have a Bloom instance per API worker instance (in case you scale your API horizontally).**
+**Important: make sure to spin up a Bloom instance for each API worker running on your infrastructure. Bloom does not manage the Load Balancing logic itself, so you should have a Bloom instance per API worker instance and still rely on eg. NGINX for Load Balancing.**
 
 ### Configure Load Balancers
 
-Once Bloom is running and points to your API, you can configure your Load Balancers to point to Bloom IP and port instead of your API IP and port.
+Once Bloom is running and points to your API, you can configure your Load Balancers to point to Bloom IP and port (instead of your API IP and port as previously).
 
 Bloom requires the `Bloom-Request-Shard` HTTP header to be set by your Load Balancer upon proxying a client request to Bloom. This header tells Bloom which cache shard to use for storing data (this way, you can have a single Bloom instance for different API sub-systems listening on the same server).
 
@@ -101,6 +101,8 @@ proxy_pass http://(...)
 # Adds the 'Bloom-Request-Shard' header for Bloom
 proxy_set_header Bloom-Request-Shard 0;
 ```
+
+**Notice: a shard is a number from 0 to 255 (8-bit unsigned number).**
 
 ## How fast is it?
 
