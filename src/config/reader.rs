@@ -14,7 +14,8 @@ use ini::Ini;
 
 use super::defaults;
 use super::config::Config;
-use super::config::ConfigListen;
+use super::config::ConfigServer;
+use super::config::ConfigControl;
 use super::config::ConfigProxy;
 use super::config::ConfigMemcached;
 
@@ -41,10 +42,16 @@ impl ConfigReader {
 
     fn make(&self, conf: &Ini) -> Config {
         Config {
-            listen: ConfigListen {
-                inet: ConfigReaderGetter::get_inet(&conf, "listen", "inet",
-                "host", "port", defaults::LISTEN_HOST,
-                defaults::LISTEN_PORT)
+            server: ConfigServer {
+                inet: ConfigReaderGetter::get_inet(&conf, "server", "inet",
+                "host", "port", defaults::SERVER_HOST,
+                defaults::SERVER_PORT)
+            },
+
+            control: ConfigControl {
+                inet: ConfigReaderGetter::get_inet(&conf, "control", "inet",
+                "host", "port", defaults::CONTROL_HOST,
+                defaults::CONTROL_PORT)
             },
 
             proxy: ConfigProxy {

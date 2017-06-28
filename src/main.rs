@@ -13,15 +13,17 @@ extern crate futures;
 
 mod config;
 mod header;
-mod server;
 mod proxy;
 mod cache;
+mod control;
+mod server;
 
 use clap::{App, Arg};
 use config::logger::ConfigLogger;
 use config::reader::ConfigReaderBuilder;
 use cache::store::CacheStoreBuilder;
 use proxy::serve::ProxyServeBuilder;
+use control::listen::ControlListenBuilder;
 use server::listen::ServerListenBuilder;
 
 fn main() {
@@ -51,8 +53,11 @@ fn main() {
     // Create serve manager
     let proxy_serve = ProxyServeBuilder::new(conf.proxy);
 
+    // Run control interface (in its own thread)
+    ControlListenBuilder::new(conf.control).run();
+
     // Run server (in main thread)
-    ServerListenBuilder::new(conf.listen).run(proxy_serve, cache_store);
+    ServerListenBuilder::new(conf.server).run(proxy_serve, cache_store);
 
     error!("could not start");
 }

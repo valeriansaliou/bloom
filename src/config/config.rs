@@ -7,12 +7,17 @@
 use std::net::SocketAddr;
 
 pub struct Config {
-    pub listen: ConfigListen,
+    pub server: ConfigServer,
+    pub control: ConfigControl,
     pub proxy: ConfigProxy,
     pub memcached: ConfigMemcached
 }
 
-pub struct ConfigListen {
+pub struct ConfigServer {
+    pub inet: SocketAddr
+}
+
+pub struct ConfigControl {
     pub inet: SocketAddr
 }
 

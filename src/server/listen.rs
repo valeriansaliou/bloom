@@ -8,26 +8,26 @@ use hyper::server::Http;
 
 use super::handle::ServerRequestHandle;
 
-use config::config::ConfigListen;
+use config::config::ConfigServer;
 use cache::store::CacheStore;
 use proxy::serve::ProxyServe;
 
 pub struct ServerListenBuilder;
 pub struct ServerListen {
-    config_listen: ConfigListen
+    config_server: ConfigServer
 }
 
 impl ServerListenBuilder {
-    pub fn new(config_listen: ConfigListen) -> ServerListen {
+    pub fn new(config_server: ConfigServer) -> ServerListen {
         ServerListen {
-            config_listen: config_listen
+            config_server: config_server
         }
     }
 }
 
 impl ServerListen {
     pub fn run(&self, proxy_serve: ProxyServe, cache_store: CacheStore) {
-        let addr = self.config_listen.inet;
+        let addr = self.config_server.inet;
         let server = Http::new().bind(&addr, move || {
             // TODO: solve those dirty clones?
             // CRITICAL, as this closure is called for EVERY HTTP request

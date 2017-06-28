@@ -4,8 +4,11 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-pub static LISTEN_HOST: &'static str = "::1";
-pub static LISTEN_PORT: &'static str = "811";
+pub static SERVER_HOST: &'static str = "::1";
+pub static SERVER_PORT: &'static str = "80";
+
+pub static CONTROL_HOST: &'static str = "::1";
+pub static CONTROL_PORT: &'static str = "811";
 
 pub static PROXY_SHARD: &'static str = "0";
 pub static PROXY_HOST: &'static str = "::1";
