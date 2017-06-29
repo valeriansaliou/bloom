@@ -17,7 +17,7 @@ Bloom relies on `memcached` to store cached data. It is built in Rust and focuse
 
 <table>
 <tr>
-<td align="center"><a href="https://crisp.im/"><img src="https://valeriansaliou.github.io/bloom/images/crisp.png" height="64" /></a></td>
+<td align="center"><a href="https://crisp.chat/"><img src="https://valeriansaliou.github.io/bloom/images/crisp.png" height="64" /></a></td>
 </tr>
 <tr>
 <td align="center">Crisp</td>
