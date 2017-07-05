@@ -61,5 +61,8 @@ fn main() {
     // Run server (in main thread)
     ServerListenBuilder::new(conf.server).run(proxy_serve, cache_store);
 
+    // TODO: wrap the things in lazy_static?
+    // @ref: https://github.com/rust-lang-nursery/lazy-static.rs
+
     error!("could not start");
 }
