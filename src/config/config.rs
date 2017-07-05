@@ -21,7 +21,6 @@ pub struct ConfigControl {
     pub inet: SocketAddr
 }
 
-#[derive(Clone)]
 pub struct ConfigProxy {
     pub shard: u8,
     pub inet: SocketAddr,
@@ -30,7 +29,6 @@ pub struct ConfigProxy {
     pub send_timeout: u16
 }
 
-#[derive(Clone)]
 pub struct ConfigMemcached {
     pub inet: SocketAddr,
     pub max_key_size: u32,

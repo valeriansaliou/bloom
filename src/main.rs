@@ -10,6 +10,7 @@ extern crate ini;
 extern crate hyper;
 extern crate farmhash;
 extern crate futures;
+extern crate memcached;
 
 mod config;
 mod header;
@@ -18,6 +19,7 @@ mod cache;
 mod control;
 mod server;
 
+use std::sync::Arc;
 use clap::{App, Arg};
 use config::logger::ConfigLogger;
 use config::reader::ConfigReaderBuilder;
@@ -47,11 +49,11 @@ fn main() {
         args.value_of("config").unwrap());
 
     // Bind to cache store
-    let cache_store = CacheStoreBuilder::new(conf.memcached);
-    cache_store.bind();
+    let cache_store = Arc::new(CacheStoreBuilder::new(conf.memcached));
+    cache_store.as_ref().bind();
 
     // Create serve manager
-    let proxy_serve = ProxyServeBuilder::new(conf.proxy);
+    let proxy_serve = Arc::new(ProxyServeBuilder::new(conf.proxy));
 
     // Run control interface (in its own thread)
     ControlListenBuilder::new(conf.control).run();

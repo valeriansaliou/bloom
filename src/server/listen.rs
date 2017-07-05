@@ -4,6 +4,8 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use std::sync::Arc;
+
 use hyper::server::Http;
 
 use super::handle::ServerRequestHandle;
@@ -26,10 +28,11 @@ impl ServerListenBuilder {
 }
 
 impl ServerListen {
-    pub fn run(&self, proxy_serve: ProxyServe, cache_store: CacheStore) {
+    pub fn run(&self, proxy_serve: Arc<ProxyServe>,
+        cache_store: Arc<CacheStore>) {
         let addr = self.config_server.inet;
         let server = Http::new().bind(&addr, move || {
-            // TODO: solve those dirty clones?
+            // TODO: can we make this better w/o cloning memory?
             // CRITICAL, as this closure is called for EVERY HTTP request
             Ok(ServerRequestHandle::new(
                 proxy_serve.clone(), cache_store.clone()

@@ -4,19 +4,30 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use std::sync::atomic::{AtomicBool, Ordering};
+
+use futures;
+use futures::future::Future;
+use memcached::Client;
+use memcached::proto::{Operation, MultiOperation, NoReplyOperation, CasOperation, ProtoType};
+
 use config::config::ConfigMemcached;
 
 pub struct CacheStoreBuilder;
 
-#[derive(Clone)]
 pub struct CacheStore {
-    config_memcached: ConfigMemcached
+    config_memcached: ConfigMemcached,
+    is_connected: AtomicBool
+    // client: Client  <-- TODO: impl. clone for Client?
 }
+
+// type CacheResult = impl Future<Item = bool>;
 
 impl CacheStoreBuilder {
     pub fn new(config_memcached: ConfigMemcached) -> CacheStore {
         CacheStore {
-            config_memcached: config_memcached
+            config_memcached: config_memcached,
+            is_connected: AtomicBool::new(false)
         }
     }
 }
@@ -40,14 +51,46 @@ impl CacheStore {
             //   return response w/ the DIRECT bloom status header)
 
         info!("Binding to store backend at {}", self.config_memcached.inet);
+
+        let tcp_addr = format!("tcp://{}:{}", self.config_memcached.inet.ip(),
+            self.config_memcached.inet.port());
+        let servers = [(tcp_addr.as_str(), 1)];
+
+        match Client::connect(&servers, ProtoType::Binary) {
+            Ok(mut client) => {
+                // TODO: assign to struct
+                // self.client = client
+
+                self.is_connected.store(true, Ordering::Relaxed);
+            }
+            Err(err) => panic!("could not connect to memcached: {}", err)
+        }
+
+        info!("Bound to store backend");
     }
 
     pub fn get(&self, key: &str) {
+        if self.is_connected.load(Ordering::Relaxed) == true {
+            // TODO
+
+            // futures::future::ok(true)
+        }
+
+        // futures::future::err(false)
+
         // TODO: return future immediately if disconnected (w/ 'false' value)
         // TODO: get and return a future (w/ 'true' value or 'false if fail)
     }
 
     pub fn set(&self, key: &str, value: &str, ttl: u32) {
+        if self.is_connected.load(Ordering::Relaxed) == true {
+            // TODO
+
+            // futures::future::ok(true)
+        }
+
+        // futures::future::err(false)
+
         // TODO: return future immediately if disconnected (w/ 'false' value)
 
         // TODO: set and return a future (needed? maybe we dont even need to \

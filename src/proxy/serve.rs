@@ -17,7 +17,6 @@ use cache::route::CacheRoute;
 
 pub struct ProxyServeBuilder;
 
-#[derive(Clone)]
 pub struct ProxyServe {
     config_proxy: ConfigProxy
 }
