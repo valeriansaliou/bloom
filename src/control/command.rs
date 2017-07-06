@@ -8,6 +8,7 @@ use std::str::SplitWhitespace;
 
 #[derive(PartialEq)]
 pub enum ControlCommandResponse {
+    Void,
     Nil,
     Ok,
     Pong,
@@ -18,6 +19,7 @@ pub enum ControlCommandResponse {
 impl ControlCommandResponse {
     pub fn to_str(&self) -> &'static str {
         match *self {
+            ControlCommandResponse::Void => "",
             ControlCommandResponse::Nil => "NIL",
             ControlCommandResponse::Ok => "OK",
             ControlCommandResponse::Pong => "PONG",
@@ -33,7 +35,7 @@ pub const COMMAND_SIZE: usize = 6;
 
 impl ControlCommand {
     pub fn dispatch_flush_bucket(mut parts: SplitWhitespace) ->
-        Result<ControlCommandResponse, u8> {
+        Result<ControlCommandResponse, Option<bool>> {
         let namespace = parts.next().unwrap_or("");
 
         debug!("dispatch bucket flush for namespace: {}", namespace);
@@ -49,11 +51,11 @@ impl ControlCommand {
             // return Ok(ControlCommandResponse::Ok)
         }
 
-        Err(0)
+        Err(None)
     }
 
     pub fn dispatch_flush_auth(mut parts: SplitWhitespace) ->
-        Result<ControlCommandResponse, u8> {
+        Result<ControlCommandResponse, Option<bool>> {
         let auth = parts.next().unwrap_or("");
 
         debug!("dispatch auth flush for auth: {}", auth);
@@ -69,14 +71,14 @@ impl ControlCommand {
             // return Ok(ControlCommandResponse::Ok)
         }
 
-        Err(0)
+        Err(None)
     }
 
-    pub fn dispatch_ping() -> Result<ControlCommandResponse, u8> {
+    pub fn dispatch_ping() -> Result<ControlCommandResponse, Option<bool>> {
         Ok(ControlCommandResponse::Pong)
     }
 
-    pub fn dispatch_quit() -> Result<ControlCommandResponse, u8> {
+    pub fn dispatch_quit() -> Result<ControlCommandResponse, Option<bool>> {
         Ok(ControlCommandResponse::Ended)
     }
 }

@@ -62,7 +62,8 @@ impl ControlHandle {
         }
     }
 
-    pub fn test_hasher(mut stream: &TcpStream) -> Result<u8, &'static str> {
+    pub fn test_hasher(mut stream: &TcpStream) ->
+        Result<Option<bool>, &'static str> {
         let test_value: String = thread_rng().gen_ascii_chars()
                                     .take(HASH_VALUE_SIZE).collect();
         let test_hash = CacheRoute::hash(test_value.as_str());
@@ -93,7 +94,7 @@ impl ControlHandle {
                         // Validate hash
                         if res_hash.is_empty() == false &&
                             res_hash == test_hash {
-                            return Ok(0)
+                            return Ok(None)
                         }
 
                         return Err("incompatible_hasher")
@@ -120,7 +121,8 @@ impl ControlHandle {
                 ControlCommandResponse::Ok
                 | ControlCommandResponse::Pong
                 | ControlCommandResponse::Ended
-                | ControlCommandResponse::Nil => {
+                | ControlCommandResponse::Nil
+                | ControlCommandResponse::Void => {
                     if resp == ControlCommandResponse::Ended {
                         do_shutdown = true
                     }
@@ -131,16 +133,20 @@ impl ControlHandle {
             _ => ControlCommandResponse::Err.to_str()
         };
 
-        write!(stream, "{}\r\n", response).expect("write failed");
+        if response.is_empty() == false {
+            write!(stream, "{}\r\n", response).expect("write failed");
+        }
 
         return do_shutdown
     }
 
-    pub fn handle_message(message: &str) -> Result<ControlCommandResponse, u8> {
+    pub fn handle_message(message: &str) ->
+        Result<ControlCommandResponse, Option<bool>> {
         let mut parts = message.split_whitespace();
         let command = parts.next().unwrap_or("");
 
         match command {
+            "" => Ok(ControlCommandResponse::Void),
             "FLUSHB" => ControlCommand::dispatch_flush_bucket(parts),
             "FLUSHA" => ControlCommand::dispatch_flush_auth(parts),
             "PING" => ControlCommand::dispatch_ping(),
