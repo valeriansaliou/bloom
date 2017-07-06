@@ -146,7 +146,7 @@ Trying ::1...
 Connected to bloom.local.
 Escape character is '^]'.
 CONNECTED <bloom v1.0.0>
-FLUSHB <namespace>
+FLUSHB [namespace]
 OK
 PING
 PONG
