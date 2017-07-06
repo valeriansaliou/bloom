@@ -6,10 +6,8 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use futures;
-use futures::future::Future;
 use memcached::Client;
-use memcached::proto::{Operation, MultiOperation, NoReplyOperation, CasOperation, ProtoType};
+use memcached::proto::ProtoType;
 
 use config::config::ConfigMemcached;
 
@@ -57,7 +55,7 @@ impl CacheStore {
         let servers = [(tcp_addr.as_str(), 1)];
 
         match Client::connect(&servers, ProtoType::Binary) {
-            Ok(mut client) => {
+            Ok(client) => {
                 // TODO: assign to struct
                 // self.client = client
 
@@ -101,5 +99,13 @@ impl CacheStore {
         // TODO: enforce config values:
         //   - ConfigMemcached.max_key_size
         //   - ConfigMemcached.max_key_expiration
+    }
+
+    pub fn purge(&self, key: &str) {
+        if self.is_connected.load(Ordering::Relaxed) == true {
+            // TODO
+
+            // futures::future::ok(true)
+        }
     }
 }

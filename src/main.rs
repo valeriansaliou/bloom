@@ -11,6 +11,7 @@ extern crate hyper;
 extern crate farmhash;
 extern crate futures;
 extern crate memcached;
+extern crate rand;
 
 mod config;
 mod header;

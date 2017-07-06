@@ -146,8 +146,8 @@ Trying ::1...
 Connected to bloom.local.
 Escape character is '^]'.
 CONNECTED <bloom v1.0.0>
-HASHREQ
-HASHRES geA4Z647Qf6Tfw39a329 d99966b66a5e2000
+HASHREQ geA4Z647Qf6Tfw39a329
+HASHRES d99966b66a5e2000
 STARTED
 FLUSHB [namespace]
 OK

@@ -51,7 +51,15 @@ impl ConfigReader {
             control: ConfigControl {
                 inet: ConfigReaderGetter::get_inet(&conf, "control", "inet",
                 "host", "port", defaults::CONTROL_HOST,
-                defaults::CONTROL_PORT)
+                defaults::CONTROL_PORT),
+
+                tcp_read_timeout: ConfigReaderGetter::get_generic(&conf,
+                    "control", "tcp_read_timeout",
+                    defaults::CONTROL_TCP_READ_TIMEOUT),
+
+                tcp_write_timeout: ConfigReaderGetter::get_generic(&conf,
+                    "control", "tcp_write_timeout",
+                    defaults::CONTROL_TCP_WRITE_TIMEOUT)
             },
 
             proxy: ConfigProxy {

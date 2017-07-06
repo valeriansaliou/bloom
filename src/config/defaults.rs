@@ -9,6 +9,8 @@ pub static SERVER_PORT: &'static str = "80";
 
 pub static CONTROL_HOST: &'static str = "::1";
 pub static CONTROL_PORT: &'static str = "811";
+pub static CONTROL_TCP_READ_TIMEOUT: &'static str = "300";
+pub static CONTROL_TCP_WRITE_TIMEOUT: &'static str = "300";
 
 pub static PROXY_SHARD: &'static str = "0";
 pub static PROXY_HOST: &'static str = "::1";

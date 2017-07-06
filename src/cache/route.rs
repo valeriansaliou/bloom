@@ -5,22 +5,31 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use hyper::{Method, StatusCode, HttpVersion};
-
 use farmhash;
 
 pub struct CacheRoute;
 
+pub const ROUTE_SIZE: usize = 26;
+
 impl CacheRoute {
+    pub fn gen_ns_from_hash(shard: u8, namespace_hash: &str) -> String {
+        format!("bloom:{}:{}", shard, namespace_hash)
+    }
+
     pub fn gen_ns(shard: u8, version: HttpVersion, method: &Method, path: &str,
                     query: Option<&str>, authorization: &str) -> String {
         let namespace_raw = format!("[{}][{}][{}][{}][{}]", version, method,
             path, query.unwrap_or(""), authorization);
-        let namespace_hash = farmhash::hash64(namespace_raw.as_bytes());
+        let namespace_hash = Self::hash(&namespace_raw);
 
         debug!("Generated namespace: {} with hash: {}", namespace_raw,
             namespace_hash);
 
-        format!("bloom:{}:{:x}", shard, namespace_hash)
+        Self::gen_ns_from_hash(shard, namespace_hash.as_str())
+    }
+
+    pub fn hash(hash: &str) -> String {
+        format!("{:x}", farmhash::hash64(hash.as_bytes()))
     }
 }
 
@@ -46,6 +55,11 @@ mod tests {
             80, HttpVersion::H2, &Method::Head, "/user", Some("u=1"), "2d"),
             "bloom:80:7011223c059f2bfb",
             "[shard=80][auth=yes] h2 HEAD /feed");
+        assert_eq!(ROUTE_SIZE, "bloom:255:7011223c059f2bfb".len(),
+            "Route size should be 26 (static)");
+        assert_eq!(ROUTE_SIZE, CacheRoute::gen_ns(255, HttpVersion::H2,
+            &Method::Head, "/user", Some("u=1"), "2d").len(),
+            "Route size should be 26 (dynamic)");
     }
 }
 

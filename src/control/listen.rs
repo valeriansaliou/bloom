@@ -4,6 +4,11 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use std::thread;
+use std::time::Duration;
+use std::net::TcpListener;
+
+use super::handle::ControlHandle;
 use config::config::ConfigControl;
 
 pub struct ControlListenBuilder;
@@ -21,6 +26,38 @@ impl ControlListenBuilder {
 
 impl ControlListen {
     pub fn run(&self) {
-        // TODO
+        let addr = self.config_control.inet;
+
+        let tcp_read_timeout = self.config_control.tcp_read_timeout;
+        let tcp_write_timeout = self.config_control.tcp_write_timeout;
+
+        thread::spawn(move || {
+            let listener = TcpListener::bind(addr).unwrap();
+
+            for stream in listener.incoming() {
+                match stream {
+                    Ok(stream) => {
+                        thread::spawn(move || {
+                            debug!("control client connecting: {}",
+                                stream.peer_addr().unwrap());
+
+                            // Configure stream
+                            assert!(stream.set_read_timeout(Some(Duration::new(
+                                tcp_read_timeout, 0))).is_ok());
+                            assert!(stream.set_write_timeout(Some(Duration::new(
+                                tcp_write_timeout, 0))).is_ok());
+
+                            // Create client
+                            ControlHandle::client(stream);
+                        });
+                    }
+                    Err(err) => {
+                        warn!("error handling stream: {}", err);
+                    }
+                }
+            }
+
+            info!("listening on tcp://{}", addr);
+        });
     }
 }
