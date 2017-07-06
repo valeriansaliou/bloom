@@ -8,6 +8,7 @@ use std::str::SplitWhitespace;
 
 #[derive(PartialEq)]
 pub enum ControlCommandResponse {
+    Nil,
     Ok,
     Pong,
     Ended,
@@ -17,6 +18,7 @@ pub enum ControlCommandResponse {
 impl ControlCommandResponse {
     pub fn to_str(&self) -> &'static str {
         match *self {
+            ControlCommandResponse::Nil => "NIL",
             ControlCommandResponse::Ok => "OK",
             ControlCommandResponse::Pong => "PONG",
             ControlCommandResponse::Ended => "ENDED quit",
@@ -44,7 +46,7 @@ impl ControlCommand {
 
             // CacheStore::purge(ns);
 
-            return Ok(ControlCommandResponse::Ok)
+            // return Ok(ControlCommandResponse::Ok)
         }
 
         Err(0)
@@ -64,7 +66,7 @@ impl ControlCommand {
 
             // CacheStore::purge(ns);
 
-            return Ok(ControlCommandResponse::Ok)
+            // return Ok(ControlCommandResponse::Ok)
         }
 
         Err(0)

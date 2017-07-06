@@ -23,28 +23,22 @@ const MAX_LINE_SIZE: usize = COMMAND_SIZE + ROUTE_SIZE + 1;
 const HASH_VALUE_SIZE: usize = 20;
 const HASH_RESULT_SIZE: usize = 24;
 
-// TODO
-// pub static CONNECTED_BANNER: &'static str = format!("CONNECTED <{} v{}>",
-//     env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")).as_str();
+lazy_static! {
+    static ref CONNECTED_BANNER: String = format!("CONNECTED <{} v{}>",
+        env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+}
 
 impl ControlHandle {
     pub fn client(mut stream: TcpStream) {
-        // write!(stream, "{}\r\n", CONNECTED_BANNER);
+        write!(stream, "{}\r\n", *CONNECTED_BANNER).expect("write failed");
 
-        // TODO: build CONNECTED_BANNER at compile-time
-        write!(&stream, "{}\r\n",
-            format!("CONNECTED <{} v{}>", env!("CARGO_PKG_NAME"),
-            env!("CARGO_PKG_VERSION")).as_str()).expect("write failed");
-
-        // TODO: test hasher (req/res test) — abort socket if hasher is invalid
+        // Ensure client hasher is compatible
         match Self::test_hasher(&stream) {
             Ok(_) => {
-                write!(&stream, "STARTED\r\n").expect("write failed");
+                write!(stream, "STARTED\r\n").expect("write failed");
 
                 // Wait for incoming messages
                 loop {
-                    // TODO: increase buffer size (for larger keys) — keys are \
-                    //   not served pre-hashed
                     let mut read = [0; MAX_LINE_SIZE];
 
                     match stream.read(&mut read) {
@@ -62,19 +56,21 @@ impl ControlHandle {
                 }
             },
             Err(err) => {
-                // TODO: macro for this and all other <write!>
-                write!(&stream, "ENDED {}\r\n", err)
+                write!(stream, "ENDED {}\r\n", err)
                     .expect("write failed");
             }
         }
     }
 
     pub fn test_hasher(mut stream: &TcpStream) -> Result<u8, &'static str> {
-        let test_value_raw = thread_rng().gen_iter::<u8>()
-                                .take(HASH_VALUE_SIZE).collect::<Vec<u8>>();
-        let test_value = format!("{:?}", test_value_raw);
+        let test_value: String = thread_rng().gen_ascii_chars()
+                                    .take(HASH_VALUE_SIZE).collect();
+        let test_hash = CacheRoute::hash(test_value.as_str());
 
-        write!(&stream, "HASHREQ {}\r\n", test_value).expect("write failed");
+        write!(stream, "HASHREQ {}\r\n", test_value).expect("write failed");
+
+        debug!("sent hasher request: {} and expecting hash: {}",
+            test_value, test_hash);
 
         loop {
             let mut read = [0; HASH_RESULT_SIZE];
@@ -89,11 +85,14 @@ impl ControlHandle {
                                         .unwrap_or("").split_whitespace();
 
                     if parts.next().unwrap_or("") == "HASHRES" {
-                        let test_hash = parts.next().unwrap_or("");
+                        let res_hash = parts.next().unwrap_or("");
+
+                        debug!("got hasher response: {} and expecting: {}",
+                            res_hash, test_hash);
 
                         // Validate hash
-                        if test_hash.is_empty() == false &&
-                            test_hash == CacheRoute::hash(test_value.as_str()) {
+                        if res_hash.is_empty() == false &&
+                            res_hash == test_hash {
                             return Ok(0)
                         }
 
@@ -109,7 +108,7 @@ impl ControlHandle {
         }
     }
 
-    pub fn on_message(stream: &TcpStream, message_slice: &[u8]) -> bool {
+    pub fn on_message(mut stream: &TcpStream, message_slice: &[u8]) -> bool {
         let message = str::from_utf8(message_slice).unwrap_or("");
 
         debug!("got control message: {}", message);
@@ -120,7 +119,8 @@ impl ControlHandle {
             Ok(resp) => match resp {
                 ControlCommandResponse::Ok
                 | ControlCommandResponse::Pong
-                | ControlCommandResponse::Ended => {
+                | ControlCommandResponse::Ended
+                | ControlCommandResponse::Nil => {
                     if resp == ControlCommandResponse::Ended {
                         do_shutdown = true
                     }
@@ -128,10 +128,10 @@ impl ControlHandle {
                 },
                 _ => ControlCommandResponse::Err.to_str()
             },
-            Err(_) => ControlCommandResponse::Err.to_str()
+            _ => ControlCommandResponse::Err.to_str()
         };
 
-        write!(&stream, "{}\r\n", response).expect("write failed");
+        write!(stream, "{}\r\n", response).expect("write failed");
 
         return do_shutdown
     }
@@ -145,7 +145,7 @@ impl ControlHandle {
             "FLUSHA" => ControlCommand::dispatch_flush_auth(parts),
             "PING" => ControlCommand::dispatch_ping(),
             "QUIT" => ControlCommand::dispatch_quit(),
-            _ => Err(0)
+            _ => Ok(ControlCommandResponse::Nil)
         }
     }
 }
