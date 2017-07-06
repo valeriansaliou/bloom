@@ -89,9 +89,10 @@ mod tests {
 
     #[test]
     fn it_matches_command_response_string() {
+        assert_eq!(ControlCommandResponse::Nil.to_str(), "NIL");
         assert_eq!(ControlCommandResponse::Ok.to_str(), "OK");
         assert_eq!(ControlCommandResponse::Pong.to_str(), "PONG");
-        assert_eq!(ControlCommandResponse::Ended.to_str(), "ENDED");
+        assert_eq!(ControlCommandResponse::Ended.to_str(), "ENDED quit");
         assert_eq!(ControlCommandResponse::Err.to_str(), "ERR");
     }
 }

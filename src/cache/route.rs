@@ -49,7 +49,7 @@ mod tests {
             "[shard=0][auth=no] HTTP/1.1 POST /login");
         assert_eq!(CacheRoute::gen_ns(
             7, HttpVersion::Http11, &Method::Options, "/feed", Some(""), "8ab"),
-            "bloom:7:2b5dc16d448eecb9",
+            "bloom:7:8b613c3c1c66f39e",
             "[shard=7][auth=yes] HTTP/1.1 OPTIONS /feed");
         assert_eq!(CacheRoute::gen_ns(
             80, HttpVersion::H2, &Method::Head, "/user", Some("u=1"), "2d"),
