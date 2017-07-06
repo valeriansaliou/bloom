@@ -131,6 +131,30 @@ This way, your API worker (or any other worker in your infrastructure) can eithe
 * **Expire cache for a given bucket.** Note that as a given bucket may contain variations of cache for different HTTP `Authorization` headers, bucket cache for all authentication tokens is purged at the same time when you purge cache for a bucket.
 * **Expire cache for a given HTTP `Authorization` header.** Useful if an user logs-out and revokes their authentication token.
 
+**➡️  Available commands:**
+
+* `FLUSHB <namespace>`: flush cache for given bucket namespace
+* `FLUSHA <authorization>`: flush cache for given authorization
+* `PING`: ping server
+* `QUIT`: stop connection
+
+**⬇️  Control flow example:**
+
+```bash
+telnet bloom.local 811
+Trying ::1...
+Connected to bloom.local.
+Escape character is '^]'.
+CONNECTED <bloom v1.0.0>
+FLUSHB <namespace>
+OK
+PING
+PONG
+QUIT
+BYE
+Connection closed by foreign host.
+```
+
 **📦 Bloom Control Libraries:**
 
 * **NodeJS**: **[node-bloom-control](https://www.npmjs.com/package/bloom-control)**
