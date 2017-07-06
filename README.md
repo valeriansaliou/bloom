@@ -146,10 +146,12 @@ Trying ::1...
 Connected to bloom.local.
 Escape character is '^]'.
 CONNECTED <bloom v1.0.0>
-HASHREQ geA4Z647Qf6Tfw39a329
-HASHRES d99966b66a5e2000
+HASHREQ PdiZOIFdRH8QOzTSSOr3
+HASHRES e7caa44d98f2008
 STARTED
-FLUSHB [namespace]
+FLUSHB cf8dcd23bd2136f0
+OK
+FLUSHA 84ff74a98689fdbf
 OK
 PING
 PONG
