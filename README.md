@@ -146,6 +146,9 @@ Trying ::1...
 Connected to bloom.local.
 Escape character is '^]'.
 CONNECTED <bloom v1.0.0>
+HASHREQ
+HASHRES geA4Z647Qf6Tfw39a329 d99966b66a5e2000
+STARTED
 FLUSHB [namespace]
 OK
 PING
@@ -154,6 +157,8 @@ QUIT
 BYE
 Connection closed by foreign host.
 ```
+
+**Notice: before any command can be issued, Bloom requires the client to validate its hasher function against the Bloom internal hasher (done with the `HASHREQ` and `HASHRES` exchange). Farmhash is used to hash keys, which computed results may vary between architectures. This way, any weird Bloom Control issues due to caching are prevented in advance.**
 
 **📦 Bloom Control Libraries:**
 
