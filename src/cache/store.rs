@@ -18,7 +18,7 @@ pub struct CacheStoreBuilder;
 pub struct CacheStore {
     config_memcached: ConfigMemcached,
     is_connected: AtomicBool
-    // client: Client  <-- TODO: impl. clone for Client?
+    // client: Client
 }
 
 type CacheResult = FutureResult<Option<()>, &'static str>;
@@ -71,7 +71,8 @@ impl CacheStore {
 
     pub fn get(&self, key: &str) -> CacheResult {
         if self.is_connected.load(Ordering::Relaxed) == true {
-            // TODO
+            // TODO: handle success or error (if empty or netwrk error)
+            // let (value, _) = self.client.get(key);
 
             return future::ok(None)
         }
@@ -81,7 +82,9 @@ impl CacheStore {
 
     pub fn set(&self, key: &str, value: &str, ttl: u32) -> CacheResult {
         if self.is_connected.load(Ordering::Relaxed) == true {
-            // TODO
+            // TODO: flags + expiration
+            // TODO: handle success or error
+            // self.client.set_noreply(key, value, 0x00000001, 20).unwrap();
 
             return future::ok(None)
         }
@@ -100,7 +103,8 @@ impl CacheStore {
 
     pub fn purge(&self, key: &str) -> CacheResult {
         if self.is_connected.load(Ordering::Relaxed) == true {
-            // TODO
+            // TODO: handle success or error (if no such key or netwrk error)
+            // self.client.delete(key);
 
             return future::ok(None)
         }
