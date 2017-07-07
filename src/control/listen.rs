@@ -4,6 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use std::net::TcpListener;

@@ -7,6 +7,7 @@
 use std::str::SplitWhitespace;
 
 use super::handle::ControlShard;
+use cache::route::CacheRoute;
 
 #[derive(PartialEq)]
 pub enum ControlCommandResponse {
@@ -36,17 +37,17 @@ pub struct ControlCommand;
 pub const COMMAND_SIZE: usize = 6;
 
 impl ControlCommand {
-    pub fn dispatch_flush_bucket(mut parts: SplitWhitespace) ->
+    pub fn dispatch_flush_bucket(shard: &ControlShard,
+        mut parts: SplitWhitespace) ->
         Result<ControlCommandResponse, Option<()>> {
         let namespace = parts.next().unwrap_or("");
 
         debug!("dispatch bucket flush for namespace: {}", namespace);
 
         if namespace.is_empty() == false {
-            // TODO
+            let ns = CacheRoute::gen_ns_from_hash(*shard, namespace);
 
-            // let ns = CacheRoute::gen_ns(shard, req.version(), req.method(),
-            //   req.path(), req.query(), auth);
+            // TODO
 
             // CacheStore::purge(ns);
 
@@ -56,17 +57,17 @@ impl ControlCommand {
         Err(None)
     }
 
-    pub fn dispatch_flush_auth(mut parts: SplitWhitespace) ->
+    pub fn dispatch_flush_auth(shard: &ControlShard,
+        mut parts: SplitWhitespace) ->
         Result<ControlCommandResponse, Option<()>> {
         let auth = parts.next().unwrap_or("");
 
         debug!("dispatch auth flush for auth: {}", auth);
 
         if auth.is_empty() == false {
-            // TODO
+            let ns = CacheRoute::gen_ns_from_hash(*shard, auth);
 
-            // let ns = CacheRoute::gen_ns(shard, req.version(), req.method(),
-            //   req.path(), req.query(), auth);
+            // TODO
 
             // CacheStore::purge(ns);
 

@@ -161,8 +161,8 @@ impl ControlHandle {
 
         match command {
             "" => Ok(ControlCommandResponse::Void),
-            "FLUSHB" => ControlCommand::dispatch_flush_bucket(parts),
-            "FLUSHA" => ControlCommand::dispatch_flush_auth(parts),
+            "FLUSHB" => ControlCommand::dispatch_flush_bucket(shard, parts),
+            "FLUSHA" => ControlCommand::dispatch_flush_auth(shard, parts),
             "PING" => ControlCommand::dispatch_ping(),
             "SHARD" => ControlCommand::dispatch_shard(shard, parts),
             "QUIT" => ControlCommand::dispatch_quit(),
