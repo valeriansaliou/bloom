@@ -9,7 +9,7 @@ use farmhash;
 
 pub struct CacheRoute;
 
-pub const ROUTE_SIZE: usize = 26;
+pub const ROUTE_SIZE: usize = 16;
 
 impl CacheRoute {
     pub fn gen_ns_from_hash(shard: u8, namespace_hash: &str) -> String {

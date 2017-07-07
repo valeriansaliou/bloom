@@ -47,8 +47,9 @@ impl ControlCommand {
         if namespace.is_empty() == false {
             let ns = CacheRoute::gen_ns_from_hash(*shard, namespace);
 
-            // TODO
+            debug!("attempting to flush bucket for route: {}", ns);
 
+            // TODO
             // CacheStore::purge(ns);
 
             return Ok(ControlCommandResponse::Ok)
@@ -67,8 +68,9 @@ impl ControlCommand {
         if auth.is_empty() == false {
             let ns = CacheRoute::gen_ns_from_hash(*shard, auth);
 
-            // TODO
+            debug!("attempting to flush auth for route: {}", ns);
 
+            // TODO
             // CacheStore::purge(ns);
 
             return Ok(ControlCommandResponse::Ok)
