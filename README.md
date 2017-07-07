@@ -135,6 +135,7 @@ This way, your API worker (or any other worker in your infrastructure) can eithe
 
 * `FLUSHB <namespace>`: flush cache for given bucket namespace
 * `FLUSHA <authorization>`: flush cache for given authorization
+* `SHARD`: select shard
 * `PING`: ping server
 * `QUIT`: stop connection
 
@@ -149,6 +150,8 @@ CONNECTED <bloom v1.0.0>
 HASHREQ PdiZOIFdRH8QOzTSSOr3
 HASHRES e7caa44d98f2008
 STARTED
+SHARD 1
+OK
 FLUSHB cf8dcd23bd2136f0
 OK
 FLUSHA 84ff74a98689fdbf
