@@ -6,6 +6,8 @@
 
 use std::str::SplitWhitespace;
 
+use super::handle::ControlShard;
+
 #[derive(PartialEq)]
 pub enum ControlCommandResponse {
     Void,
@@ -76,6 +78,18 @@ impl ControlCommand {
 
     pub fn dispatch_ping() -> Result<ControlCommandResponse, Option<()>> {
         Ok(ControlCommandResponse::Pong)
+    }
+
+    pub fn dispatch_shard(shard: &mut ControlShard, mut parts: SplitWhitespace)
+        -> Result<ControlCommandResponse, Option<()>> {
+        match parts.next().unwrap_or("").parse::<u8>() {
+            Ok(shard_to) => {
+                *shard = shard_to;
+
+                Ok(ControlCommandResponse::Ok)
+            },
+            _ => Err(None)
+        }
     }
 
     pub fn dispatch_quit() -> Result<ControlCommandResponse, Option<()>> {
