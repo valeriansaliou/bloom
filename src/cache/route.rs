@@ -55,11 +55,10 @@ mod tests {
             80, HttpVersion::H2, &Method::Head, "/user", Some("u=1"), "2d"),
             "bloom:80:7011223c059f2bfb",
             "[shard=80][auth=yes] h2 HEAD /feed");
-        assert_eq!(ROUTE_SIZE, "bloom:255:7011223c059f2bfb".len(),
-            "Route size should be 26 (static)");
-        assert_eq!(ROUTE_SIZE, CacheRoute::gen_ns(255, HttpVersion::H2,
-            &Method::Head, "/user", Some("u=1"), "2d").len(),
-            "Route size should be 26 (dynamic)");
+        assert_eq!(ROUTE_SIZE, "7011223c059f2bfb".len(),
+            "Route size should be 16 (static)");
+        assert_eq!(ROUTE_SIZE, CacheRoute::hash("fiJxtAESapUXehXSUv90").len(),
+            "Route size should be 16 (dynamic)");
     }
 }
 
