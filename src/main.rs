@@ -11,7 +11,7 @@ extern crate ini;
 extern crate hyper;
 extern crate farmhash;
 extern crate futures;
-extern crate memcached;
+extern crate bmemcached;
 extern crate rand;
 
 mod config;
@@ -52,7 +52,6 @@ fn main() {
 
     // Bind to cache store
     let cache_store = Arc::new(CacheStoreBuilder::new(conf.memcached));
-    cache_store.as_ref().bind();
 
     // Create serve manager
     let proxy_serve = Arc::new(ProxyServeBuilder::new(conf.proxy));

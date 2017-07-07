@@ -4,12 +4,12 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use std::cmp;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use futures::future;
-use futures::future::FutureResult;
-use memcached::Client;
-use memcached::proto::ProtoType;
+use bmemcached::MemcachedClient;
+use bmemcached::errors::BMemcachedError;
 
 use config::config::ConfigMemcached;
 
@@ -17,27 +17,23 @@ pub struct CacheStoreBuilder;
 
 pub struct CacheStore {
     config_memcached: ConfigMemcached,
-    is_connected: AtomicBool
-    // client: Client
+    client: Option<Arc<MemcachedClient>>
 }
 
-type CacheResult = FutureResult<Option<()>, &'static str>;
+type CacheResult = Result<Option<String>, &'static str>;
 
 impl CacheStoreBuilder {
     pub fn new(config_memcached: ConfigMemcached) -> CacheStore {
         CacheStore {
             config_memcached: config_memcached,
-            is_connected: AtomicBool::new(false)
+            client: None
         }
     }
 }
 
 impl CacheStore {
-    pub fn bind(&self) {
-        // TODO: bind to ConfigMemcached.inet
-
+    pub fn bind(&mut self) {
         // TODO: enforce config values:
-        //   - ConfigMemcached.pool_size
         //   - ConfigMemcached.reconnect
         //   - ConfigMemcached.timeout
 
@@ -52,63 +48,68 @@ impl CacheStore {
 
         info!("Binding to store backend at {}", self.config_memcached.inet);
 
-        let tcp_addr = format!("tcp://{}:{}", self.config_memcached.inet.ip(),
-            self.config_memcached.inet.port());
-        let servers = [(tcp_addr.as_str(), 1)];
+        let tcp_addr = format!("{}:{}", self.config_memcached.inet.ip(),
+                            self.config_memcached.inet.port());
 
-        match Client::connect(&servers, ProtoType::Binary) {
-            Ok(client) => {
-                // TODO: assign to struct
-                // self.client = client
-
-                self.is_connected.store(true, Ordering::Relaxed);
+        match MemcachedClient::new(
+            vec![tcp_addr], self.config_memcached.pool_size) {
+            Ok(client_raw) => {
+                self.client = Some(Arc::new(client_raw));
             }
-            Err(err) => panic!("could not connect to memcached: {}", err)
+            Err(err) => panic!("could not connect to memcached")
         }
 
         info!("Bound to store backend");
     }
 
     pub fn get(&self, key: &str) -> CacheResult {
-        if self.is_connected.load(Ordering::Relaxed) == true {
-            // TODO: handle success or error (if empty or netwrk error)
-            // let (value, _) = self.client.get(key);
-
-            return future::ok(None)
+        match self.client {
+            Some(ref client) => {
+                match client.get(key) {
+                    Ok(String) => Ok(Some(String)),
+                    _ => Err("failed")
+                }
+            }
+            _ => {
+                Err("disconnected")
+            }
         }
-
-        future::err("disconnected")
     }
 
     pub fn set(&self, key: &str, value: &str, ttl: u32) -> CacheResult {
-        if self.is_connected.load(Ordering::Relaxed) == true {
-            // TODO: flags + expiration
-            // TODO: handle success or error
-            // self.client.set_noreply(key, value, 0x00000001, 20).unwrap();
+        match self.client {
+            Some(ref client) => {
+                // Cap TTL to 'max_key_expiration'
+                let ttl_cap = cmp::min(ttl,
+                                self.config_memcached.max_key_expiration);
 
-            return future::ok(None)
+                // Ensure value is not larger than 'max_key_size'
+                if value.len() > self.config_memcached.max_key_size {
+                    return Err("too large")
+                }
+
+                match client.set(key, value, ttl_cap) {
+                    Ok(_) => Ok(None),
+                    _ => Err("failed")
+                }
+            }
+            _ => {
+                Err("disconnected")
+            }
         }
-
-        future::err("disconnected")
-
-        // TODO: set and return a future (needed? maybe we dont even need to \
-        //   ack as this is best effort, maybe just log write errors) \
-        //   (w/ 'true' value or 'false if fail)
-        // TODO: value maybe would be better be a stream to avoid large buffers
-
-        // TODO: enforce config values:
-        //   - ConfigMemcached.max_key_size
-        //   - ConfigMemcached.max_key_expiration
     }
 
     pub fn purge(&self, key: &str) -> CacheResult {
-        if self.is_connected.load(Ordering::Relaxed) == true {
-            // TODO: handle success or error (if no such key or netwrk error)
-            // self.client.delete(key);
-
-            return future::ok(None)
+        match self.client {
+            Some(ref client) => {
+                match client.delete(key) {
+                    Ok(_) => Ok(None),
+                    _ => Err("failed")
+                }
+            }
+            _ => {
+                Err("disconnected")
+            }
         }
-
-        future::err("disconnected")
     }
 }

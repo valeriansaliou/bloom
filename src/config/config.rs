@@ -33,7 +33,7 @@ pub struct ConfigProxy {
 
 pub struct ConfigMemcached {
     pub inet: SocketAddr,
-    pub max_key_size: u32,
+    pub max_key_size: usize,
     pub max_key_expiration: u32,
     pub pool_size: u8,
     pub reconnect: u16,

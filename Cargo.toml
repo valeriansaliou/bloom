@@ -22,7 +22,7 @@ clap = "2.25"
 lazy_static = "0.2"
 futures = "0.1"
 hyper = "0.11"
-memcached-rs = "0.1"
+bmemcached = "0.2"
 farmhash = "1.1"
 rand = "0.3"
 
