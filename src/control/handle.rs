@@ -19,6 +19,12 @@ use cache::route::ROUTE_SIZE;
 
 pub struct ControlHandle;
 
+#[derive(PartialEq)]
+enum ControlHandleMessageResult {
+    Continue,
+    Close
+}
+
 const MAX_LINE_SIZE: usize = COMMAND_SIZE + ROUTE_SIZE + 1;
 const HASH_VALUE_SIZE: usize = 20;
 const HASH_RESULT_SIZE: usize = 24;
@@ -44,7 +50,8 @@ impl ControlHandle {
                     match stream.read(&mut read) {
                         Ok(n) => {
                             if n == 0 ||
-                                Self::on_message(&stream, &read[0..n]) == true {
+                                Self::on_message(&stream, &read[0..n]) ==
+                                ControlHandleMessageResult::Close {
                                 // Should close?
                                 break;
                             }
@@ -62,8 +69,8 @@ impl ControlHandle {
         }
     }
 
-    pub fn test_hasher(mut stream: &TcpStream) ->
-        Result<Option<bool>, &'static str> {
+    fn test_hasher(mut stream: &TcpStream) ->
+        Result<Option<()>, &'static str> {
         let test_value: String = thread_rng().gen_ascii_chars()
                                     .take(HASH_VALUE_SIZE).collect();
         let test_hash = CacheRoute::hash(test_value.as_str());
@@ -109,12 +116,13 @@ impl ControlHandle {
         }
     }
 
-    pub fn on_message(mut stream: &TcpStream, message_slice: &[u8]) -> bool {
+    fn on_message(mut stream: &TcpStream, message_slice: &[u8]) ->
+        ControlHandleMessageResult {
         let message = str::from_utf8(message_slice).unwrap_or("");
 
         debug!("got control message: {}", message);
 
-        let mut do_shutdown = false;
+        let mut result = ControlHandleMessageResult::Continue;
 
         let response = match Self::handle_message(&message) {
             Ok(resp) => match resp {
@@ -124,7 +132,7 @@ impl ControlHandle {
                 | ControlCommandResponse::Nil
                 | ControlCommandResponse::Void => {
                     if resp == ControlCommandResponse::Ended {
-                        do_shutdown = true
+                        result = ControlHandleMessageResult::Close;
                     }
                     resp.to_str()
                 },
@@ -137,11 +145,11 @@ impl ControlHandle {
             write!(stream, "{}\r\n", response).expect("write failed");
         }
 
-        return do_shutdown
+        return result
     }
 
-    pub fn handle_message(message: &str) ->
-        Result<ControlCommandResponse, Option<bool>> {
+    fn handle_message(message: &str) ->
+        Result<ControlCommandResponse, Option<()>> {
         let mut parts = message.split_whitespace();
         let command = parts.next().unwrap_or("");
 

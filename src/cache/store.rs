@@ -6,6 +6,8 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use futures::future;
+use futures::future::FutureResult;
 use memcached::Client;
 use memcached::proto::ProtoType;
 
@@ -19,7 +21,7 @@ pub struct CacheStore {
     // client: Client  <-- TODO: impl. clone for Client?
 }
 
-// type CacheResult = impl Future<Item = bool>;
+type CacheResult = FutureResult<Option<()>, &'static str>;
 
 impl CacheStoreBuilder {
     pub fn new(config_memcached: ConfigMemcached) -> CacheStore {
@@ -67,29 +69,24 @@ impl CacheStore {
         info!("Bound to store backend");
     }
 
-    pub fn get(&self, key: &str) {
+    pub fn get(&self, key: &str) -> CacheResult {
         if self.is_connected.load(Ordering::Relaxed) == true {
             // TODO
 
-            // futures::future::ok(true)
+            return future::ok(None)
         }
 
-        // futures::future::err(false)
-
-        // TODO: return future immediately if disconnected (w/ 'false' value)
-        // TODO: get and return a future (w/ 'true' value or 'false if fail)
+        future::err("disconnected")
     }
 
-    pub fn set(&self, key: &str, value: &str, ttl: u32) {
+    pub fn set(&self, key: &str, value: &str, ttl: u32) -> CacheResult {
         if self.is_connected.load(Ordering::Relaxed) == true {
             // TODO
 
-            // futures::future::ok(true)
+            return future::ok(None)
         }
 
-        // futures::future::err(false)
-
-        // TODO: return future immediately if disconnected (w/ 'false' value)
+        future::err("disconnected")
 
         // TODO: set and return a future (needed? maybe we dont even need to \
         //   ack as this is best effort, maybe just log write errors) \
@@ -101,11 +98,13 @@ impl CacheStore {
         //   - ConfigMemcached.max_key_expiration
     }
 
-    pub fn purge(&self, key: &str) {
+    pub fn purge(&self, key: &str) -> CacheResult {
         if self.is_connected.load(Ordering::Relaxed) == true {
             // TODO
 
-            // futures::future::ok(true)
+            return future::ok(None)
         }
+
+        future::err("disconnected")
     }
 }

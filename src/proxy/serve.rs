@@ -5,6 +5,7 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use futures;
+use futures::future;
 use futures::future::FutureResult;
 use hyper;
 use hyper::{Method, StatusCode};
@@ -56,7 +57,7 @@ impl ProxyServe {
             self.reject(&req, &mut res, StatusCode::NotExtended)
         }
 
-        futures::future::ok(res)
+        future::ok(res)
     }
 
     fn accept(&self, req: &Request, res: &mut Response) {

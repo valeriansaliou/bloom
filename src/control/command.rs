@@ -35,7 +35,7 @@ pub const COMMAND_SIZE: usize = 6;
 
 impl ControlCommand {
     pub fn dispatch_flush_bucket(mut parts: SplitWhitespace) ->
-        Result<ControlCommandResponse, Option<bool>> {
+        Result<ControlCommandResponse, Option<()>> {
         let namespace = parts.next().unwrap_or("");
 
         debug!("dispatch bucket flush for namespace: {}", namespace);
@@ -48,14 +48,14 @@ impl ControlCommand {
 
             // CacheStore::purge(ns);
 
-            // return Ok(ControlCommandResponse::Ok)
+            return Ok(ControlCommandResponse::Ok)
         }
 
         Err(None)
     }
 
     pub fn dispatch_flush_auth(mut parts: SplitWhitespace) ->
-        Result<ControlCommandResponse, Option<bool>> {
+        Result<ControlCommandResponse, Option<()>> {
         let auth = parts.next().unwrap_or("");
 
         debug!("dispatch auth flush for auth: {}", auth);
@@ -68,17 +68,17 @@ impl ControlCommand {
 
             // CacheStore::purge(ns);
 
-            // return Ok(ControlCommandResponse::Ok)
+            return Ok(ControlCommandResponse::Ok)
         }
 
         Err(None)
     }
 
-    pub fn dispatch_ping() -> Result<ControlCommandResponse, Option<bool>> {
+    pub fn dispatch_ping() -> Result<ControlCommandResponse, Option<()>> {
         Ok(ControlCommandResponse::Pong)
     }
 
-    pub fn dispatch_quit() -> Result<ControlCommandResponse, Option<bool>> {
+    pub fn dispatch_quit() -> Result<ControlCommandResponse, Option<()>> {
         Ok(ControlCommandResponse::Ended)
     }
 }
