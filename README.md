@@ -135,7 +135,7 @@ This way, your API worker (or any other worker in your infrastructure) can eithe
 
 * `FLUSHB <namespace>`: flush cache for given bucket namespace
 * `FLUSHA <authorization>`: flush cache for given authorization
-* `SHARD`: select shard
+* `SHARD <shard>`: select shard to use for connection
 * `PING`: ping server
 * `QUIT`: stop connection
 
