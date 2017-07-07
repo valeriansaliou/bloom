@@ -28,8 +28,7 @@ impl ControlListen {
     pub fn run(&self) {
         let addr = self.config_control.inet;
 
-        let tcp_read_timeout = self.config_control.tcp_read_timeout;
-        let tcp_write_timeout = self.config_control.tcp_write_timeout;
+        let tcp_timeout = self.config_control.tcp_timeout;
 
         thread::spawn(move || {
             let listener = TcpListener::bind(addr).unwrap();
@@ -43,9 +42,9 @@ impl ControlListen {
 
                             // Configure stream
                             assert!(stream.set_read_timeout(Some(Duration::new(
-                                tcp_read_timeout, 0))).is_ok());
+                                tcp_timeout, 0))).is_ok());
                             assert!(stream.set_write_timeout(Some(Duration::new(
-                                tcp_write_timeout, 0))).is_ok());
+                                tcp_timeout, 0))).is_ok());
 
                             // Create client
                             ControlHandle::client(stream);

@@ -19,8 +19,7 @@ pub struct ConfigServer {
 
 pub struct ConfigControl {
     pub inet: SocketAddr,
-    pub tcp_read_timeout: u64,
-    pub tcp_write_timeout: u64
+    pub tcp_timeout: u64
 }
 
 pub struct ConfigProxy {
