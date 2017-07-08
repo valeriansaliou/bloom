@@ -126,7 +126,7 @@ impl ControlHandle {
         message_slice: &[u8]) -> ControlHandleMessageResult {
         let message = str::from_utf8(message_slice).unwrap_or("");
 
-        debug!("got control message: {} on shard: {}", message, shard);
+        debug!("got control message on shard {}: {}", shard, message);
 
         let mut result = ControlHandleMessageResult::Continue;
 
