@@ -78,8 +78,8 @@ impl ProxyServe {
     fn tunnel(&self, req: &Request, res: &mut Response) {
         let (auth, shard) = ProxyHeader::parse_from_request(req.headers());
 
-        let ns = CacheRoute::gen_ns(shard, req.version(), req.method(),
-            req.path(), req.query(), auth);
+        let ns = CacheRoute::gen_ns(shard, auth, req.version(), req.method(),
+            req.path(), req.query());
 
         // TODO: support for 304 Not Modified here (return empty content \
         //   to ongoing specific client, but still read/populate cache normally)

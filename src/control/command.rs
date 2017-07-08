@@ -40,14 +40,15 @@ impl ControlCommand {
     pub fn dispatch_flush_bucket(shard: &ControlShard,
         mut parts: SplitWhitespace) ->
         Result<ControlCommandResponse, Option<()>> {
-        let namespace = parts.next().unwrap_or("");
+        let bucket = parts.next().unwrap_or("");
 
-        debug!("dispatch bucket flush for namespace: {}", namespace);
+        debug!("dispatch bucket flush for bucket: {}", bucket);
 
-        if namespace.is_empty() == false {
-            let ns = CacheRoute::gen_ns_from_hash(*shard, namespace);
+        if bucket.is_empty() == false {
+            // TODO: auth param?
+            let ns = CacheRoute::gen_ns_from_hash(*shard, "", bucket);
 
-            debug!("attempting to flush bucket for route: {}", ns);
+            debug!("attempting to flush bucket for: {}", ns);
 
             // TODO
             // CacheStore::purge(ns);
@@ -66,9 +67,10 @@ impl ControlCommand {
         debug!("dispatch auth flush for auth: {}", auth);
 
         if auth.is_empty() == false {
-            let ns = CacheRoute::gen_ns_from_hash(*shard, auth);
+            // TODO: route param?
+            let ns = CacheRoute::gen_ns_from_hash(*shard, auth, "");
 
-            debug!("attempting to flush auth for route: {}", ns);
+            debug!("attempting to flush auth for: {}", ns);
 
             // TODO
             // CacheStore::purge(ns);

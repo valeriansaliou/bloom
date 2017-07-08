@@ -12,25 +12,24 @@ pub struct CacheRoute;
 pub const ROUTE_HASH_SIZE: usize = 8;
 
 impl CacheRoute {
-    // TODO: adjust hash system to concat. authorization hash + route hash
-    // this makes hash collisions impossible and thus cache leak across != \
-    //   authorization values not possible.
-    // ie new key format: bloom:{shard}:{auth_h<HASH(auth or nil)>}:{ns_h}
-
-    pub fn gen_ns_from_hash(shard: u8, namespace_hash: &str) -> String {
-        format!("bloom:{}:{}", shard, namespace_hash)
+    pub fn gen_ns_from_hash(shard: u8, auth_hash: &str, bucket_hash: &str) ->
+        String {
+        format!("bloom:{}:{}:{}", shard, auth_hash, bucket_hash)
     }
 
-    pub fn gen_ns(shard: u8, version: HttpVersion, method: &Method, path: &str,
-                    query: Option<&str>, authorization: &str) -> String {
-        let namespace_raw = format!("[{}][{}][{}][{}][{}]", version, method,
-            path, query.unwrap_or(""), authorization);
-        let namespace_hash = Self::hash(&namespace_raw);
+    pub fn gen_ns(shard: u8, authorization: &str, version: HttpVersion,
+                    method: &Method, path: &str, query: Option<&str>) ->
+        String {
+        let authorization_raw = format!("[{}]", authorization);
+        let bucket_raw = format!("[{}][{}][{}][{}]", version, method,
+            path, query.unwrap_or(""));
 
-        debug!("Generated namespace: {} with hash: {}", namespace_raw,
-            namespace_hash);
+        let auth_hash = Self::hash(&authorization_raw);
+        let bucket_hash = Self::hash(&bucket_raw);
 
-        Self::gen_ns_from_hash(shard, namespace_hash.as_str())
+        debug!("Generated bucket: {} with hash: {}", bucket_raw, bucket_hash);
+
+        Self::gen_ns_from_hash(shard, auth_hash.as_str(), bucket_hash.as_str())
     }
 
     pub fn hash(hash: &str) -> String {
@@ -45,17 +44,19 @@ mod tests {
     #[test]
     fn it_generates_valid_ns() {
         assert_eq!(CacheRoute::gen_ns(
-            0, HttpVersion::Http11, &Method::Get, "/", Some(""), ""),
-            "bloom:0:d180fb05", "[shard=0][auth=no] HTTP/1.1 GET /");
+            0, "", HttpVersion::Http11, &Method::Get, "/", Some("")),
+            "bloom:0:90d52bc6:f773d6f1", "[shard=0][auth=no] HTTP/1.1 GET /");
         assert_eq!(CacheRoute::gen_ns(
-            0, HttpVersion::Http11, &Method::Post, "/login", Some(""), ""),
-            "bloom:0:27859e5b", "[shard=0][auth=no] HTTP/1.1 POST /login");
+            0, "", HttpVersion::Http11, &Method::Post, "/login", Some("")),
+            "bloom:0:90d52bc6:afddff64",
+            "[shard=0][auth=no] HTTP/1.1 POST /login");
         assert_eq!(CacheRoute::gen_ns(
-            7, HttpVersion::Http11, &Method::Options, "/feed", Some(""), "8ab"),
-            "bloom:7:263a7d5", "[shard=7][auth=yes] HTTP/1.1 OPTIONS /feed");
+            7, "8ab", HttpVersion::Http11, &Method::Options, "/feed", Some("")),
+            "bloom:7:d42601a6:3352b2d5",
+            "[shard=7][auth=yes] HTTP/1.1 OPTIONS /feed");
         assert_eq!(CacheRoute::gen_ns(
-            80, HttpVersion::H2, &Method::Head, "/user", Some("u=1"), "2d"),
-            "bloom:80:660a39b2", "[shard=80][auth=yes] h2 HEAD /feed");
+            80, "2d", HttpVersion::H2, &Method::Head, "/user", Some("u=1")),
+            "bloom:80:471d2c40:e99cc313", "[shard=80][auth=yes] h2 HEAD /feed");
         assert_eq!(ROUTE_HASH_SIZE, CacheRoute::hash("7gCq81kzO5").len(),
             "Route size should be 8 (dynamic)");
     }
