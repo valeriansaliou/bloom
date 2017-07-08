@@ -15,7 +15,7 @@ use super::command::ControlCommandResponse;
 use super::command::ControlCommand;
 use super::command::COMMAND_SIZE;
 use cache::route::CacheRoute;
-use cache::route::ROUTE_SIZE;
+use cache::route::ROUTE_HASH_SIZE;
 
 pub struct ControlHandle;
 
@@ -25,9 +25,9 @@ enum ControlHandleMessageResult {
     Close
 }
 
-const MAX_LINE_SIZE: usize = COMMAND_SIZE + ROUTE_SIZE + 1;
-const HASH_VALUE_SIZE: usize = 20;
-const HASH_RESULT_SIZE: usize = 24;
+const MAX_LINE_SIZE: usize = COMMAND_SIZE + ROUTE_HASH_SIZE + 1;
+const HASH_VALUE_SIZE: usize = 10;
+const HASH_RESULT_SIZE: usize = 7 + ROUTE_HASH_SIZE + 1;
 const SHARD_DEFAULT: ControlShard = 0;
 
 pub type ControlShard = u8;

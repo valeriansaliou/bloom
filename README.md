@@ -163,7 +163,7 @@ ENDED quit
 Connection closed by foreign host.
 ```
 
-**Notice: before any command can be issued, Bloom requires the client to validate its hasher function against the Bloom internal hasher (done with the `HASHREQ` and `HASHRES` exchange). FarmHash is used to hash keys, using the FarmHash.fingerprint64(), which computed results may vary between architectures. This way, most weird Bloom Control issues are prevented in advance.**
+**Notice: before any command can be issued, Bloom requires the client to validate its hasher function against the Bloom internal hasher (done with the `HASHREQ` and `HASHRES` exchange). FarmHash is used to hash keys, using the FarmHash.fingerprint32(), which computed results may vary between architectures. This way, most weird Bloom Control issues are prevented in advance.**
 
 **📦 Bloom Control Libraries:**
 

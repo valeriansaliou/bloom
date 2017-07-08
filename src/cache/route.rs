@@ -9,9 +9,14 @@ use farmhash;
 
 pub struct CacheRoute;
 
-pub const ROUTE_SIZE: usize = 16;
+pub const ROUTE_HASH_SIZE: usize = 8;
 
 impl CacheRoute {
+    // TODO: adjust hash system to concat. authorization hash + route hash
+    // this makes hash collisions impossible and thus cache leak across != \
+    //   authorization values not possible.
+    // ie new key format: bloom:{shard}:{auth_h<HASH(auth or nil)>}:{ns_h}
+
     pub fn gen_ns_from_hash(shard: u8, namespace_hash: &str) -> String {
         format!("bloom:{}:{}", shard, namespace_hash)
     }
@@ -29,7 +34,7 @@ impl CacheRoute {
     }
 
     pub fn hash(hash: &str) -> String {
-        format!("{:x}", farmhash::fingerprint64(hash.as_bytes()))
+        format!("{:x}", farmhash::fingerprint32(hash.as_bytes()))
     }
 }
 
@@ -41,24 +46,18 @@ mod tests {
     fn it_generates_valid_ns() {
         assert_eq!(CacheRoute::gen_ns(
             0, HttpVersion::Http11, &Method::Get, "/", Some(""), ""),
-            "bloom:0:f8bb423988eb2814",
-            "[shard=0][auth=no] HTTP/1.1 GET /");
+            "bloom:0:d180fb05", "[shard=0][auth=no] HTTP/1.1 GET /");
         assert_eq!(CacheRoute::gen_ns(
             0, HttpVersion::Http11, &Method::Post, "/login", Some(""), ""),
-            "bloom:0:9927a78b4d94dbf5",
-            "[shard=0][auth=no] HTTP/1.1 POST /login");
+            "bloom:0:27859e5b", "[shard=0][auth=no] HTTP/1.1 POST /login");
         assert_eq!(CacheRoute::gen_ns(
             7, HttpVersion::Http11, &Method::Options, "/feed", Some(""), "8ab"),
-            "bloom:7:8b613c3c1c66f39e",
-            "[shard=7][auth=yes] HTTP/1.1 OPTIONS /feed");
+            "bloom:7:263a7d5", "[shard=7][auth=yes] HTTP/1.1 OPTIONS /feed");
         assert_eq!(CacheRoute::gen_ns(
             80, HttpVersion::H2, &Method::Head, "/user", Some("u=1"), "2d"),
-            "bloom:80:7011223c059f2bfb",
-            "[shard=80][auth=yes] h2 HEAD /feed");
-        assert_eq!(ROUTE_SIZE, "7011223c059f2bfb".len(),
-            "Route size should be 16 (static)");
-        assert_eq!(ROUTE_SIZE, CacheRoute::hash("fiJxtAESapUXehXSUv90").len(),
-            "Route size should be 16 (dynamic)");
+            "bloom:80:660a39b2", "[shard=80][auth=yes] h2 HEAD /feed");
+        assert_eq!(ROUTE_HASH_SIZE, CacheRoute::hash("7gCq81kzO5").len(),
+            "Route size should be 8 (dynamic)");
     }
 }
 
