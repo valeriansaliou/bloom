@@ -42,7 +42,8 @@ impl ControlListen {
                                 stream.peer_addr().unwrap());
 
                             // Configure stream
-                            assert!(stream.set_read_timeout(Some(Duration::new(
+                            assert!(stream.set_nodelay(true).is_ok());
+                            assert!(stream.set_write_timeout(Some(Duration::new(
                                 tcp_timeout, 0))).is_ok());
                             assert!(stream.set_write_timeout(Some(Duration::new(
                                 tcp_timeout, 0))).is_ok());

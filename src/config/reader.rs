@@ -44,42 +44,40 @@ impl ConfigReader {
         Config {
             server: ConfigServer {
                 inet: ConfigReaderGetter::get_inet(&conf, "server", "inet",
-                "host", "port", defaults::SERVER_HOST,
-                defaults::SERVER_PORT)
+                    "host", "port", defaults::SERVER_HOST,
+                    defaults::SERVER_PORT)
             },
 
             control: ConfigControl {
                 inet: ConfigReaderGetter::get_inet(&conf, "control", "inet",
-                "host", "port", defaults::CONTROL_HOST,
-                defaults::CONTROL_PORT),
+                    "host", "port", defaults::CONTROL_HOST,
+                    defaults::CONTROL_PORT),
 
                 tcp_timeout: ConfigReaderGetter::get_generic(&conf,
-                    "control", "tcp_timeout",
-                    defaults::CONTROL_TCP_TIMEOUT)
+                    "control", "tcp_timeout", defaults::CONTROL_TCP_TIMEOUT)
             },
 
             proxy: ConfigProxy {
                 shard: ConfigReaderGetter::get_generic(&conf, "proxy",
-                "shard", defaults::PROXY_SHARD),
+                    "shard", defaults::PROXY_SHARD),
 
                 inet: ConfigReaderGetter::get_inet(&conf, "proxy", "inet",
-                "host", "port", defaults::PROXY_HOST,
-                defaults::PROXY_PORT),
+                    "host", "port", defaults::PROXY_HOST, defaults::PROXY_PORT),
 
                 connect_timeout: ConfigReaderGetter::get_generic(&conf, "proxy",
-                "connect_timeout", defaults::PROXY_CONNECT_TIMEOUT),
+                    "connect_timeout", defaults::PROXY_CONNECT_TIMEOUT),
 
                 read_timeout: ConfigReaderGetter::get_generic(&conf, "proxy",
-                "read_timeout", defaults::PROXY_READ_TIMEOUT),
+                    "read_timeout", defaults::PROXY_READ_TIMEOUT),
 
                 send_timeout: ConfigReaderGetter::get_generic(&conf, "proxy",
-                "send_timeout", defaults::PROXY_SEND_TIMEOUT),
+                    "send_timeout", defaults::PROXY_SEND_TIMEOUT),
             },
 
             memcached: ConfigMemcached {
                 inet: ConfigReaderGetter::get_inet(&conf, "memcached", "inet",
-                "host", "port", defaults::MEMCACHED_HOST,
-                defaults::MEMCACHED_PORT),
+                    "host", "port", defaults::MEMCACHED_HOST,
+                    defaults::MEMCACHED_PORT),
 
                 max_key_size: ConfigReaderGetter::get_generic(&conf,
                     "memcached", "max_key_size",
@@ -90,13 +88,13 @@ impl ConfigReader {
                     defaults::MEMCACHED_MAX_KEY_EXPIRATION),
 
                 pool_size: ConfigReaderGetter::get_generic(&conf, "memcached",
-                "pool_size", defaults::MEMCACHED_POOL_SIZE),
+                    "pool_size", defaults::MEMCACHED_POOL_SIZE),
 
                 reconnect: ConfigReaderGetter::get_generic(&conf, "memcached",
-                "reconnect", defaults::MEMCACHED_RECONNECT),
+                    "reconnect", defaults::MEMCACHED_RECONNECT),
 
                 timeout: ConfigReaderGetter::get_generic(&conf, "memcached",
-                "timeout", defaults::MEMCACHED_TIMEOUT)
+                    "timeout", defaults::MEMCACHED_TIMEOUT)
             }
         }
     }

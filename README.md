@@ -159,7 +159,7 @@ OK
 PING
 PONG
 QUIT
-BYE
+ENDED quit
 Connection closed by foreign host.
 ```
 
