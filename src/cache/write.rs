@@ -111,13 +111,13 @@ mod tests {
 
     #[test]
     fn it_asserts_valid_cacheable_status() {
-        assert_eq!(CacheWrite::is_cacheable_status(StatusCode::Ok),
+        assert_eq!(CacheWrite::is_cacheable_status(&StatusCode::Ok),
             true, "200 OK");
-        assert_eq!(CacheWrite::is_cacheable_status(StatusCode::Unauthorized),
+        assert_eq!(CacheWrite::is_cacheable_status(&StatusCode::Unauthorized),
             true, "401 OK");
-        assert_eq!(CacheWrite::is_cacheable_status(StatusCode::BadRequest),
+        assert_eq!(CacheWrite::is_cacheable_status(&StatusCode::BadRequest),
             false, "400 Bad Request");
-        assert_eq!(CacheWrite::is_cacheable_status(StatusCode::InternalServerError),
+        assert_eq!(CacheWrite::is_cacheable_status(&StatusCode::InternalServerError),
             false, "500 Internal Server Error");
     }
 }
