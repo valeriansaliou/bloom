@@ -13,35 +13,20 @@ use std::net::SocketAddr;
 use ini::Ini;
 
 use super::defaults;
-use super::config::Config;
-use super::config::ConfigServer;
-use super::config::ConfigControl;
-use super::config::ConfigProxy;
-use super::config::ConfigMemcached;
+use super::config::*;
 use ::APP_ARGS;
 
-pub struct ConfigReaderBuilder;
 pub struct ConfigReader;
 struct ConfigReaderGetter;
 
-impl ConfigReaderBuilder {
-    pub fn new() -> ConfigReader {
-        ConfigReader {}
-    }
-}
-
 impl ConfigReader {
-    pub fn read(&self) -> Config {
+    pub fn make() -> Config {
         debug!("reading config file: {}", &APP_ARGS.config);
 
         let conf = Ini::load_from_file(&APP_ARGS.config).unwrap();
 
         debug!("read config file: {}", &APP_ARGS.config);
 
-        self.make(&conf)
-    }
-
-    fn make(&self, conf: &Ini) -> Config {
         Config {
             server: ConfigServer {
                 inet: ConfigReaderGetter::get_inet(&conf, "server", "inet",
@@ -72,7 +57,12 @@ impl ConfigReader {
                     "read_timeout", defaults::PROXY_READ_TIMEOUT),
 
                 send_timeout: ConfigReaderGetter::get_generic(&conf, "proxy",
-                    "send_timeout", defaults::PROXY_SEND_TIMEOUT),
+                    "send_timeout", defaults::PROXY_SEND_TIMEOUT)
+            },
+
+            cache: ConfigCache {
+                ttl_default: ConfigReaderGetter::get_generic(&conf, "cache",
+                    "ttl_default", defaults::CACHE_TTL_DEFAULT)
             },
 
             memcached: ConfigMemcached {
@@ -89,13 +79,7 @@ impl ConfigReader {
                     defaults::MEMCACHED_MAX_KEY_EXPIRATION),
 
                 pool_size: ConfigReaderGetter::get_generic(&conf, "memcached",
-                    "pool_size", defaults::MEMCACHED_POOL_SIZE),
-
-                reconnect: ConfigReaderGetter::get_generic(&conf, "memcached",
-                    "reconnect", defaults::MEMCACHED_RECONNECT),
-
-                timeout: ConfigReaderGetter::get_generic(&conf, "memcached",
-                    "timeout", defaults::MEMCACHED_TIMEOUT)
+                    "pool_size", defaults::MEMCACHED_POOL_SIZE)
             }
         }
     }

@@ -5,15 +5,17 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str;
-use std::io::{Read, Write};
+use std::io::{Read, Write, ErrorKind};
 use std::result::Result;
 use std::net::TcpStream;
+use std::time::Duration;
 
 use rand::{thread_rng, Rng};
 
 use super::command::ControlCommandResponse;
 use super::command::ControlCommand;
 use super::command::COMMAND_SIZE;
+use ::APP_CONF;
 use cache::route::CacheRoute;
 use cache::route::ROUTE_HASH_SIZE;
 
@@ -29,6 +31,7 @@ const MAX_LINE_SIZE: usize = COMMAND_SIZE + ROUTE_HASH_SIZE + 1;
 const HASH_VALUE_SIZE: usize = 10;
 const HASH_RESULT_SIZE: usize = 7 + ROUTE_HASH_SIZE + 1;
 const SHARD_DEFAULT: ControlShard = 0;
+const TCP_TIMEOUT_NON_ESTABLISHED: u64 = 20;
 
 pub type ControlShard = u8;
 
@@ -39,11 +42,19 @@ lazy_static! {
 
 impl ControlHandle {
     pub fn client(mut stream: TcpStream) {
+        // Configure stream (non-established)
+        ControlHandle::configure_stream(&stream, false);
+
+        // Send connected banner
         write!(stream, "{}\r\n", *CONNECTED_BANNER).expect("write failed");
 
         // Ensure client hasher is compatible
         match Self::test_hasher(&stream) {
             Ok(_) => {
+                // Configure stream (established)
+                ControlHandle::configure_stream(&stream, true);
+
+                // Send started acknowledgement
                 write!(stream, "STARTED\r\n").expect("write failed");
 
                 // Select default shard
@@ -73,6 +84,21 @@ impl ControlHandle {
                     .expect("write failed");
             }
         }
+    }
+
+    fn configure_stream(mut stream: &TcpStream, is_established: bool) {
+        let tcp_timeout = if is_established == true {
+            APP_CONF.control.tcp_timeout
+        } else {
+            TCP_TIMEOUT_NON_ESTABLISHED
+        };
+
+        assert!(stream.set_nodelay(true).is_ok());
+
+        assert!(stream.set_read_timeout(Some(Duration::new(
+            tcp_timeout, 0))).is_ok());
+        assert!(stream.set_write_timeout(Some(Duration::new(
+            tcp_timeout, 0))).is_ok());
     }
 
     fn test_hasher(mut stream: &TcpStream) ->
@@ -114,7 +140,17 @@ impl ControlHandle {
                     }
 
                     return Err("not_recognized")
-                }
+                },
+                Err(err) => {
+                    let err_reason = match err.kind() {
+                        ErrorKind::TimedOut => "timed_out",
+                        ErrorKind::ConnectionAborted => "connection_aborted",
+                        ErrorKind::Interrupted => "interrupted",
+                        _ => "error"
+                    };
+
+                    return Err(err_reason)
+                },
                 _ => {
                     return Err("unknown")
                 }
@@ -158,6 +194,8 @@ impl ControlHandle {
         Result<ControlCommandResponse, Option<()>> {
         let mut parts = message.split_whitespace();
         let command = parts.next().unwrap_or("");
+
+        debug!("will dispatch command: {}", command);
 
         match command {
             "" => Ok(ControlCommandResponse::Void),

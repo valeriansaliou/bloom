@@ -5,7 +5,6 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::cmp;
-use std::sync::Arc;
 
 use bmemcached::MemcachedClient;
 
@@ -14,26 +13,13 @@ use ::APP_CONF;
 pub struct CacheStoreBuilder;
 
 pub struct CacheStore {
-    // TODO: not event required to Arc there...
-    client: Option<Arc<MemcachedClient>>
+    client: Option<MemcachedClient>
 }
 
 type CacheResult = Result<Option<String>, &'static str>;
 
 impl CacheStoreBuilder {
     pub fn new() -> CacheStore {
-        CacheStore {
-            client: None
-        }
-    }
-}
-
-impl CacheStore {
-    pub fn bind(&mut self) {
-        // TODO: enforce config values:
-        //   - ConfigMemcached.reconnect
-        //   - ConfigMemcached.timeout
-
         // TODO: ensure following contracts:
             // if first connect fails, panic!()
             // if connection to memcached is lost at any point, mark as \
@@ -51,14 +37,18 @@ impl CacheStore {
         match MemcachedClient::new(
             vec![tcp_addr], APP_CONF.memcached.pool_size) {
             Ok(client_raw) => {
-                self.client = Some(Arc::new(client_raw));
+                info!("Bound to store backend");
+
+                CacheStore {
+                    client: Some(client_raw)
+                }
             }
             Err(err) => panic!("could not connect to memcached")
         }
-
-        info!("Bound to store backend");
     }
+}
 
+impl CacheStore {
     pub fn get(&self, key: &str) -> CacheResult {
         match self.client {
             Some(ref client) => {

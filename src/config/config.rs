@@ -10,6 +10,7 @@ pub struct Config {
     pub server: ConfigServer,
     pub control: ConfigControl,
     pub proxy: ConfigProxy,
+    pub cache: ConfigCache,
     pub memcached: ConfigMemcached
 }
 
@@ -30,11 +31,13 @@ pub struct ConfigProxy {
     pub send_timeout: u16
 }
 
+pub struct ConfigCache {
+    pub ttl_default: u32
+}
+
 pub struct ConfigMemcached {
     pub inet: SocketAddr,
     pub max_key_size: usize,
     pub max_key_expiration: u32,
-    pub pool_size: u8,
-    pub reconnect: u16,
-    pub timeout: u16
+    pub pool_size: u8
 }

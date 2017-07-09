@@ -11,7 +11,7 @@ use hyper::{Method, StatusCode};
 use hyper::server::{Request, Response};
 
 use super::header::ProxyHeader;
-use header::request::HeaderRequestBloomRequestShard;
+use header::request_shard::HeaderRequestBloomRequestShard;
 use cache::route::CacheRoute;
 
 pub struct ProxyServeBuilder;
@@ -78,7 +78,7 @@ impl ProxyServe {
         // TODO: support for 304 Not Modified here (return empty content \
         //   to ongoing specific client, but still read/populate cache normally)
 
-        // TODO: CacheRead::acquire()
+        // TODO: CacheRead::acquire(ns)
         // TODO -> if acquired, serve cached response
             // TODO -> set 'Bloom-Status' as 'HIT'
         // TODO -> else (not acquired); proxy connection
@@ -87,9 +87,14 @@ impl ProxyServe {
                     //   - ConfigProxy.connect_timeout
                     //   - ConfigProxy.read_timeout
                     //   - ConfigProxy.send_timeout
-            // TODO -> CacheWrite::save() (check return value)
+            // TODO -> CacheWrite::save(ns, req, res) (check return value)
                 // TODO -> return == true -> set 'Bloom-Status' as 'MISS'
                 // TODO -> return == false -> set 'Bloom-Status' as 'DIRECT'
+
+        // TODO: implement support for Bloom-Response-Bucket
+        // CONCERN: how to link this to the gen_ns() utility? We dont \
+        //   know about which route is mapped to which bucket in advance. \
+        //   so maybe redesign this part.
 
         debug!("tunneling for ns = {}", ns);
     }

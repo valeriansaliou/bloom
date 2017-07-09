@@ -9,11 +9,10 @@ use std::fmt;
 use hyper::Result;
 use hyper::header::{Header, Raw, Formatter, parsing};
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone)]
 pub struct HeaderRequestBloomRequestShard(pub u8);
 
 impl Header for HeaderRequestBloomRequestShard {
-    #[inline]
     fn header_name() -> &'static str {
         static NAME: &'static str = "Bloom-Request-Shard";
         NAME
@@ -23,14 +22,12 @@ impl Header for HeaderRequestBloomRequestShard {
         parsing::from_one_raw_str(raw).map(HeaderRequestBloomRequestShard)
     }
 
-    #[inline]
     fn fmt_header(&self, f: &mut Formatter) -> fmt::Result {
         f.fmt_line(self)
     }
 }
 
 impl fmt::Display for HeaderRequestBloomRequestShard {
-    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
     }

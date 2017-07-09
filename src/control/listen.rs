@@ -5,7 +5,6 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::thread;
-use std::time::Duration;
 use std::net::TcpListener;
 
 use super::handle::ControlHandle;
@@ -22,12 +21,8 @@ impl ControlListenBuilder {
 
 impl ControlListen {
     pub fn run(&self) {
-        let addr = APP_CONF.control.inet;
-
-        let tcp_timeout = APP_CONF.control.tcp_timeout;
-
         thread::spawn(move || {
-            let listener = TcpListener::bind(addr).unwrap();
+            let listener = TcpListener::bind(APP_CONF.control.inet).unwrap();
 
             for stream in listener.incoming() {
                 match stream {
@@ -35,13 +30,6 @@ impl ControlListen {
                         thread::spawn(move || {
                             debug!("control client connecting: {}",
                                 stream.peer_addr().unwrap());
-
-                            // Configure stream
-                            assert!(stream.set_nodelay(true).is_ok());
-                            assert!(stream.set_write_timeout(Some(Duration::new(
-                                tcp_timeout, 0))).is_ok());
-                            assert!(stream.set_write_timeout(Some(Duration::new(
-                                tcp_timeout, 0))).is_ok());
 
                             // Create client
                             ControlHandle::client(stream);
@@ -53,7 +41,7 @@ impl ControlListen {
                 }
             }
 
-            info!("listening on tcp://{}", addr);
+            info!("listening on tcp://{}", APP_CONF.control.inet);
         });
     }
 }

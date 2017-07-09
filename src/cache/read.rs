@@ -4,17 +4,27 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use ::APP_CACHE_STORE;
+
 pub struct CacheRead;
 
 impl CacheRead {
-    pub fn acquire(ns: &str) {
-        // TODO: Not implemented
+    pub fn acquire(key: &str) -> Result<String, &'static str> {
+        match APP_CACHE_STORE.get(key) {
+            Ok(Some(result)) => {
+                Ok(result)
+            },
+            Ok(None) => {
+                warn!("acquired empty value from cache for key: {}", key);
 
-        // TODO: CacheStore::get()
-            // TODO: return future w/ Ok if valid response
-            // TODO: return future w/ Err if no response (or expired?)
+                Err("empty")
+            },
+            Err(err) => {
+                error!("could not acquire value from cache for key: {} \
+                    because: {}", key, err);
 
-        // TODO: IMPORTANT: if memcached is down, fallback to DIRECT in any \
-        //   case, but throw an error log
+                Err(err)
+            }
+        }
     }
 }

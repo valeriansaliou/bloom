@@ -24,7 +24,7 @@ mod server;
 use clap::{App, Arg};
 use config::config::Config;
 use config::logger::ConfigLogger;
-use config::reader::ConfigReaderBuilder;
+use config::reader::ConfigReader;
 use cache::store::{CacheStore, CacheStoreBuilder};
 use proxy::serve::{ProxyServe, ProxyServeBuilder};
 use control::listen::ControlListenBuilder;
@@ -36,7 +36,7 @@ struct AppArgs {
 
 lazy_static! {
     static ref APP_ARGS: AppArgs = make_app_args();
-    static ref APP_CONF: Config = ConfigReaderBuilder::new().read();
+    static ref APP_CONF: Config = ConfigReader::make();
     static ref APP_CACHE_STORE: CacheStore = CacheStoreBuilder::new();
     static ref APP_PROXY_SERVE: ProxyServe = ProxyServeBuilder::new();
 }

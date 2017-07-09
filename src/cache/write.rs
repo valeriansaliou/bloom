@@ -4,37 +4,48 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::{Method, StatusCode};
+use hyper::{Method, StatusCode, Headers};
 use hyper::server::{Request, Response};
+
+use ::APP_CONF;
+use ::APP_CACHE_STORE;
+use header::response_ignore::HeaderResponseBloomResponseIgnore;
+use header::response_ttl::HeaderResponseBloomResponseTTL;
 
 pub struct CacheWrite;
 
 impl CacheWrite {
-    pub fn save(req: Request, res: Response) -> bool {
-        // TODO: Not implemented
+    pub fn save(key: &str, req: Request, res: Response) -> bool {
+        let method = req.method();
+        let status = res.status();
+        let headers = res.headers();
 
-        if Self::is_cacheable(req, res) == true {
-            // TODO: write cache (if memcached is down, ignore but throw a \
-            //         log error)
-            // TODO: implement support for Bloom-Response-TTL
+        if Self::is_cacheable(&method, &status, &headers)
+            == true {
+            // Acquire TTL from response, or fallback to default TTL
+            let ttl = match headers.get::<HeaderResponseBloomResponseTTL>() {
+                None => APP_CONF.cache.ttl_default,
+                Some(value) => value.0
+            };
 
-            // Later:
-            // TODO: implement support for Bloom-Response-Bucket
-            // CONCERN: how to link this to the gen_ns() utility? We dont \
-            //   know about which route is mapped to which bucket in advance. \
-            //   so maybe redesign this part.
+            // TODO: nuke contextual / time-dependant headers, add only \
+            //   static headers
+            // TODO: append body
+            let value = "";
 
-            true
+            // Write to cache
+            APP_CACHE_STORE.set(key, value, ttl).is_ok()
         } else {
             // Not cacheable, ignore
             false
         }
     }
 
-    fn is_cacheable(req: Request, res: Response) -> bool {
-        Self::is_cacheable_method(req.method()) &&
-            Self::is_cacheable_status(res.status()) &&
-            Self::is_cacheable_response()
+    fn is_cacheable(method: &Method, status: &StatusCode, headers: &Headers)
+        -> bool {
+        Self::is_cacheable_method(method) == true &&
+            Self::is_cacheable_status(status) == true &&
+            Self::is_cacheable_response(headers) == true
     }
 
     fn is_cacheable_method(method: &Method) -> bool {
@@ -44,8 +55,8 @@ impl CacheWrite {
         }
     }
 
-    fn is_cacheable_status(status: StatusCode) -> bool {
-        match status {
+    fn is_cacheable_status(status: &StatusCode) -> bool {
+        match *status {
             StatusCode::Ok
             | StatusCode::NonAuthoritativeInformation
             | StatusCode::NoContent
@@ -76,10 +87,9 @@ impl CacheWrite {
         }
     }
 
-    fn is_cacheable_response() -> bool {
-        // TODO: implement support for Bloom-Response-Ignore
-
-        true
+    fn is_cacheable_response(headers: &Headers) -> bool {
+        // Ignore responses with 'Bloom-Response-Ignore'
+        headers.has::<HeaderResponseBloomResponseIgnore>()
     }
 }
 

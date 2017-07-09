@@ -9,7 +9,7 @@ use std::str::from_utf8;
 use hyper::header::Headers;
 
 use super::defaults;
-use header::request::HeaderRequestBloomRequestShard;
+use header::request_shard::HeaderRequestBloomRequestShard;
 
 pub struct ProxyHeader;
 

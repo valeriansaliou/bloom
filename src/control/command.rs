@@ -7,7 +7,9 @@
 use std::str::SplitWhitespace;
 
 use super::handle::ControlShard;
+use ::APP_CACHE_STORE;
 use cache::route::CacheRoute;
+use cache::store::CacheStore;
 
 #[derive(PartialEq)]
 pub enum ControlCommandResponse {
@@ -36,24 +38,18 @@ pub struct ControlCommand;
 
 pub const COMMAND_SIZE: usize = 6;
 
+type ControlResult = Result<ControlCommandResponse, Option<()>>;
+
 impl ControlCommand {
     pub fn dispatch_flush_bucket(shard: &ControlShard,
         mut parts: SplitWhitespace) ->
-        Result<ControlCommandResponse, Option<()>> {
+        ControlResult {
         let bucket = parts.next().unwrap_or("");
 
-        debug!("dispatch bucket flush for bucket: {}", bucket);
-
         if bucket.is_empty() == false {
-            // TODO: auth param?
             let ns = CacheRoute::gen_ns_from_hash(*shard, "*", bucket);
 
-            debug!("attempting to flush bucket for: {}", ns);
-
-            // TODO
-            // CacheStore::purge(ns);
-
-            return Ok(ControlCommandResponse::Ok)
+            return Self::proceed_flush("bucket", ns.as_ref());
         }
 
         Err(None)
@@ -61,32 +57,24 @@ impl ControlCommand {
 
     pub fn dispatch_flush_auth(shard: &ControlShard,
         mut parts: SplitWhitespace) ->
-        Result<ControlCommandResponse, Option<()>> {
+        ControlResult {
         let auth = parts.next().unwrap_or("");
 
-        debug!("dispatch auth flush for auth: {}", auth);
-
         if auth.is_empty() == false {
-            // TODO: route param?
             let ns = CacheRoute::gen_ns_from_hash(*shard, auth, "*");
 
-            debug!("attempting to flush auth for: {}", ns);
-
-            // TODO
-            // CacheStore::purge(ns);
-
-            return Ok(ControlCommandResponse::Ok)
+            return Self::proceed_flush("auth", ns.as_ref());
         }
 
         Err(None)
     }
 
-    pub fn dispatch_ping() -> Result<ControlCommandResponse, Option<()>> {
+    pub fn dispatch_ping() -> ControlResult {
         Ok(ControlCommandResponse::Pong)
     }
 
     pub fn dispatch_shard(shard: &mut ControlShard, mut parts: SplitWhitespace)
-        -> Result<ControlCommandResponse, Option<()>> {
+        -> ControlResult {
         match parts.next().unwrap_or("").parse::<u8>() {
             Ok(shard_to) => {
                 *shard = shard_to;
@@ -97,8 +85,26 @@ impl ControlCommand {
         }
     }
 
-    pub fn dispatch_quit() -> Result<ControlCommandResponse, Option<()>> {
+    pub fn dispatch_quit() -> ControlResult {
         Ok(ControlCommandResponse::Ended)
+    }
+
+    fn proceed_flush(variant: &str, ns: &str) -> ControlResult {
+        debug!("attempting to flush {} for: {}", variant, ns);
+
+        match APP_CACHE_STORE.purge(ns) {
+            Ok(_) => {
+                info!("flushed {} for: {}", variant, ns);
+
+                Ok(ControlCommandResponse::Ok)
+            },
+            Err(err) => {
+                warn!("could not flush {} for: {} because: {}", variant,
+                    ns, err);
+
+                Err(None)
+            }
+        }
     }
 }
 
