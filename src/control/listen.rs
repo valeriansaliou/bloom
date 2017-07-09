@@ -4,32 +4,29 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use std::net::TcpListener;
 
 use super::handle::ControlHandle;
+use ::APP_CONF;
 use config::config::ConfigControl;
+use cache::store::CacheStore;
 
 pub struct ControlListenBuilder;
-pub struct ControlListen {
-    config_control: ConfigControl
-}
+pub struct ControlListen;
 
 impl ControlListenBuilder {
-    pub fn new(config_control: ConfigControl) -> ControlListen {
-        ControlListen {
-            config_control: config_control
-        }
+    pub fn new() -> ControlListen {
+        ControlListen {}
     }
 }
 
 impl ControlListen {
     pub fn run(&self) {
-        let addr = self.config_control.inet;
+        let addr = APP_CONF.control.inet;
 
-        let tcp_timeout = self.config_control.tcp_timeout;
+        let tcp_timeout = APP_CONF.control.tcp_timeout;
 
         thread::spawn(move || {
             let listener = TcpListener::bind(addr).unwrap();

@@ -46,7 +46,7 @@ impl ControlCommand {
 
         if bucket.is_empty() == false {
             // TODO: auth param?
-            let ns = CacheRoute::gen_ns_from_hash(*shard, "", bucket);
+            let ns = CacheRoute::gen_ns_from_hash(*shard, "*", bucket);
 
             debug!("attempting to flush bucket for: {}", ns);
 
@@ -68,7 +68,7 @@ impl ControlCommand {
 
         if auth.is_empty() == false {
             // TODO: route param?
-            let ns = CacheRoute::gen_ns_from_hash(*shard, auth, "");
+            let ns = CacheRoute::gen_ns_from_hash(*shard, auth, "*");
 
             debug!("attempting to flush auth for: {}", ns);
 

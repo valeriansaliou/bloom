@@ -6,6 +6,8 @@
 
 use hyper::{HttpVersion, Method};
 
+use ::APP_CACHE_STORE;
+
 pub struct CacheRead;
 
 impl CacheRead {

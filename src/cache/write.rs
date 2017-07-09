@@ -7,6 +7,8 @@
 use hyper::{Method, StatusCode};
 use hyper::server::{Request, Response};
 
+use ::APP_CACHE_STORE;
+
 pub struct CacheWrite;
 
 impl CacheWrite {

@@ -13,22 +13,17 @@ use hyper::server::{Request, Response};
 
 use super::header::ProxyHeader;
 use header::request::HeaderRequestBloomRequestShard;
-use config::config::ConfigProxy;
 use cache::route::CacheRoute;
 
 pub struct ProxyServeBuilder;
 
-pub struct ProxyServe {
-    config_proxy: ConfigProxy
-}
+pub struct ProxyServe;
 
 pub type ProxyServeFuture = FutureResult<Response, hyper::Error>;
 
 impl ProxyServeBuilder {
-    pub fn new(config_proxy: ConfigProxy) -> ProxyServe {
-        ProxyServe {
-            config_proxy: config_proxy
-        }
+    pub fn new() -> ProxyServe {
+        ProxyServe {}
     }
 }
 

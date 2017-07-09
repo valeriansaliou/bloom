@@ -11,21 +11,21 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use bmemcached::MemcachedClient;
 use bmemcached::errors::BMemcachedError;
 
+use ::APP_CONF;
 use config::config::ConfigMemcached;
 
 pub struct CacheStoreBuilder;
 
 pub struct CacheStore {
-    config_memcached: ConfigMemcached,
+    // TODO: not event required to Arc there...
     client: Option<Arc<MemcachedClient>>
 }
 
 type CacheResult = Result<Option<String>, &'static str>;
 
 impl CacheStoreBuilder {
-    pub fn new(config_memcached: ConfigMemcached) -> CacheStore {
+    pub fn new() -> CacheStore {
         CacheStore {
-            config_memcached: config_memcached,
             client: None
         }
     }
@@ -46,13 +46,13 @@ impl CacheStore {
             //   (best-effort retries, hit the api directly in that case and \
             //   return response w/ the DIRECT bloom status header)
 
-        info!("Binding to store backend at {}", self.config_memcached.inet);
+        info!("Binding to store backend at {}", APP_CONF.memcached.inet);
 
-        let tcp_addr = format!("{}:{}", self.config_memcached.inet.ip(),
-                            self.config_memcached.inet.port());
+        let tcp_addr = format!("{}:{}", APP_CONF.memcached.inet.ip(),
+                            APP_CONF.memcached.inet.port());
 
         match MemcachedClient::new(
-            vec![tcp_addr], self.config_memcached.pool_size) {
+            vec![tcp_addr], APP_CONF.memcached.pool_size) {
             Ok(client_raw) => {
                 self.client = Some(Arc::new(client_raw));
             }
@@ -81,10 +81,10 @@ impl CacheStore {
             Some(ref client) => {
                 // Cap TTL to 'max_key_expiration'
                 let ttl_cap = cmp::min(ttl,
-                                self.config_memcached.max_key_expiration);
+                                APP_CONF.memcached.max_key_expiration);
 
                 // Ensure value is not larger than 'max_key_size'
-                if value.len() > self.config_memcached.max_key_size {
+                if value.len() > APP_CONF.memcached.max_key_size {
                     return Err("too large")
                 }
 

@@ -21,49 +21,55 @@ mod cache;
 mod control;
 mod server;
 
-use std::sync::Arc;
-use clap::{App, Arg};
+use clap::{App, Arg, ArgMatches};
+use config::config::Config;
 use config::logger::ConfigLogger;
 use config::reader::ConfigReaderBuilder;
-use cache::store::CacheStoreBuilder;
-use proxy::serve::ProxyServeBuilder;
+use cache::store::{CacheStore, CacheStoreBuilder};
+use proxy::serve::{ProxyServe, ProxyServeBuilder};
 use control::listen::ControlListenBuilder;
 use server::listen::ServerListenBuilder;
+
+struct AppArgs {
+    config: String
+}
+
+lazy_static! {
+    static ref APP_ARGS: AppArgs = make_app_args();
+    static ref APP_CONF: Config = ConfigReaderBuilder::new().read();
+    static ref APP_CACHE_STORE: CacheStore = CacheStoreBuilder::new();
+    static ref APP_PROXY_SERVE: ProxyServe = ProxyServeBuilder::new();
+}
+
+fn make_app_args() -> AppArgs {
+    let matches = App::new(crate_name!())
+        .version(crate_version!())
+        .author(crate_authors!("\n"))
+        .about(crate_description!())
+        .arg(Arg::with_name("config")
+            .short("c")
+            .long("config")
+            .help("Path to configuration file")
+            .default_value("./config.cfg")
+            .takes_value(true))
+        .get_matches();
+
+    // Generate owned app arguments
+    AppArgs {
+        config: String::from(matches.value_of("config").unwrap())
+    }
+}
 
 fn main() {
     let _logger = ConfigLogger::init();
 
     info!("starting up");
 
-    let app = App::new(crate_name!())
-                .version(crate_version!())
-                .author(crate_authors!("\n"))
-                .about(crate_description!())
-                .arg(Arg::with_name("config")
-                    .short("c")
-                    .long("config")
-                    .help("Path to configuration file")
-                    .default_value("./config.cfg")
-                    .takes_value(true));
-
-    let args = app.get_matches();
-    let conf = ConfigReaderBuilder::new().read(
-        args.value_of("config").unwrap());
-
-    // Bind to cache store
-    let cache_store = Arc::new(CacheStoreBuilder::new(conf.memcached));
-
-    // Create serve manager
-    let proxy_serve = Arc::new(ProxyServeBuilder::new(conf.proxy));
-
     // Run control interface (in its own thread)
-    ControlListenBuilder::new(conf.control).run();
+    ControlListenBuilder::new().run();
 
     // Run server (in main thread)
-    ServerListenBuilder::new(conf.server).run(proxy_serve, cache_store);
-
-    // TODO: wrap the things in lazy_static?
-    // @ref: https://github.com/rust-lang-nursery/lazy-static.rs
+    ServerListenBuilder::new().run();
 
     error!("could not start");
 }

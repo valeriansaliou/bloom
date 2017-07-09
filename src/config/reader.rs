@@ -18,6 +18,7 @@ use super::config::ConfigServer;
 use super::config::ConfigControl;
 use super::config::ConfigProxy;
 use super::config::ConfigMemcached;
+use ::APP_ARGS;
 
 pub struct ConfigReaderBuilder;
 pub struct ConfigReader;
@@ -30,12 +31,12 @@ impl ConfigReaderBuilder {
 }
 
 impl ConfigReader {
-    pub fn read(&self, path: &str) -> Config {
-        debug!("reading config file: {}", path);
+    pub fn read(&self) -> Config {
+        debug!("reading config file: {}", &APP_ARGS.config);
 
-        let conf = Ini::load_from_file(path).unwrap();
+        let conf = Ini::load_from_file(&APP_ARGS.config).unwrap();
 
-        debug!("read config file: {}", path);
+        debug!("read config file: {}", &APP_ARGS.config);
 
         self.make(&conf)
     }
