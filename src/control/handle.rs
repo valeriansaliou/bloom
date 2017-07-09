@@ -78,7 +78,7 @@ impl ControlHandle {
                         }
                     }
                 }
-            },
+            }
             Err(err) => {
                 write!(stream, "ENDED {}\r\n", err)
                     .expect("write failed");
@@ -140,7 +140,7 @@ impl ControlHandle {
                     }
 
                     return Err("not_recognized")
-                },
+                }
                 Err(err) => {
                     let err_reason = match err.kind() {
                         ErrorKind::TimedOut => "timed_out",
@@ -150,7 +150,7 @@ impl ControlHandle {
                     };
 
                     return Err(err_reason)
-                },
+                }
                 _ => {
                     return Err("unknown")
                 }
@@ -177,7 +177,7 @@ impl ControlHandle {
                         result = ControlHandleMessageResult::Close;
                     }
                     resp.to_str()
-                },
+                }
                 _ => ControlCommandResponse::Err.to_str()
             },
             _ => ControlCommandResponse::Err.to_str()

@@ -80,7 +80,7 @@ impl ControlCommand {
                 *shard = shard_to;
 
                 Ok(ControlCommandResponse::Ok)
-            },
+            }
             _ => Err(None)
         }
     }
@@ -97,7 +97,7 @@ impl ControlCommand {
                 info!("flushed {} for: {}", variant, ns);
 
                 Ok(ControlCommandResponse::Ok)
-            },
+            }
             Err(err) => {
                 warn!("could not flush {} for: {} because: {}", variant,
                     ns, err);

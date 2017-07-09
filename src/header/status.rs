@@ -4,19 +4,66 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-enum HeaderStatus {
+use std::str;
+use std::fmt;
+
+use hyper::{Result, Error};
+use hyper::header::{Header, Raw, Formatter, parsing};
+
+#[derive(Clone)]
+pub enum HeaderBloomStatusValue {
     Hit,
     Miss,
     Direct
 }
 
-impl HeaderStatus {
+#[derive(Clone)]
+pub struct HeaderBloomStatus(pub HeaderBloomStatusValue);
+
+impl HeaderBloomStatusValue {
     fn to_str(&self) -> &str {
         match *self {
-            HeaderStatus::Hit => "HIT",
-            HeaderStatus::Miss => "MISS",
-            HeaderStatus::Direct => "DIRECT",
+            HeaderBloomStatusValue::Hit => "HIT",
+            HeaderBloomStatusValue::Miss => "MISS",
+            HeaderBloomStatusValue::Direct => "DIRECT",
         }
+    }
+}
+
+impl Header for HeaderBloomStatus {
+    fn header_name() -> &'static str {
+        static NAME: &'static str = "Bloom-Status";
+        NAME
+    }
+
+    fn parse_header(raw: &Raw) -> Result<HeaderBloomStatus> {
+        match raw.one() {
+            Some(header_raw) => {
+                match str::from_utf8(header_raw) {
+                    Ok("HIT") => {
+                        Ok(HeaderBloomStatus(HeaderBloomStatusValue::Hit))
+                    }
+                    Ok("MISS") => {
+                        Ok(HeaderBloomStatus(HeaderBloomStatusValue::Miss))
+                    }
+                    Ok("DIRECT") => {
+                        Ok(HeaderBloomStatus(HeaderBloomStatusValue::Direct))
+                    }
+                    _ => Err(Error::Header)
+                }
+            }
+            _ => Err(Error::Header)
+        }
+    }
+
+    fn fmt_header(&self, f: &mut Formatter) -> fmt::Result {
+        f.fmt_line(self)
+    }
+}
+
+impl fmt::Display for HeaderBloomStatus {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&self.0.to_str(), f)
     }
 }
 
@@ -26,8 +73,8 @@ mod tests {
 
     #[test]
     fn it_matches_status_string() {
-        assert_eq!(HeaderStatus::Hit.to_str(), "HIT");
-        assert_eq!(HeaderStatus::Miss.to_str(), "MISS");
-        assert_eq!(HeaderStatus::Direct.to_str(), "DIRECT");
+        assert_eq!(HeaderBloomStatusValue::Hit.to_str(), "HIT");
+        assert_eq!(HeaderBloomStatusValue::Miss.to_str(), "MISS");
+        assert_eq!(HeaderBloomStatusValue::Direct.to_str(), "DIRECT");
     }
 }

@@ -20,15 +20,6 @@ type CacheResult = Result<Option<String>, &'static str>;
 
 impl CacheStoreBuilder {
     pub fn new() -> CacheStore {
-        // TODO: ensure following contracts:
-            // if first connect fails, panic!()
-            // if connection to memcached is lost at any point, mark as \
-            //   disconnected and immediately return get/set futures w/o \
-            //   trying to access the network (this doesnt add extra-latency \
-            //   to api requests). but: keep trying to reconnect in bg.
-            //   (best-effort retries, hit the api directly in that case and \
-            //   return response w/ the DIRECT bloom status header)
-
         info!("Binding to store backend at {}", APP_CONF.memcached.inet);
 
         let tcp_addr = format!("{}:{}", APP_CONF.memcached.inet.ip(),

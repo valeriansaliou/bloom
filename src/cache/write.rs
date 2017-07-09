@@ -4,11 +4,13 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::{Method, StatusCode, Headers};
+use std::str;
+use hyper::{Method, StatusCode, Headers, Body};
 use hyper::server::{Request, Response};
 
 use ::APP_CONF;
 use ::APP_CACHE_STORE;
+use header::janitor::HeaderJanitor;
 use header::response_ignore::HeaderResponseBloomResponseIgnore;
 use header::response_ttl::HeaderResponseBloomResponseTTL;
 
@@ -28,13 +30,14 @@ impl CacheWrite {
                 Some(value) => value.0
             };
 
-            // TODO: nuke contextual / time-dependant headers, add only \
-            //   static headers
-            // TODO: append body
-            let value = "";
+            // Generate storable value
+            let value = format!("{}\n{}\n\n{}",
+                CacheWrite::generate_chain_status(&status),
+                CacheWrite::generate_chain_headers(&headers),
+                CacheWrite::generate_chain_body(()));
 
             // Write to cache
-            APP_CACHE_STORE.set(key, value, ttl).is_ok()
+            APP_CACHE_STORE.set(key, &value, ttl).is_ok()
         } else {
             // Not cacheable, ignore
             false
@@ -90,6 +93,39 @@ impl CacheWrite {
     fn is_cacheable_response(headers: &Headers) -> bool {
         // Ignore responses with 'Bloom-Response-Ignore'
         headers.has::<HeaderResponseBloomResponseIgnore>()
+    }
+
+    fn generate_chain_status(status: &StatusCode) -> String {
+        // TODO
+        String::from("200")
+    }
+
+    fn generate_chain_headers(headers: &Headers) -> String {
+        let mut chain_headers = String::new();
+
+        for header in headers.iter() {
+            // Ensure no contextual header is added to cache
+            if HeaderJanitor::is_contextual(&header) == false {
+                match header.raw().one() {
+                    Some(header_raw) => {
+                        match str::from_utf8(header_raw) {
+                            Ok(header_str) => {
+                                chain_headers.push_str(header_str)
+                            }
+                            _ => ()
+                        }
+                    }
+                    _ => ()
+                }
+            }
+        }
+
+        chain_headers
+    }
+
+    fn generate_chain_body(body: ()) -> String {
+        // TODO
+        String::from("{}")
     }
 }
 

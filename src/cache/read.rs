@@ -13,12 +13,12 @@ impl CacheRead {
         match APP_CACHE_STORE.get(key) {
             Ok(Some(result)) => {
                 Ok(result)
-            },
+            }
             Ok(None) => {
                 warn!("acquired empty value from cache for key: {}", key);
 
                 Err("empty")
-            },
+            }
             Err(err) => {
                 error!("could not acquire value from cache for key: {} \
                     because: {}", key, err);
