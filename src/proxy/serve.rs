@@ -110,24 +110,18 @@ impl ProxyServe {
                 //   for each connection.
                 let mut tunnel = ProxyTunnelBuilder::new();
 
-                match tunnel.run() {
+                match tunnel.run(req.method()) {
                     Ok(tunnel_res) => {
-                        // TODO: parse raw response
-                        let tunnel_res_value = String::from("{}");
-
                         if CacheWrite::save(ns.as_ref(), req, &tunnel_res) ==
                             true {
-                            // TODO
                             self.dispatch_direct(res, tunnel_res,
                                 HeaderBloomStatusValue::Miss)
                         } else {
-                            // TODO
                             self.dispatch_direct(res, tunnel_res,
                                 HeaderBloomStatusValue::Direct)
                         }
                     }
                     _ => {
-                        // TODO: dispatch Bloom proxy error
                         self.dispatch_failure(res)
                     }
                 }
@@ -139,8 +133,6 @@ impl ProxyServe {
 
     fn dispatch_cached(&self, res: &mut Response, value: String) {
         // TODO: handle 'tunnel_res: &mut Response' here.
-
-        // TODO
 
         // TODO: append status
         // TODO: append headers
@@ -156,19 +148,19 @@ impl ProxyServe {
         bloomStatus: HeaderBloomStatusValue) {
         // TODO: handle 'tunnel_res: &mut Response' here.
 
-        // TODO
-
         // TODO: append status
         // TODO: append headers
         res.set_status(tunnel_res.status());  // <-- TODO: dynamic status
+
         // res.set_header(HeaderBloomStatus(bloomStatus))
+
         res.set_body(tunnel_res.body());
     }
 
     fn dispatch_failure(&self, res: &mut Response) {
         let status = StatusCode::BadGateway;
 
-        res.set_status(status);  // <-- TODO: dynamic status
+        res.set_status(status);
 
         // TODO: issue w/ borrow
         // res.with_header(HeaderBloomStatus(HeaderBloomStatusValue::Offline));

@@ -4,7 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::{Error, Client, Uri};
+use hyper::{Error, Client, Uri, Method, Request};
 use hyper::client::HttpConnector;
 use hyper::server::Response;
 use tokio_core::reactor::Core;
@@ -40,12 +40,13 @@ impl ProxyTunnelBuilder {
 }
 
 impl ProxyTunnel {
-    pub fn run(&mut self) -> Result<Response, Error> {
-        // TODO: method + pre-parsed URL
+    pub fn run(&mut self, method: &Method) -> Result<Response, Error> {
         // TODO: multiple shard support (get from config.)
+        // TODO: do not clone()
 
         let shard = 0;
-        let tunnel_req = self.client.get(self.shards[shard].clone());
+        let tunnel_req = self.client.request(
+            Request::new(method.clone(), self.shards[shard].clone()));
 
         self.core.run(tunnel_req)
     }

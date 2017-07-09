@@ -108,18 +108,14 @@ impl CacheWrite {
     }
 
     fn generate_chain_headers(headers: &Headers) -> String {
-        let mut chain_headers = String::new();
-
-        // TODO: beautify this iterator w/ functional design
-        for header in headers.iter() {
-            // Ensure no contextual header is added to cache
-            if HeaderJanitor::is_contextual(&header) == false {
-                chain_headers.push_str(format!("{}: {}\n",
-                    header.name(), header.value_string()).as_ref());
-            }
-        }
-
-        chain_headers
+        headers.iter()
+            .filter(|header| {
+                HeaderJanitor::is_contextual(&header) == false
+            })
+            .map(|header| {
+                format!("{}: {}\n", header.name(), header.value_string())
+            })
+            .collect()
     }
 
     fn generate_chain_body(body: ()) -> String {
