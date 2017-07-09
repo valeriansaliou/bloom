@@ -20,7 +20,7 @@ type CacheResult = Result<Option<String>, &'static str>;
 
 impl CacheStoreBuilder {
     pub fn new() -> CacheStore {
-        info!("Binding to store backend at {}", APP_CONF.memcached.inet);
+        info!("binding to store backend at {}", APP_CONF.memcached.inet);
 
         let tcp_addr = format!("{}:{}", APP_CONF.memcached.inet.ip(),
                             APP_CONF.memcached.inet.port());
@@ -28,7 +28,7 @@ impl CacheStoreBuilder {
         match MemcachedClient::new(
             vec![tcp_addr], APP_CONF.memcached.pool_size) {
             Ok(client_raw) => {
-                info!("Bound to store backend");
+                info!("bound to store backend");
 
                 CacheStore {
                     client: Some(client_raw)

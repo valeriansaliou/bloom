@@ -27,13 +27,15 @@ impl CacheRoute {
         let auth_hash = Self::hash(&authorization_raw);
         let bucket_hash = Self::hash(&bucket_raw);
 
-        debug!("Generated bucket: {} with hash: {}", bucket_raw, bucket_hash);
+        debug!("generated bucket: {} with hash: {}", bucket_raw, bucket_hash);
 
         Self::gen_ns_from_hash(shard, auth_hash.as_str(), bucket_hash.as_str())
     }
 
-    pub fn hash(hash: &str) -> String {
-        format!("{:x}", farmhash::fingerprint32(hash.as_bytes()))
+    pub fn hash(value: &str) -> String {
+        debug!("hashing value: {}", value);
+
+        format!("{:x}", farmhash::fingerprint32(value.as_bytes()))
     }
 }
 
