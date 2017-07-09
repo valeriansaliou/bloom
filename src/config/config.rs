@@ -26,9 +26,10 @@ pub struct ConfigControl {
 pub struct ConfigProxy {
     pub shard: u8,
     pub inet: SocketAddr,
-    pub connect_timeout: u16,
-    pub read_timeout: u16,
-    pub send_timeout: u16
+    pub tunnel_threads: usize,
+    pub tunnel_connect_timeout: u16,
+    pub tunnel_read_timeout: u16,
+    pub tunnel_send_timeout: u16
 }
 
 pub struct ConfigCache {

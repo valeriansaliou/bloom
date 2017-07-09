@@ -11,10 +11,9 @@ pub struct HeaderJanitor;
 
 impl HeaderJanitor {
     pub fn is_contextual(header: &HeaderView) -> bool {
-        // TODO: add more contextual headers here
         header.is::<header::Connection>() ||
             header.is::<header::Date>() ||
             header.is::<header::Upgrade>() ||
-            header.is::<header::ContentEncoding>()
+            header.is::<header::Cookie>()
     }
 }

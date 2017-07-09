@@ -50,14 +50,21 @@ impl ConfigReader {
                 inet: ConfigReaderGetter::get_inet(&conf, "proxy", "inet",
                     "host", "port", defaults::PROXY_HOST, defaults::PROXY_PORT),
 
-                connect_timeout: ConfigReaderGetter::get_generic(&conf, "proxy",
-                    "connect_timeout", defaults::PROXY_CONNECT_TIMEOUT),
+                tunnel_threads: ConfigReaderGetter::get_generic(&conf,
+                    "proxy", "tunnel_threads",
+                    defaults::PROXY_TUNNEL_THREADS),
 
-                read_timeout: ConfigReaderGetter::get_generic(&conf, "proxy",
-                    "read_timeout", defaults::PROXY_READ_TIMEOUT),
+                tunnel_connect_timeout: ConfigReaderGetter::get_generic(&conf,
+                    "proxy", "tunnel_connect_timeout",
+                    defaults::PROXY_TUNNEL_CONNECT_TIMEOUT),
 
-                send_timeout: ConfigReaderGetter::get_generic(&conf, "proxy",
-                    "send_timeout", defaults::PROXY_SEND_TIMEOUT)
+                tunnel_read_timeout: ConfigReaderGetter::get_generic(&conf,
+                    "proxy", "tunnel_read_timeout",
+                    defaults::PROXY_TUNNEL_READ_TIMEOUT),
+
+                tunnel_send_timeout: ConfigReaderGetter::get_generic(&conf,
+                    "proxy", "tunnel_send_timeout",
+                    defaults::PROXY_TUNNEL_SEND_TIMEOUT)
             },
 
             cache: ConfigCache {

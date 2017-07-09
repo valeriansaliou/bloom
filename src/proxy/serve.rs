@@ -11,9 +11,11 @@ use hyper::{Method, StatusCode};
 use hyper::server::{Request, Response};
 
 use super::header::ProxyHeader;
+use super::tunnel::ProxyTunnelBuilder;
 use header::request_shard::HeaderRequestBloomRequestShard;
-use header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
+use header::status::HeaderBloomStatusValue;
 use cache::read::CacheRead;
+use cache::write::CacheWrite;
 use cache::route::CacheRoute;
 
 pub struct ProxyServeBuilder;
@@ -89,35 +91,88 @@ impl ProxyServe {
 
         match CacheRead::acquire(ns.as_ref()) {
             Ok(cached_value) => {
-                self.dispatch(res, HeaderBloomStatusValue::Hit, cached_value)
+                self.dispatch_cached(res, cached_value)
             },
             Err(_) => {
                 // TODO -> connect to API using ConfigProxy[:shard].inet
                     // TODO -> enforce timeouts:
-                        //   - ConfigProxy.connect_timeout
-                        //   - ConfigProxy.read_timeout
-                        //   - ConfigProxy.send_timeout
+                        //   - ConfigProxy.tunnel_connect_timeout
+                        //   - ConfigProxy.tunnel_read_timeout
+                        //   - ConfigProxy.tunnel_send_timeout
                 // TODO -> CacheWrite::save(ns, req, res) (check return value)
                     // TODO -> return == true -> set 'Bloom-Status' as 'MISS'
                     // TODO -> return == false -> set 'Bloom-Status' as 'DIRECT'
 
-                // TODO: not void
-                let value_void = String::from("");
+                // Acquire response object from client to API
 
-                // TODO
-                self.dispatch(res, HeaderBloomStatusValue::Miss, value_void)
+                // TODO: move this to a common factory, ie global.
+                // CRITICAL: avoid spawning new threads and destroying them \
+                //   for each connection.
+                let mut tunnel = ProxyTunnelBuilder::new();
+
+                match tunnel.run() {
+                    Ok(tunnel_res) => {
+                        // TODO: parse raw response
+                        let tunnel_res_value = String::from("{}");
+
+                        if CacheWrite::save(ns.as_ref(), req, &tunnel_res) ==
+                            true {
+                            // TODO
+                            self.dispatch_direct(res, tunnel_res,
+                                HeaderBloomStatusValue::Miss)
+                        } else {
+                            // TODO
+                            self.dispatch_direct(res, tunnel_res,
+                                HeaderBloomStatusValue::Direct)
+                        }
+                    }
+                    _ => {
+                        // TODO: dispatch Bloom proxy error
+                        self.dispatch_failure(res)
+                    }
+                }
             }
         }
 
         debug!("done tunneling for ns = {}", ns);
     }
 
-    fn dispatch(&self, res: &mut Response, bloomStatus: HeaderBloomStatusValue,
-        value: String) {
+    fn dispatch_cached(&self, res: &mut Response, value: String) {
+        // TODO: handle 'tunnel_res: &mut Response' here.
+
         // TODO
 
-        // TODO: tmp header
-        // res.with_header(HeaderBloomStatus(bloomStatus))
-        //     .with_body(value);
+        // TODO: append status
+        // TODO: append headers
+        res.set_status(StatusCode::Accepted);  // <-- TODO: dynamic status
+
+        // TODO: issue w/ borrow
+        // res.with_header(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
+
+        res.set_body(value);
+    }
+
+    fn dispatch_direct(&self, res: &mut Response, tunnel_res: Response,
+        bloomStatus: HeaderBloomStatusValue) {
+        // TODO: handle 'tunnel_res: &mut Response' here.
+
+        // TODO
+
+        // TODO: append status
+        // TODO: append headers
+        res.set_status(tunnel_res.status());  // <-- TODO: dynamic status
+        // res.set_header(HeaderBloomStatus(bloomStatus))
+        res.set_body(tunnel_res.body());
+    }
+
+    fn dispatch_failure(&self, res: &mut Response) {
+        let status = StatusCode::BadGateway;
+
+        res.set_status(status);  // <-- TODO: dynamic status
+
+        // TODO: issue w/ borrow
+        // res.with_header(HeaderBloomStatus(HeaderBloomStatusValue::Offline));
+
+        res.set_body(format!("{}", status));
     }
 }

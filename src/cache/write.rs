@@ -5,7 +5,7 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str;
-use hyper::{Method, StatusCode, Headers, Body};
+use hyper::{Method, HttpVersion, StatusCode, Headers};
 use hyper::server::{Request, Response};
 
 use ::APP_CONF;
@@ -17,13 +17,18 @@ use header::response_ttl::HeaderResponseBloomResponseTTL;
 pub struct CacheWrite;
 
 impl CacheWrite {
-    pub fn save(key: &str, req: Request, res: Response) -> bool {
+    pub fn save(key: &str, req: &Request, res: &Response) -> bool {
+        let version = req.version();
         let method = req.method();
         let status = res.status();
         let headers = res.headers();
 
+        debug!("checking whether to write cache for key: {}", key);
+
         if Self::is_cacheable(&method, &status, &headers)
             == true {
+            debug!("key: {} cacheable, writing cache", key);
+
             // Acquire TTL from response, or fallback to default TTL
             let ttl = match headers.get::<HeaderResponseBloomResponseTTL>() {
                 None => APP_CONF.cache.ttl_default,
@@ -32,13 +37,15 @@ impl CacheWrite {
 
             // Generate storable value
             let value = format!("{}\n{}\n\n{}",
-                CacheWrite::generate_chain_status(&status),
+                CacheWrite::generate_chain_banner(&version, &status),
                 CacheWrite::generate_chain_headers(&headers),
                 CacheWrite::generate_chain_body(()));
 
             // Write to cache
             APP_CACHE_STORE.set(key, &value, ttl).is_ok()
         } else {
+            debug!("key: {} not cacheable, ignoring", key);
+
             // Not cacheable, ignore
             false
         }
@@ -92,31 +99,23 @@ impl CacheWrite {
 
     fn is_cacheable_response(headers: &Headers) -> bool {
         // Ignore responses with 'Bloom-Response-Ignore'
-        headers.has::<HeaderResponseBloomResponseIgnore>()
+        headers.has::<HeaderResponseBloomResponseIgnore>() == false
     }
 
-    fn generate_chain_status(status: &StatusCode) -> String {
-        // TODO
-        String::from("200")
+    fn generate_chain_banner(version: &HttpVersion, status: &StatusCode) ->
+        String {
+        format!("{} {}", version, status)
     }
 
     fn generate_chain_headers(headers: &Headers) -> String {
         let mut chain_headers = String::new();
 
+        // TODO: beautify this iterator w/ functional design
         for header in headers.iter() {
             // Ensure no contextual header is added to cache
             if HeaderJanitor::is_contextual(&header) == false {
-                match header.raw().one() {
-                    Some(header_raw) => {
-                        match str::from_utf8(header_raw) {
-                            Ok(header_str) => {
-                                chain_headers.push_str(header_str)
-                            }
-                            _ => ()
-                        }
-                    }
-                    _ => ()
-                }
+                chain_headers.push_str(format!("{}: {}\n",
+                    header.name(), header.value_string()).as_ref());
             }
         }
 

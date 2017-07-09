@@ -7,7 +7,7 @@
 use std::fmt;
 use std::str;
 
-use hyper::{Result, Error};
+use hyper::Result;
 use hyper::header::{Header, Raw, Formatter, parsing};
 
 #[derive(Clone)]

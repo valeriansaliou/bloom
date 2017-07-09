@@ -8,13 +8,14 @@ use std::str;
 use std::fmt;
 
 use hyper::{Result, Error};
-use hyper::header::{Header, Raw, Formatter, parsing};
+use hyper::header::{Header, Raw, Formatter};
 
 #[derive(Clone)]
 pub enum HeaderBloomStatusValue {
     Hit,
     Miss,
-    Direct
+    Direct,
+    Offline
 }
 
 #[derive(Clone)]
@@ -26,6 +27,7 @@ impl HeaderBloomStatusValue {
             HeaderBloomStatusValue::Hit => "HIT",
             HeaderBloomStatusValue::Miss => "MISS",
             HeaderBloomStatusValue::Direct => "DIRECT",
+            HeaderBloomStatusValue::Offline => "OFFLINE"
         }
     }
 }
@@ -48,6 +50,9 @@ impl Header for HeaderBloomStatus {
                     }
                     Ok("DIRECT") => {
                         Ok(HeaderBloomStatus(HeaderBloomStatusValue::Direct))
+                    }
+                    Ok("OFFLINE") => {
+                        Ok(HeaderBloomStatus(HeaderBloomStatusValue::Offline))
                     }
                     _ => Err(Error::Header)
                 }
@@ -76,5 +81,6 @@ mod tests {
         assert_eq!(HeaderBloomStatusValue::Hit.to_str(), "HIT");
         assert_eq!(HeaderBloomStatusValue::Miss.to_str(), "MISS");
         assert_eq!(HeaderBloomStatusValue::Direct.to_str(), "DIRECT");
+        assert_eq!(HeaderBloomStatusValue::Offline.to_str(), "OFFLINE");
     }
 }

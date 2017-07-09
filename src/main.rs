@@ -9,6 +9,7 @@
 #[macro_use] extern crate lazy_static;
 extern crate ini;
 extern crate hyper;
+extern crate tokio_core;
 extern crate farmhash;
 extern crate futures;
 extern crate bmemcached;

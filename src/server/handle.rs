@@ -8,8 +8,8 @@ use futures::future::FutureResult;
 use hyper;
 use hyper::server::{Service, Request, Response};
 
-use ::APP_PROXY_SERVE;
 use proxy::serve::ProxyServeFuture;
+use ::APP_PROXY_SERVE;
 
 pub struct ServerRequestHandle;
 
