@@ -7,12 +7,10 @@
 use hyper::{Method, StatusCode};
 use hyper::server::{Request, Response};
 
-use ::APP_CACHE_STORE;
-
 pub struct CacheWrite;
 
 impl CacheWrite {
-    pub fn save(ns: &str, req: Request, res: Response) -> bool {
+    pub fn save(req: Request, res: Response) -> bool {
         // TODO: Not implemented
 
         if Self::is_cacheable(req, res) == true {

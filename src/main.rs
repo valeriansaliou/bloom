@@ -21,7 +21,7 @@ mod cache;
 mod control;
 mod server;
 
-use clap::{App, Arg, ArgMatches};
+use clap::{App, Arg};
 use config::config::Config;
 use config::logger::ConfigLogger;
 use config::reader::ConfigReaderBuilder;

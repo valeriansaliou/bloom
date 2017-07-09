@@ -7,7 +7,7 @@
 use std::str;
 use std::io::{Read, Write};
 use std::result::Result;
-use std::net::{Shutdown, TcpStream};
+use std::net::TcpStream;
 
 use rand::{thread_rng, Rng};
 

@@ -10,8 +10,6 @@ use std::net::TcpListener;
 
 use super::handle::ControlHandle;
 use ::APP_CONF;
-use config::config::ConfigControl;
-use cache::store::CacheStore;
 
 pub struct ControlListenBuilder;
 pub struct ControlListen;

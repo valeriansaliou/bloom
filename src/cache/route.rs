@@ -4,7 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::{Method, StatusCode, HttpVersion};
+use hyper::{Method, HttpVersion};
 use farmhash;
 
 pub struct CacheRoute;

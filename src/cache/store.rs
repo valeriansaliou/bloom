@@ -6,13 +6,10 @@
 
 use std::cmp;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 use bmemcached::MemcachedClient;
-use bmemcached::errors::BMemcachedError;
 
 use ::APP_CONF;
-use config::config::ConfigMemcached;
 
 pub struct CacheStoreBuilder;
 

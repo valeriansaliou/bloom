@@ -9,8 +9,6 @@ use hyper;
 use hyper::server::{Service, Request, Response};
 
 use ::APP_PROXY_SERVE;
-use cache::store::CacheStore;
-use proxy::serve::ProxyServe;
 use proxy::serve::ProxyServeFuture;
 
 pub struct ServerRequestHandle;

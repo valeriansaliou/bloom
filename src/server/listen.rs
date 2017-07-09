@@ -9,9 +9,6 @@ use hyper::server::Http;
 use super::handle::ServerRequestHandle;
 
 use ::APP_CONF;
-use config::config::ConfigServer;
-use cache::store::CacheStore;
-use proxy::serve::ProxyServe;
 
 pub struct ServerListenBuilder;
 pub struct ServerListen;
