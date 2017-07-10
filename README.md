@@ -104,6 +104,28 @@ proxy_set_header Bloom-Request-Shard 0;
 
 **Notice: a shard number is an integer from 0 to 255 (8-bit unsigned number).**
 
+## How to install it on Debian & Ubuntu?
+
+Bloom provides [pre-built packages](https://packagecloud.io/valeriansaliou/bloom) for Debian-based systems (Debian, Ubuntu, etc.).
+
+Installing Bloom on those systems is as simple as:
+
+```bash
+curl -s https://packagecloud.io/install/repositories/valeriansaliou/bloom/script.deb.sh | sudo bash
+```
+
+Then, edit the pre-filled Bloom configuration file:
+
+```bash
+nano /etc/bloom/bloom.cfg
+```
+
+Finally, restart Bloom using:
+
+```
+service bloom restart
+```
+
 ## How fast is it?
 
 Bloom is built in Rust, which can be compiled to native code for your architecture. Rust, unlike eg. Golang, doesn't carry a GC (Garbage Collector), which is usually a bad thing for high-throughput / high-load production systems (as a GC halts all program instruction execution for an amount of time that depends on how many references are kept in memory).
