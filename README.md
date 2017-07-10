@@ -108,25 +108,25 @@ proxy_set_header Bloom-Request-Shard 0;
 
 Bloom provides [pre-built packages](https://packagecloud.io/valeriansaliou/bloom) for Debian-based systems (Debian, Ubuntu, etc.).
 
-**1️⃣ Start by adding the Bloom APT repository:**
+**1️⃣ Add the Bloom APT repository:**
 
 ```bash
 curl -s https://packagecloud.io/install/repositories/valeriansaliou/bloom/script.deb.sh | sudo bash
 ```
 
-**2️⃣ Then, install the Bloom package:**
+**2️⃣ Install the Bloom package:**
 
 ```bash
 sudo apt-get install bloom
 ```
 
-**3️⃣ Then, edit the pre-filled Bloom configuration file:**
+**3️⃣ Edit the pre-filled Bloom configuration file:**
 
 ```bash
 sudo nano /etc/bloom/bloom.cfg
 ```
 
-**4️⃣ Finally, restart Bloom using:**
+**4️⃣ Restart Bloom:**
 
 ```
 sudo service bloom restart
