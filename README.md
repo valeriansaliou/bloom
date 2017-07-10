@@ -111,7 +111,7 @@ Bloom provides [pre-built packages](https://packagecloud.io/valeriansaliou/bloom
 Installing Bloom on those systems is as simple as:
 
 ```bash
-curl -s https://packagecloud.io/install/repositories/valeriansaliou/bloom/script.deb.sh | sudo bash
+curl -s https://packagecloud.io/install/repositories/valeriansaliou/bloom/script.deb.sh | sudo bash && apt-get install bloom
 ```
 
 Then, edit the pre-filled Bloom configuration file:
