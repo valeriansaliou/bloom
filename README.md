@@ -108,25 +108,25 @@ proxy_set_header Bloom-Request-Shard 0;
 
 Bloom provides [pre-built packages](https://packagecloud.io/valeriansaliou/bloom) for Debian-based systems (Debian, Ubuntu, etc.).
 
-Start by adding the Bloom APT repository:
+**1️⃣ Start by adding the Bloom APT repository:**
 
 ```bash
 curl -s https://packagecloud.io/install/repositories/valeriansaliou/bloom/script.deb.sh | sudo bash
 ```
 
-Then, install the Bloom package:
+**2️⃣ Then, install the Bloom package:**
 
 ```bash
 sudo apt-get install bloom
 ```
 
-Then, edit the pre-filled Bloom configuration file:
+**3️⃣ Then, edit the pre-filled Bloom configuration file:**
 
 ```bash
 sudo nano /etc/bloom/bloom.cfg
 ```
 
-Finally, restart Bloom using:
+**4️⃣ Finally, restart Bloom using:**
 
 ```
 sudo service bloom restart
@@ -159,7 +159,7 @@ This way, your API worker (or any other worker in your infrastructure) can eithe
 * **Expire cache for a given bucket.** Note that as a given bucket may contain variations of cache for different HTTP `Authorization` headers, bucket cache for all authentication tokens is purged at the same time when you purge cache for a bucket.
 * **Expire cache for a given HTTP `Authorization` header.** Useful if an user logs-out and revokes their authentication token.
 
-**➡️  Available commands:**
+**➡️ Available commands:**
 
 * `FLUSHB <namespace>`: flush cache for given bucket namespace
 * `FLUSHA <authorization>`: flush cache for given authorization
@@ -167,7 +167,7 @@ This way, your API worker (or any other worker in your infrastructure) can eithe
 * `PING`: ping server
 * `QUIT`: stop connection
 
-**⬇️  Control flow example:**
+**⬇️ Control flow example:**
 
 ```bash
 telnet bloom.local 811
