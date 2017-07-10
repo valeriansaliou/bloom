@@ -72,6 +72,8 @@ cargo build --release
 
 You can find the built binaries in the `./target/release` directory.
 
+**Notice: Debian & Ubuntu packages are also distributed. You may use those instead of building Bloom yourself. See below.**
+
 ### Configuration
 
 Use the sample [config.cfg](https://github.com/valeriansaliou/bloom/blob/master/config.cfg) configuration file and adjust it to your own environment.
