@@ -5,8 +5,9 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str;
-use hyper::{Method, HttpVersion, StatusCode, Headers};
+use hyper::{Method, HttpVersion, StatusCode, Headers, Body};
 use hyper::server::{Request, Response};
+use futures::{Stream, Future};
 
 use ::APP_CONF;
 use ::APP_CACHE_STORE;
@@ -25,7 +26,7 @@ impl CacheWrite {
 
         debug!("checking whether to write cache for key: {}", key);
 
-        if Self::is_cacheable(&method, &status, &headers)
+        if Self::is_cacheable(&method, &status, headers)
             == true {
             debug!("key: {} cacheable, writing cache", key);
 
@@ -35,11 +36,40 @@ impl CacheWrite {
                 Some(value) => value.0
             };
 
+            // Acquire body value
+            let mut body_value = String::from("{}");
+
+            // TODO: beautify this iterator w/ functional design
+            // for body_chunk in res.body().wait().enumerate() {
+            //     match body_chunk.1 {
+            //         Ok(body_chunk_value) => {
+            //             for value in body_chunk_value.iter() {
+            //                 body_value.push_str(str::from_utf8(&[*value]).unwrap());
+            //             }
+            //         }
+            //         _ => ()
+            //     }
+            // }
+
+            // let body = res.body().wait().map(|chunk| {
+            //     String::from_utf8(chunk)
+            // }).collect();
+
+            // let body = res.body()
+            //             .map_err(|_| ())
+            //             .fold(vec![], |mut acc, chunk| {
+            //                 acc.extend_from_slice(&chunk);
+            //                 Ok(acc)
+            //             })
+            //             .and_then(|v| String::from_utf8(v)
+            //             .map_err(|_| ()))
+            //             .wait().unwrap();
+
             // Generate storable value
             let value = format!("{}\n{}\n\n{}",
                 CacheWrite::generate_chain_banner(&version, &status),
-                CacheWrite::generate_chain_headers(&headers),
-                CacheWrite::generate_chain_body(()));
+                CacheWrite::generate_chain_headers(headers),
+                body_value);
 
             // Write to cache
             APP_CACHE_STORE.set(key, &value, ttl).is_ok()
@@ -116,11 +146,6 @@ impl CacheWrite {
                 format!("{}: {}\n", header.name(), header.value_string())
             })
             .collect()
-    }
-
-    fn generate_chain_body(body: ()) -> String {
-        // TODO
-        String::from("{}")
     }
 }
 
