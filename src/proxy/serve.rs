@@ -85,7 +85,11 @@ impl ProxyServe {
         // TODO: implement support for Bloom-Response-Bucket
         // CONCERN: how to link this to the gen_ns() utility? We dont \
         //   know about which route is mapped to which bucket in advance. \
-        //   so maybe redesign this part.
+        //   so maybe redesign this part.  <--- FOUND OUT
+        // WAIT TO GO: any route can be 'tagged' as 'bucket' using a generic \
+        //   tagging system. As buckets are only used for cache expiration, \
+        //   and not cache storage, they are only useful as 'tags'. This way \
+        //   we dont need to know them in advance.
 
         info!("tunneling for ns = {}", ns);
 
