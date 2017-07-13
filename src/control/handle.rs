@@ -146,13 +146,10 @@ impl ControlHandle {
                         ErrorKind::TimedOut => "timed_out",
                         ErrorKind::ConnectionAborted => "connection_aborted",
                         ErrorKind::Interrupted => "interrupted",
-                        _ => "error"
+                        _ => "unknown"
                     };
 
                     return Err(err_reason)
-                }
-                _ => {
-                    return Err("unknown")
                 }
             }
         }

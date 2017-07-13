@@ -13,7 +13,7 @@ use hyper::server::{Request, Response};
 use super::header::ProxyHeader;
 use super::tunnel::ProxyTunnelBuilder;
 use header::request_shard::HeaderRequestBloomRequestShard;
-use header::status::HeaderBloomStatusValue;
+use header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
 use cache::read::CacheRead;
 use cache::write::CacheWrite;
 use cache::route::CacheRoute;
@@ -64,6 +64,7 @@ impl ProxyServe {
     fn reject(&self, req: &Request, status: StatusCode) -> Response {
         Response::new()
             .with_status(status)
+            .with_header(HeaderBloomStatus(HeaderBloomStatusValue::Reject))
             .with_body(
                 match *req.method() {
                     Method::Get
@@ -90,7 +91,7 @@ impl ProxyServe {
         // CONCERN: how to link this to the gen_ns() utility? We dont \
         //   know about which route is mapped to which bucket in advance. \
         //   so maybe redesign this part.  <--- FOUND OUT
-        // WAIT TO GO: any route can be 'tagged' as 'bucket' using a generic \
+        // WAY TO GO: any route can be 'tagged' as 'bucket' using a generic \
         //   tagging system. As buckets are only used for cache expiration, \
         //   and not cache storage, they are only useful as 'tags'. This way \
         //   we dont need to know them in advance.
@@ -102,17 +103,6 @@ impl ProxyServe {
                 self.dispatch_cached(cached_value)
             },
             Err(_) => {
-                // TODO -> connect to API using ConfigProxy[:shard].inet
-                    // TODO -> enforce timeouts:
-                        //   - ConfigProxy.tunnel_connect_timeout
-                        //   - ConfigProxy.tunnel_read_timeout
-                        //   - ConfigProxy.tunnel_send_timeout
-                // TODO -> CacheWrite::save(ns, req, res) (check return value)
-                    // TODO -> return == true -> set 'Bloom-Status' as 'MISS'
-                    // TODO -> return == false -> set 'Bloom-Status' as 'DIRECT'
-
-                // Acquire response object from client to API
-
                 // TODO: move this to a common factory, ie global.
                 // CRITICAL: avoid spawning new threads and destroying them \
                 //   for each connection.
@@ -120,14 +110,13 @@ impl ProxyServe {
 
                 match tunnel.run(req.method()) {
                     Ok(tunnel_res) => {
-                        if CacheWrite::save(ns.as_ref(), req, &tunnel_res) ==
-                            true {
-                            self.dispatch_direct(tunnel_res,
-                                HeaderBloomStatusValue::Miss)
-                        } else {
-                            self.dispatch_direct(tunnel_res,
-                                HeaderBloomStatusValue::Direct)
-                        }
+                        let bloomStatus = match CacheWrite::save(ns.as_ref(),
+                            req, &tunnel_res) {
+                            Ok(_) => HeaderBloomStatusValue::Miss,
+                            _ => HeaderBloomStatusValue::Direct
+                        };
+
+                        self.dispatch_fetched(tunnel_res, bloomStatus)
                     }
                     _ => {
                         self.dispatch_failure()
@@ -138,43 +127,31 @@ impl ProxyServe {
     }
 
     fn dispatch_cached(&self, value: String) -> Response {
-        // TODO: handle 'tunnel_res: &mut Response' here.
-
-        // TODO: issue w/ borrow
-        // res.with_header(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
-
         // TODO: parse value and split headers (restore them + set body)
-
         // TODO: append status
         // TODO: append headers
 
         Response::new()
             .with_status(StatusCode::Accepted)  // <-- TODO: dynamic status
+            .with_header(HeaderBloomStatus(HeaderBloomStatusValue::Hit))
             .with_body(value)
     }
 
-    fn dispatch_direct(&self, tunnel_res: Response,
+    fn dispatch_fetched(&self, tunnel_res: Response,
         bloomStatus: HeaderBloomStatusValue) -> Response {
-        // TODO: handle 'tunnel_res: &mut Response' here.
-
-        // res.set_header(HeaderBloomStatus(bloomStatus))
-
-        // TODO: append status
-        // TODO: append headers
-
         Response::new()
-            .with_status(tunnel_res.status())  // <-- TODO: dynamic status
+            .with_status(tunnel_res.status())
+            .with_headers(tunnel_res.headers().clone())
+            .with_header(HeaderBloomStatus(bloomStatus))
             .with_body(tunnel_res.body())
     }
 
     fn dispatch_failure(&self) -> Response {
         let status = StatusCode::BadGateway;
 
-        // TODO: issue w/ borrow
-        // res.with_header(HeaderBloomStatus(HeaderBloomStatusValue::Offline));
-
         Response::new()
             .with_status(status)
+            .with_header(HeaderBloomStatus(HeaderBloomStatusValue::Offline))
             .with_body(format!("{}", status))
     }
 }

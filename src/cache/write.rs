@@ -18,12 +18,12 @@ use header::response_ttl::HeaderResponseBloomResponseTTL;
 pub struct CacheWrite;
 
 impl CacheWrite {
-    pub fn save(key: &str, req: &Request, res: &Response) -> bool {
+    pub fn save(key: &str, req: &Request, res: &Response) -> Result<(), ()> {
         let ref version = req.version();
         let ref method = req.method();
         let ref status = res.status();
         let ref headers = res.headers();
-        let ref body = res.body();
+        // let ref body = res.body();
 
         debug!("checking whether to write cache for key: {}", key);
 
@@ -38,15 +38,18 @@ impl CacheWrite {
             };
 
             // Acquire body value
-            let body_result = body
-                .fold(Vec::new(), |mut vector, chunk| {
-                    vector.extend(&chunk[..]);
+            // TODO
+            let body_result: Result<String, ()> = Ok(String::new());
 
-                    future::ok::<_, Error>(vector)
-                }).map(|chunks| {
-                    String::from_utf8(chunks).unwrap()
-                })
-                .wait();
+            // let body_result = body
+            //     .fold(Vec::new(), |mut vector, chunk| {
+            //         vector.extend(&chunk[..]);
+
+            //         future::ok::<_, Error>(vector)
+            //     }).map(|chunks| {
+            //         String::from_utf8(chunks).unwrap()
+            //     })
+            //     .wait();
 
             match body_result {
                 Ok(body_value) => {
@@ -57,20 +60,24 @@ impl CacheWrite {
                         body_value);
 
                     // Write to cache
-                    APP_CACHE_STORE.set(key, &value, ttl).is_ok()
+                    if APP_CACHE_STORE.set(key, &value, ttl).is_ok() == true {
+                        Ok(())
+                    } else {
+                        Err(())
+                    }
                 }
                 _ => {
                     error!("failed unwrapping body value for key: {}, ignoring",
                         key);
 
-                    false
+                    Err(())
                 }
             }
         } else {
             debug!("key: {} not cacheable, ignoring", key);
 
             // Not cacheable, ignore
-            false
+            Err(())
         }
     }
 

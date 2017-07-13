@@ -52,19 +52,7 @@ impl ConfigReader {
 
                 tunnel_threads: ConfigReaderGetter::get_generic(&conf,
                     "proxy", "tunnel_threads",
-                    defaults::PROXY_TUNNEL_THREADS),
-
-                tunnel_connect_timeout: ConfigReaderGetter::get_generic(&conf,
-                    "proxy", "tunnel_connect_timeout",
-                    defaults::PROXY_TUNNEL_CONNECT_TIMEOUT),
-
-                tunnel_read_timeout: ConfigReaderGetter::get_generic(&conf,
-                    "proxy", "tunnel_read_timeout",
-                    defaults::PROXY_TUNNEL_READ_TIMEOUT),
-
-                tunnel_send_timeout: ConfigReaderGetter::get_generic(&conf,
-                    "proxy", "tunnel_send_timeout",
-                    defaults::PROXY_TUNNEL_SEND_TIMEOUT)
+                    defaults::PROXY_TUNNEL_THREADS)
             },
 
             cache: ConfigCache {

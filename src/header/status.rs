@@ -15,6 +15,7 @@ pub enum HeaderBloomStatusValue {
     Hit,
     Miss,
     Direct,
+    Reject,
     Offline
 }
 
@@ -27,6 +28,7 @@ impl HeaderBloomStatusValue {
             HeaderBloomStatusValue::Hit => "HIT",
             HeaderBloomStatusValue::Miss => "MISS",
             HeaderBloomStatusValue::Direct => "DIRECT",
+            HeaderBloomStatusValue::Reject => "REJECT",
             HeaderBloomStatusValue::Offline => "OFFLINE"
         }
     }
@@ -50,6 +52,9 @@ impl Header for HeaderBloomStatus {
                     }
                     Ok("DIRECT") => {
                         Ok(HeaderBloomStatus(HeaderBloomStatusValue::Direct))
+                    }
+                    Ok("REJECT") => {
+                        Ok(HeaderBloomStatus(HeaderBloomStatusValue::Reject))
                     }
                     Ok("OFFLINE") => {
                         Ok(HeaderBloomStatus(HeaderBloomStatusValue::Offline))
@@ -81,6 +86,7 @@ mod tests {
         assert_eq!(HeaderBloomStatusValue::Hit.to_str(), "HIT");
         assert_eq!(HeaderBloomStatusValue::Miss.to_str(), "MISS");
         assert_eq!(HeaderBloomStatusValue::Direct.to_str(), "DIRECT");
+        assert_eq!(HeaderBloomStatusValue::Reject.to_str(), "REJECT");
         assert_eq!(HeaderBloomStatusValue::Offline.to_str(), "OFFLINE");
     }
 }

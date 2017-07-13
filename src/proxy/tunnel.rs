@@ -42,7 +42,6 @@ impl ProxyTunnelBuilder {
 impl ProxyTunnel {
     pub fn run(&mut self, method: &Method) -> Result<Response, Error> {
         // TODO: multiple shard support (get from config.)
-        // TODO: do not clone()
 
         let shard = 0;
         let tunnel_req = self.client.request(
