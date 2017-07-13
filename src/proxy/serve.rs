@@ -145,6 +145,8 @@ impl ProxyServe {
         // TODO: issue w/ borrow
         // res.with_header(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
+        // TODO: parse value and split headers (restore them + set body)
+
         res.set_body(value);
     }
 

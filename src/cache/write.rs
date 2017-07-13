@@ -5,9 +5,9 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str;
-use hyper::{Method, HttpVersion, StatusCode, Headers, Body};
+use hyper::{Error, Method, HttpVersion, StatusCode, Headers, Body};
 use hyper::server::{Request, Response};
-use futures::{Stream, Future};
+use futures::{future, Stream, Future};
 
 use ::APP_CONF;
 use ::APP_CACHE_STORE;
@@ -19,14 +19,15 @@ pub struct CacheWrite;
 
 impl CacheWrite {
     pub fn save(key: &str, req: &Request, res: &Response) -> bool {
-        let version = req.version();
-        let method = req.method();
-        let status = res.status();
-        let headers = res.headers();
+        let ref version = req.version();
+        let ref method = req.method();
+        let ref status = res.status();
+        let ref headers = res.headers();
+        let ref body = res.body();
 
         debug!("checking whether to write cache for key: {}", key);
 
-        if Self::is_cacheable(&method, &status, headers)
+        if Self::is_cacheable(method, status, headers)
             == true {
             debug!("key: {} cacheable, writing cache", key);
 
@@ -37,42 +38,34 @@ impl CacheWrite {
             };
 
             // Acquire body value
-            let mut body_value = String::from("{}");
+            let body_result = body
+                .fold(Vec::new(), |mut vector, chunk| {
+                    vector.extend(&chunk[..]);
 
-            // TODO: beautify this iterator w/ functional design
-            // for body_chunk in res.body().wait().enumerate() {
-            //     match body_chunk.1 {
-            //         Ok(body_chunk_value) => {
-            //             for value in body_chunk_value.iter() {
-            //                 body_value.push_str(str::from_utf8(&[*value]).unwrap());
-            //             }
-            //         }
-            //         _ => ()
-            //     }
-            // }
+                    future::ok::<_, Error>(vector)
+                }).map(|chunks| {
+                    String::from_utf8(chunks).unwrap()
+                })
+                .wait();
 
-            // let body = res.body().wait().map(|chunk| {
-            //     String::from_utf8(chunk)
-            // }).collect();
+            match body_result {
+                Ok(body_value) => {
+                    // Generate storable value
+                    let value = format!("{}\n{}\n\n{}",
+                        CacheWrite::generate_chain_banner(version, status),
+                        CacheWrite::generate_chain_headers(headers),
+                        body_value);
 
-            // let body = res.body()
-            //             .map_err(|_| ())
-            //             .fold(vec![], |mut acc, chunk| {
-            //                 acc.extend_from_slice(&chunk);
-            //                 Ok(acc)
-            //             })
-            //             .and_then(|v| String::from_utf8(v)
-            //             .map_err(|_| ()))
-            //             .wait().unwrap();
+                    // Write to cache
+                    APP_CACHE_STORE.set(key, &value, ttl).is_ok()
+                }
+                _ => {
+                    error!("failed unwrapping body value for key: {}, ignoring",
+                        key);
 
-            // Generate storable value
-            let value = format!("{}\n{}\n\n{}",
-                CacheWrite::generate_chain_banner(&version, &status),
-                CacheWrite::generate_chain_headers(headers),
-                body_value);
-
-            // Write to cache
-            APP_CACHE_STORE.set(key, &value, ttl).is_ok()
+                    false
+                }
+            }
         } else {
             debug!("key: {} not cacheable, ignoring", key);
 
