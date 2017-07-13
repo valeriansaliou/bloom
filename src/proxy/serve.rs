@@ -7,7 +7,7 @@
 use futures::future;
 use futures::future::FutureResult;
 use hyper;
-use hyper::{Method, StatusCode};
+use hyper::{Method, StatusCode, Headers};
 use hyper::server::{Request, Response};
 
 use super::header::ProxyHeader;
@@ -110,13 +110,26 @@ impl ProxyServe {
 
                 match tunnel.run(req.method()) {
                     Ok(tunnel_res) => {
-                        let bloom_status = match CacheWrite::save(ns.as_ref(),
-                            req, &tunnel_res) {
-                            Ok(_) => HeaderBloomStatusValue::Miss,
-                            _ => HeaderBloomStatusValue::Direct
-                        };
+                        let ref status = tunnel_res.status();
+                        let headers = tunnel_res.headers().clone();
 
-                        self.dispatch_fetched(tunnel_res, bloom_status)
+                        match CacheWrite::save(ns.as_ref(),
+                            req, status, &headers, tunnel_res.body()) {
+                            Ok(body_string) => {
+                                self.dispatch_fetched(status, headers,
+                                    HeaderBloomStatusValue::Miss, body_string)
+                            }
+                            Err(body_string_values) => {
+                                match body_string_values {
+                                    Some(body_string) => {
+                                        self.dispatch_fetched(status, headers,
+                                            HeaderBloomStatusValue::Direct,
+                                            body_string)
+                                    }
+                                    _ => self.dispatch_failure()
+                                }
+                            }
+                        }
                     }
                     _ => {
                         self.dispatch_failure()
@@ -137,13 +150,14 @@ impl ProxyServe {
             .with_body(value)
     }
 
-    fn dispatch_fetched(&self, tunnel_res: Response,
-        bloom_status: HeaderBloomStatusValue) -> Response {
+    fn dispatch_fetched(&self, status: &StatusCode, headers: Headers,
+        bloom_status: HeaderBloomStatusValue, body_string: String) ->
+        Response {
         Response::new()
-            .with_status(tunnel_res.status())
-            .with_headers(tunnel_res.headers().clone())
+            .with_status(*status)
+            .with_headers(headers)
             .with_header(HeaderBloomStatus(bloom_status))
-            .with_body(tunnel_res.body())
+            .with_body(body_string)
     }
 
     fn dispatch_failure(&self) -> Response {

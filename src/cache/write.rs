@@ -5,8 +5,9 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str;
-use hyper::{Method, HttpVersion, StatusCode, Headers};
-use hyper::server::{Request, Response};
+use hyper::{Error, Method, HttpVersion, StatusCode, Headers, Body};
+use hyper::server::Request;
+use futures::{future, Future, Stream};
 
 use ::APP_CONF;
 use ::APP_CACHE_STORE;
@@ -17,66 +18,60 @@ use header::response_ttl::HeaderResponseBloomResponseTTL;
 pub struct CacheWrite;
 
 impl CacheWrite {
-    pub fn save(key: &str, req: &Request, res: &Response) -> Result<(), ()> {
-        let ref version = req.version();
-        let ref method = req.method();
-        let ref status = res.status();
-        let ref headers = res.headers();
-        // let ref body = res.body();
+    pub fn save(key: &str, req: &Request, status: &StatusCode,
+        headers: &Headers, body: Body) -> Result<String, Option<String>> {
+        // Acquire body value
+        let body_result = body
+            .fold(Vec::new(), |mut vector, chunk| {
+                vector.extend(&chunk[..]);
 
-        debug!("checking whether to write cache for key: {}", key);
+                future::ok::<_, Error>(vector)
+            }).map(|chunks| {
+                String::from_utf8(chunks).unwrap()
+            })
+            .wait();
 
-        if Self::is_cacheable(method, status, headers)
-            == true {
-            debug!("key: {} cacheable, writing cache", key);
+        match body_result {
+            Ok(body_value) => {
+                debug!("checking whether to write cache for key: {}", key);
 
-            // Acquire TTL from response, or fallback to default TTL
-            let ttl = match headers.get::<HeaderResponseBloomResponseTTL>() {
-                None => APP_CONF.cache.ttl_default,
-                Some(value) => value.0
-            };
+                if Self::is_cacheable(&req.method(), status, headers)
+                    == true {
+                    debug!("key: {} cacheable, writing cache", key);
 
-            // Acquire body value
-            // TODO
-            let body_result: Result<String, ()> = Ok(String::new());
+                    // Acquire TTL from response, or fallback to default TTL
+                    let ttl = match
+                        headers.get::<HeaderResponseBloomResponseTTL>() {
+                        None => APP_CONF.cache.ttl_default,
+                        Some(value) => value.0
+                    };
 
-            // let body_result = body
-            //     .fold(Vec::new(), |mut vector, chunk| {
-            //         vector.extend(&chunk[..]);
-
-            //         future::ok::<_, Error>(vector)
-            //     }).map(|chunks| {
-            //         String::from_utf8(chunks).unwrap()
-            //     })
-            //     .wait();
-
-            match body_result {
-                Ok(body_value) => {
                     // Generate storable value
                     let value = format!("{}\n{}\n\n{}",
-                        CacheWrite::generate_chain_banner(version, status),
+                        CacheWrite::generate_chain_banner(&req.version(),
+                            status),
                         CacheWrite::generate_chain_headers(headers),
                         body_value);
 
                     // Write to cache
                     if APP_CACHE_STORE.set(key, &value, ttl).is_ok() == true {
-                        Ok(())
+                        Ok(body_value)
                     } else {
-                        Err(())
+                        Err(Some(body_value))
                     }
-                }
-                _ => {
-                    error!("failed unwrapping body value for key: {}, ignoring",
-                        key);
+                } else {
+                    debug!("key: {} not cacheable, ignoring", key);
 
-                    Err(())
+                    // Not cacheable, ignore
+                    Err(Some(body_value))
                 }
             }
-        } else {
-            debug!("key: {} not cacheable, ignoring", key);
+            _ => {
+                error!("failed unwrapping body value for key: {}, ignoring",
+                    key);
 
-            // Not cacheable, ignore
-            Err(())
+                Err(None)
+            }
         }
     }
 
