@@ -26,6 +26,8 @@ impl Service for ServerRequestHandle {
     type Future = FutureResult<Response, hyper::Error>;
 
     fn call(&self, req: Request) -> ProxyServeFuture {
+        debug!("called proxy serve");
+
         APP_PROXY_SERVE.handle(req)
     }
 }

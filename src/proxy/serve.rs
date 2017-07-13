@@ -66,20 +66,12 @@ impl ProxyServe {
     }
 
     fn reject(&self, req: &Request, status: StatusCode) -> Response {
-        Response::new()
-            .with_status(status)
-            .with_header(HeaderBloomStatus(HeaderBloomStatusValue::Reject))
-            .with_body(
-                match *req.method() {
-                    Method::Get
-                    | Method::Post
-                    | Method::Patch
-                    | Method::Put => {
-                        format!("{}", status)
-                    }
-                    _ => String::new()
-                }
-            )
+        let mut headers = Headers::new();
+
+        headers.set::<HeaderBloomStatus>(
+            HeaderBloomStatus(HeaderBloomStatusValue::Reject));
+
+        self.respond(req, status, headers, format!("{}", status))
     }
 
     fn tunnel(&self, req: &Request) -> Response {
@@ -104,7 +96,7 @@ impl ProxyServe {
 
         match CacheRead::acquire(ns.as_ref()) {
             Ok(cached_value) => {
-                self.dispatch_cached(cached_value)
+                self.dispatch_cached(req, cached_value)
             },
             Err(_) => {
                 // TODO: move this to a common factory, ie global.
@@ -120,30 +112,34 @@ impl ProxyServe {
                         match CacheWrite::save(ns.as_ref(),
                             req, status, &headers, tunnel_res.body()) {
                             Ok(body_string) => {
-                                self.dispatch_fetched(status, headers,
+                                self.dispatch_fetched(req, status, headers,
                                     HeaderBloomStatusValue::Miss, body_string)
                             }
                             Err(body_string_values) => {
                                 match body_string_values {
                                     Some(body_string) => {
-                                        self.dispatch_fetched(status, headers,
+                                        self.dispatch_fetched(req, status,
+                                            headers,
                                             HeaderBloomStatusValue::Direct,
                                             body_string)
                                     }
-                                    _ => self.dispatch_failure()
+                                    _ => self.dispatch_failure(req)
                                 }
                             }
                         }
                     }
                     _ => {
-                        self.dispatch_failure()
+                        self.dispatch_failure(req)
                     }
                 }
             }
         }
     }
 
-    fn dispatch_cached(&self, res_string: String) -> Response {
+    fn dispatch_cached(&self, req: &Request, res_string: String) -> Response {
+        // TODO
+        debug!("dispatch_cached: {}", res_string);
+
         let mut headers = [httparse::EMPTY_HEADER; CACHED_PARSE_MAX_HEADERS];
         let mut res = httparse::Response::new(&mut headers);
 
@@ -183,21 +179,19 @@ impl ProxyServe {
                     HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
                 // Serve cached response
-                Response::new()
-                    .with_status(status)
-                    .with_headers(headers)
-                    .with_body(res_body_string)
+                self.respond(req, status, headers, res_body_string)
             }
             Err(err) => {
                 error!("failed parsing cached response: {}", err);
 
-                self.dispatch_failure()
+                self.dispatch_failure(req)
             }
         }
     }
 
-    fn dispatch_fetched(&self, status: &StatusCode, mut headers: Headers,
-        bloom_status: HeaderBloomStatusValue, body_string: String) ->
+    fn dispatch_fetched(&self, req: &Request, status: &StatusCode,
+        mut headers: Headers, bloom_status: HeaderBloomStatusValue,
+        body_string: String) ->
         Response {
         // Map headers to clean-up
         let mut headers_remove: Vec<String> = Vec::new();
@@ -218,18 +212,37 @@ impl ProxyServe {
 
         headers.set(HeaderBloomStatus(bloom_status));
 
-        Response::new()
-            .with_status(*status)
-            .with_headers(headers)
-            .with_body(body_string)
+        self.respond(req, *status, headers, body_string)
     }
 
-    fn dispatch_failure(&self) -> Response {
+    fn dispatch_failure(&self, req: &Request) -> Response {
         let status = StatusCode::BadGateway;
 
-        Response::new()
-            .with_status(status)
-            .with_header(HeaderBloomStatus(HeaderBloomStatusValue::Offline))
-            .with_body(format!("{}", status))
+        let mut headers = Headers::new();
+
+        headers.set::<HeaderBloomStatus>(
+            HeaderBloomStatus(HeaderBloomStatusValue::Offline));
+
+        self.respond(req, status, headers, format!("{}", status))
+    }
+
+    fn respond(&self, req: &Request, status: StatusCode, headers: Headers,
+        body_string: String) -> Response {
+        match *req.method() {
+            Method::Get
+            | Method::Post
+            | Method::Patch
+            | Method::Put => {
+                Response::new()
+                    .with_status(status)
+                    .with_headers(headers)
+                    .with_body(body_string)
+            }
+            _ => {
+                Response::new()
+                    .with_status(status)
+                    .with_headers(headers)
+            }
+        }
     }
 }

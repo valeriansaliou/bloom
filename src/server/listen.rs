@@ -23,6 +23,8 @@ impl ServerListen {
     pub fn run(&self) {
         let addr = APP_CONF.server.inet;
         let server = Http::new().bind(&addr, move || {
+            debug!("handled new request");
+
             Ok(ServerRequestHandle::new())
         }).unwrap();
 
