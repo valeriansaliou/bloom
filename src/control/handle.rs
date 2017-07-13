@@ -49,7 +49,7 @@ impl ControlHandle {
         write!(stream, "{}\r\n", *CONNECTED_BANNER).expect("write failed");
 
         // Ensure client hasher is compatible
-        match Self::test_hasher(&stream) {
+        match Self::ensure_hasher(&stream) {
             Ok(_) => {
                 // Configure stream (established)
                 ControlHandle::configure_stream(&stream, true);
@@ -101,7 +101,7 @@ impl ControlHandle {
             tcp_timeout, 0))).is_ok());
     }
 
-    fn test_hasher(mut stream: &TcpStream) ->
+    fn ensure_hasher(mut stream: &TcpStream) ->
         Result<Option<()>, &'static str> {
         let test_value: String = thread_rng().gen_ascii_chars()
                                     .take(HASH_VALUE_SIZE).collect();
