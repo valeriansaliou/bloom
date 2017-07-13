@@ -5,9 +5,8 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str;
-use hyper::{Error, Method, HttpVersion, StatusCode, Headers, Body};
+use hyper::{Method, HttpVersion, StatusCode, Headers};
 use hyper::server::{Request, Response};
-use futures::{future, Stream, Future};
 
 use ::APP_CONF;
 use ::APP_CACHE_STORE;

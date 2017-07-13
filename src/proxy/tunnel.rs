@@ -21,7 +21,7 @@ pub struct ProxyTunnel {
 
 impl ProxyTunnelBuilder {
     pub fn new() -> ProxyTunnel {
-        let mut core = Core::new().unwrap();
+        let core = Core::new().unwrap();
         let handle = core.handle();
         let client = Client::configure()
             .connector(HttpConnector::new(APP_CONF.proxy.tunnel_threads,

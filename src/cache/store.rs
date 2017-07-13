@@ -34,7 +34,7 @@ impl CacheStoreBuilder {
                     client: Some(client_raw)
                 }
             }
-            Err(err) => panic!("could not connect to memcached")
+            Err(_) => panic!("could not connect to memcached")
         }
     }
 }
@@ -44,7 +44,7 @@ impl CacheStore {
         match self.client {
             Some(ref client) => {
                 match client.get(key) {
-                    Ok(String) => Ok(Some(String)),
+                    Ok(string) => Ok(Some(string)),
                     _ => Err("failed")
                 }
             }

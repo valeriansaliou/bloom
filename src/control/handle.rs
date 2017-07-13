@@ -86,7 +86,7 @@ impl ControlHandle {
         }
     }
 
-    fn configure_stream(mut stream: &TcpStream, is_established: bool) {
+    fn configure_stream(stream: &TcpStream, is_established: bool) {
         let tcp_timeout = if is_established == true {
             APP_CONF.control.tcp_timeout
         } else {

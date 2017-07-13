@@ -110,13 +110,13 @@ impl ProxyServe {
 
                 match tunnel.run(req.method()) {
                     Ok(tunnel_res) => {
-                        let bloomStatus = match CacheWrite::save(ns.as_ref(),
+                        let bloom_status = match CacheWrite::save(ns.as_ref(),
                             req, &tunnel_res) {
                             Ok(_) => HeaderBloomStatusValue::Miss,
                             _ => HeaderBloomStatusValue::Direct
                         };
 
-                        self.dispatch_fetched(tunnel_res, bloomStatus)
+                        self.dispatch_fetched(tunnel_res, bloom_status)
                     }
                     _ => {
                         self.dispatch_failure()
@@ -138,11 +138,11 @@ impl ProxyServe {
     }
 
     fn dispatch_fetched(&self, tunnel_res: Response,
-        bloomStatus: HeaderBloomStatusValue) -> Response {
+        bloom_status: HeaderBloomStatusValue) -> Response {
         Response::new()
             .with_status(tunnel_res.status())
             .with_headers(tunnel_res.headers().clone())
-            .with_header(HeaderBloomStatus(bloomStatus))
+            .with_header(HeaderBloomStatus(bloom_status))
             .with_body(tunnel_res.body())
     }
 
