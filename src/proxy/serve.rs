@@ -34,9 +34,8 @@ impl ProxyServe {
     pub fn handle(&self, req: Request) -> ProxyServeFuture {
         info!("handled request: {} on {}", req.method(), req.path());
 
-        let mut res = Response::new();
-
-        if req.headers().has::<HeaderRequestBloomRequestShard>() == true {
+        let res = if req.headers().has::<HeaderRequestBloomRequestShard>() ==
+            true {
             match *req.method() {
                 Method::Options
                 | Method::Head
@@ -45,35 +44,40 @@ impl ProxyServe {
                 | Method::Patch
                 | Method::Put
                 | Method::Delete => {
-                    self.accept(&req, &mut res)
+                    self.accept(&req)
                 }
                 _ => {
-                    self.reject(&req, &mut res, StatusCode::MethodNotAllowed)
+                    self.reject(&req, StatusCode::MethodNotAllowed)
                 }
             }
         } else {
-            self.reject(&req, &mut res, StatusCode::NotExtended)
-        }
+            self.reject(&req, StatusCode::NotExtended)
+        };
 
         future::ok(res)
     }
 
-    fn accept(&self, req: &Request, res: &mut Response) {
-        self.tunnel(req, res);
+    fn accept(&self, req: &Request) -> Response {
+        self.tunnel(req)
     }
 
-    fn reject(&self, req: &Request, res: &mut Response, status: StatusCode) {
-        res.set_status(status);
-
-        match *req.method() {
-            Method::Get | Method::Post | Method::Patch | Method::Put => {
-                res.set_body(format!("{}", status));
-            }
-            _ => {}
-        }
+    fn reject(&self, req: &Request, status: StatusCode) -> Response {
+        Response::new()
+            .with_status(status)
+            .with_body(
+                match *req.method() {
+                    Method::Get
+                    | Method::Post
+                    | Method::Patch
+                    | Method::Put => {
+                        format!("{}", status)
+                    }
+                    _ => String::new()
+                }
+            )
     }
 
-    fn tunnel(&self, req: &Request, res: &mut Response) {
+    fn tunnel(&self, req: &Request) -> Response {
         let (auth, shard) = ProxyHeader::parse_from_request(req.headers());
 
         let ns = CacheRoute::gen_ns(shard, auth, req.version(), req.method(),
@@ -95,7 +99,7 @@ impl ProxyServe {
 
         match CacheRead::acquire(ns.as_ref()) {
             Ok(cached_value) => {
-                self.dispatch_cached(res, cached_value)
+                self.dispatch_cached(cached_value)
             },
             Err(_) => {
                 // TODO -> connect to API using ConfigProxy[:shard].inet
@@ -118,59 +122,59 @@ impl ProxyServe {
                     Ok(tunnel_res) => {
                         if CacheWrite::save(ns.as_ref(), req, &tunnel_res) ==
                             true {
-                            self.dispatch_direct(res, tunnel_res,
+                            self.dispatch_direct(tunnel_res,
                                 HeaderBloomStatusValue::Miss)
                         } else {
-                            self.dispatch_direct(res, tunnel_res,
+                            self.dispatch_direct(tunnel_res,
                                 HeaderBloomStatusValue::Direct)
                         }
                     }
                     _ => {
-                        self.dispatch_failure(res)
+                        self.dispatch_failure()
                     }
                 }
             }
         }
-
-        debug!("done tunneling for ns = {}", ns);
     }
 
-    fn dispatch_cached(&self, res: &mut Response, value: String) {
+    fn dispatch_cached(&self, value: String) -> Response {
         // TODO: handle 'tunnel_res: &mut Response' here.
-
-        // TODO: append status
-        // TODO: append headers
-        res.set_status(StatusCode::Accepted);  // <-- TODO: dynamic status
 
         // TODO: issue w/ borrow
         // res.with_header(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
         // TODO: parse value and split headers (restore them + set body)
 
-        res.set_body(value);
-    }
-
-    fn dispatch_direct(&self, res: &mut Response, tunnel_res: Response,
-        bloomStatus: HeaderBloomStatusValue) {
-        // TODO: handle 'tunnel_res: &mut Response' here.
-
         // TODO: append status
         // TODO: append headers
-        res.set_status(tunnel_res.status());  // <-- TODO: dynamic status
+
+        Response::new()
+            .with_status(StatusCode::Accepted)  // <-- TODO: dynamic status
+            .with_body(value)
+    }
+
+    fn dispatch_direct(&self, tunnel_res: Response,
+        bloomStatus: HeaderBloomStatusValue) -> Response {
+        // TODO: handle 'tunnel_res: &mut Response' here.
 
         // res.set_header(HeaderBloomStatus(bloomStatus))
 
-        res.set_body(tunnel_res.body());
+        // TODO: append status
+        // TODO: append headers
+
+        Response::new()
+            .with_status(tunnel_res.status())  // <-- TODO: dynamic status
+            .with_body(tunnel_res.body())
     }
 
-    fn dispatch_failure(&self, res: &mut Response) {
+    fn dispatch_failure(&self) -> Response {
         let status = StatusCode::BadGateway;
-
-        res.set_status(status);
 
         // TODO: issue w/ borrow
         // res.with_header(HeaderBloomStatus(HeaderBloomStatusValue::Offline));
 
-        res.set_body(format!("{}", status));
+        Response::new()
+            .with_status(status)
+            .with_body(format!("{}", status))
     }
 }
