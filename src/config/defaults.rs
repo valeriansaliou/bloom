@@ -20,6 +20,6 @@ pub static CACHE_TTL_DEFAULT: &'static str = "600";
 
 pub static MEMCACHED_HOST: &'static str = "::1";
 pub static MEMCACHED_PORT: &'static str = "11211";
-pub static MEMCACHED_MAX_KEY_SIZE: &'static str = "250";
+pub static MEMCACHED_MAX_KEY_SIZE: &'static str = "256000";
 pub static MEMCACHED_MAX_KEY_EXPIRATION: &'static str = "2592000";
 pub static MEMCACHED_POOL_SIZE: &'static str = "1";

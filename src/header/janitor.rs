@@ -7,6 +7,10 @@
 use hyper::header;
 use hyper::header::HeaderView;
 
+use super::response_bucket::HeaderResponseBloomResponseBucket;
+use super::response_ignore::HeaderResponseBloomResponseIgnore;
+use super::response_ttl::HeaderResponseBloomResponseTTL;
+
 pub struct HeaderJanitor;
 
 impl HeaderJanitor {
@@ -15,5 +19,11 @@ impl HeaderJanitor {
             header.is::<header::Date>() ||
             header.is::<header::Upgrade>() ||
             header.is::<header::Cookie>()
+    }
+
+    pub fn is_internal(header: &HeaderView) -> bool {
+        header.is::<HeaderResponseBloomResponseBucket>() ||
+            header.is::<HeaderResponseBloomResponseIgnore>() ||
+            header.is::<HeaderResponseBloomResponseTTL>()
     }
 }

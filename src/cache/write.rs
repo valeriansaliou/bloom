@@ -5,9 +5,9 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str;
-use hyper::{Error, Method, HttpVersion, StatusCode, Headers, Body};
+use hyper::{Method, HttpVersion, StatusCode, Headers, Body};
 use hyper::server::Request;
-use futures::{future, Future, Stream};
+use futures::{Future, Stream};
 
 use ::APP_CONF;
 use ::APP_CACHE_STORE;
@@ -20,14 +20,15 @@ pub struct CacheWrite;
 impl CacheWrite {
     pub fn save(key: &str, req: &Request, status: &StatusCode,
         headers: &Headers, body: Body) -> Result<String, Option<String>> {
-        // Acquire body value
         let body_result = body
+            .map_err(|_| ())
             .fold(Vec::new(), |mut vector, chunk| {
-                vector.extend(&chunk[..]);
+                vector.extend_from_slice(&chunk);
 
-                future::ok::<_, Error>(vector)
-            }).map(|chunks| {
-                String::from_utf8(chunks).unwrap()
+                Ok(vector)
+            })
+            .and_then(|vector| {
+                String::from_utf8(vector).map_err(|_| ())
             })
             .wait();
 
@@ -47,17 +48,25 @@ impl CacheWrite {
                     };
 
                     // Generate storable value
-                    let value = format!("{}\n{}\n\n{}",
+                    let value = format!("{}\n{}\n{}",
                         CacheWrite::generate_chain_banner(&req.version(),
                             status),
                         CacheWrite::generate_chain_headers(headers),
                         body_value);
 
                     // Write to cache
-                    if APP_CACHE_STORE.set(key, &value, ttl).is_ok() == true {
-                        Ok(body_value)
-                    } else {
-                        Err(Some(body_value))
+                    match APP_CACHE_STORE.set(key, &value, ttl) {
+                        Ok(_) => {
+                            debug!("wrote cache for key: {}", key);
+
+                            Ok(body_value)
+                        }
+                        Err(err) => {
+                            warn!("could not write cache for key: {} \
+                                    because: {}", key, err);
+
+                            Err(Some(body_value))
+                        }
                     }
                 } else {
                     debug!("key: {} not cacheable, ignoring", key);
@@ -133,11 +142,12 @@ impl CacheWrite {
 
     fn generate_chain_headers(headers: &Headers) -> String {
         headers.iter()
-            .filter(|header| {
-                HeaderJanitor::is_contextual(&header) == false
+            .filter(|header_view| {
+                HeaderJanitor::is_contextual(&header_view) == false
             })
-            .map(|header| {
-                format!("{}: {}\n", header.name(), header.value_string())
+            .map(|header_view| {
+                format!("{}: {}\n", header_view.name(),
+                    header_view.value_string())
             })
             .collect()
     }

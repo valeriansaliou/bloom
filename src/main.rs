@@ -8,6 +8,7 @@
 #[macro_use] extern crate clap;
 #[macro_use] extern crate lazy_static;
 extern crate ini;
+extern crate httparse;
 extern crate hyper;
 extern crate tokio_core;
 extern crate farmhash;

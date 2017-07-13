@@ -6,12 +6,14 @@
 
 use futures::future;
 use futures::future::FutureResult;
+use httparse;
 use hyper;
 use hyper::{Method, StatusCode, Headers};
 use hyper::server::{Request, Response};
 
 use super::header::ProxyHeader;
 use super::tunnel::ProxyTunnelBuilder;
+use header::janitor::HeaderJanitor;
 use header::request_shard::HeaderRequestBloomRequestShard;
 use header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
 use cache::read::CacheRead;
@@ -21,6 +23,8 @@ use cache::route::CacheRoute;
 pub struct ProxyServeBuilder;
 
 pub struct ProxyServe;
+
+const CACHED_PARSE_MAX_HEADERS: usize = 100;
 
 pub type ProxyServeFuture = FutureResult<Response, hyper::Error>;
 
@@ -108,7 +112,7 @@ impl ProxyServe {
                 //   for each connection.
                 let mut tunnel = ProxyTunnelBuilder::new();
 
-                match tunnel.run(req.method()) {
+                match tunnel.run(&req, shard) {
                     Ok(tunnel_res) => {
                         let ref status = tunnel_res.status();
                         let headers = tunnel_res.headers().clone();
@@ -139,24 +143,84 @@ impl ProxyServe {
         }
     }
 
-    fn dispatch_cached(&self, value: String) -> Response {
-        // TODO: parse value and split headers (restore them + set body)
-        // TODO: append status
-        // TODO: append headers
+    fn dispatch_cached(&self, res_string: String) -> Response {
+        let mut headers = [httparse::EMPTY_HEADER; CACHED_PARSE_MAX_HEADERS];
+        let mut res = httparse::Response::new(&mut headers);
 
-        Response::new()
-            .with_status(StatusCode::Accepted)  // <-- TODO: dynamic status
-            .with_header(HeaderBloomStatus(HeaderBloomStatusValue::Hit))
-            .with_body(value)
+        // Split headers from body
+        let mut res_body_string = String::new();
+        let mut is_last_line_empty = false;
+
+        for res_line in res_string.lines() {
+            if res_body_string.is_empty() == false ||
+                is_last_line_empty == true {
+                // Write to body
+                res_body_string.push_str(res_line.as_ref());
+                res_body_string.push_str("\r\n");
+            }
+
+            is_last_line_empty = res_line.is_empty();
+        }
+
+        match res.parse(res_string.as_bytes()) {
+            Ok(_) => {
+                // Process cached status
+                let code = res.code.unwrap_or(500u16);
+                let status = StatusCode::try_from(code)
+                                .unwrap_or(StatusCode::Unregistered(code));
+
+                // Process cached headers
+                let mut headers = Headers::new();
+
+                for header in res.headers {
+                    headers.set_raw(
+                        String::from_utf8(Vec::from(header.name)).unwrap(),
+                        String::from_utf8(Vec::from(header.value)).unwrap()
+                    );
+                }
+
+                headers.set::<HeaderBloomStatus>(
+                    HeaderBloomStatus(HeaderBloomStatusValue::Hit));
+
+                // Serve cached response
+                Response::new()
+                    .with_status(status)
+                    .with_headers(headers)
+                    .with_body(res_body_string)
+            }
+            Err(err) => {
+                error!("failed parsing cached response: {}", err);
+
+                self.dispatch_failure()
+            }
+        }
     }
 
-    fn dispatch_fetched(&self, status: &StatusCode, headers: Headers,
+    fn dispatch_fetched(&self, status: &StatusCode, mut headers: Headers,
         bloom_status: HeaderBloomStatusValue, body_string: String) ->
         Response {
+        // Map headers to clean-up
+        let mut headers_remove: Vec<String> = Vec::new();
+
+        for header_view in headers.iter() {
+            // Do not forward contextual and internal headers \
+            //   (ie. 'Bloom-Response-*' headers)
+            if HeaderJanitor::is_contextual(&header_view) == true ||
+                HeaderJanitor::is_internal(&header_view) == true {
+                headers_remove.push(String::from(header_view.name()));
+            }
+        }
+
+        // Proceed headers clean-up
+        for header_remove in headers_remove.iter() {
+            headers.remove_raw(header_remove.as_ref());
+        }
+
+        headers.set(HeaderBloomStatus(bloom_status));
+
         Response::new()
             .with_status(*status)
             .with_headers(headers)
-            .with_header(HeaderBloomStatus(bloom_status))
             .with_body(body_string)
     }
 
