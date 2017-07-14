@@ -9,8 +9,6 @@ It is completely agnostic of your API implementation, and requires minimal chang
 
 Bloom relies on `memcached` to store cached data. It is built in Rust and focuses on performance and low resource usage.
 
-:newspaper: The Bloom project has been announced in [a post on my personal journal](https://journal.valeriansaliou.name/publishing-bloom-an-http-rest-api-caching-middleware/).
-
 **Important: Bloom works great if your API implements REST conventions. Your API needs to use HTTP read methods, namely `GET`, `HEAD`, `OPTIONS` solely as read methods (do not use HTTP GET parameters as a way to update data).**
 
 ![Bloom](https://valeriansaliou.github.io/bloom/images/bloom.jpg)
