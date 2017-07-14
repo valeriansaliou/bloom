@@ -21,6 +21,7 @@ use header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
 use cache::read::CacheRead;
 use cache::write::CacheWrite;
 use cache::route::CacheRoute;
+use ::LINE_FEED;
 
 pub struct ProxyServeBuilder;
 
@@ -179,7 +180,7 @@ impl ProxyServe {
                 is_last_line_empty == true {
                 // Write to body
                 res_body_string.push_str(res_line.as_ref());
-                res_body_string.push_str("\r\n");
+                res_body_string.push_str(LINE_FEED);
             }
 
             is_last_line_empty = res_line.is_empty();
@@ -270,12 +271,18 @@ impl ProxyServe {
     }
 
     fn respond(&self, req: &Request, status: StatusCode, headers: Headers,
-        body_string: String) -> Response {
+        mut body_string: String) -> Response {
         match *req.method() {
             Method::Get
             | Method::Post
             | Method::Patch
             | Method::Put => {
+                // Ensure body string ends w/ a new line in any case, this \
+                //   fixes an 'infinite loop' issue w/ Hyper
+                if body_string.ends_with(LINE_FEED) == false {
+                    body_string.push_str(LINE_FEED);
+                }
+
                 Response::new()
                     .with_status(status)
                     .with_headers(headers)

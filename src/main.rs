@@ -24,6 +24,7 @@ mod control;
 mod server;
 
 use clap::{App, Arg};
+
 use config::config::Config;
 use config::logger::ConfigLogger;
 use config::reader::ConfigReader;
@@ -35,6 +36,8 @@ use server::listen::ServerListenBuilder;
 struct AppArgs {
     config: String
 }
+
+pub static LINE_FEED: &'static str = "\r\n";
 
 lazy_static! {
     static ref APP_ARGS: AppArgs = make_app_args();

@@ -16,6 +16,7 @@ use super::command::ControlCommandResponse;
 use super::command::ControlCommand;
 use super::command::COMMAND_SIZE;
 use ::APP_CONF;
+use ::LINE_FEED;
 use cache::route::CacheRoute;
 use cache::route::ROUTE_HASH_SIZE;
 
@@ -46,7 +47,8 @@ impl ControlHandle {
         ControlHandle::configure_stream(&stream, false);
 
         // Send connected banner
-        write!(stream, "{}\r\n", *CONNECTED_BANNER).expect("write failed");
+        write!(stream, "{}{}", *CONNECTED_BANNER, LINE_FEED)
+            .expect("write failed");
 
         // Ensure client hasher is compatible
         match Self::ensure_hasher(&stream) {
@@ -55,7 +57,7 @@ impl ControlHandle {
                 ControlHandle::configure_stream(&stream, true);
 
                 // Send started acknowledgement
-                write!(stream, "STARTED\r\n").expect("write failed");
+                write!(stream, "STARTED{}", LINE_FEED).expect("write failed");
 
                 // Select default shard
                 let mut shard = SHARD_DEFAULT;
@@ -80,7 +82,7 @@ impl ControlHandle {
                 }
             }
             Err(err) => {
-                write!(stream, "ENDED {}\r\n", err)
+                write!(stream, "ENDED {}{}", err, LINE_FEED)
                     .expect("write failed");
             }
         }
@@ -107,7 +109,8 @@ impl ControlHandle {
                                     .take(HASH_VALUE_SIZE).collect();
         let test_hash = CacheRoute::hash(test_value.as_str());
 
-        write!(stream, "HASHREQ {}\r\n", test_value).expect("write failed");
+        write!(stream, "HASHREQ {}{}", test_value, LINE_FEED)
+            .expect("write failed");
 
         debug!("sent hasher request: {} and expecting hash: {}",
             test_value, test_hash);
@@ -181,7 +184,7 @@ impl ControlHandle {
         };
 
         if response.is_empty() == false {
-            write!(stream, "{}\r\n", response).expect("write failed");
+            write!(stream, "{}{}", response, LINE_FEED).expect("write failed");
         }
 
         return result
