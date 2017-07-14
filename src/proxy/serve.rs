@@ -137,9 +137,6 @@ impl ProxyServe {
     }
 
     fn dispatch_cached(&self, req: &Request, res_string: String) -> Response {
-        // TODO
-        debug!("dispatch_cached: {}", res_string);
-
         let mut headers = [httparse::EMPTY_HEADER; CACHED_PARSE_MAX_HEADERS];
         let mut res = httparse::Response::new(&mut headers);
 

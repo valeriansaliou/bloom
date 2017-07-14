@@ -20,7 +20,14 @@ pub struct CacheWrite;
 impl CacheWrite {
     pub fn save(key: &str, req: &Request, status: &StatusCode,
         headers: &Headers, body: Body) -> Result<String, Option<String>> {
-        let body_result = body
+        // TODO: unsafe for event loop, see: \
+        // https://docs.rs/futures/0.1.14/futures/stream/trait.Stream.html\
+        //   #method.wait
+        // FIX: green-threads?
+
+        // TODO: fix next() chunk infinite wait (if no. chunk > 1)
+
+        let body_result = Body::empty()
             .map_err(|_| ())
             .fold(Vec::new(), |mut vector, chunk| {
                 vector.extend_from_slice(&chunk);
