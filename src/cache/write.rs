@@ -17,9 +17,14 @@ use header::response_ttl::HeaderResponseBloomResponseTTL;
 
 pub struct CacheWrite;
 
+pub struct CacheWriteResult {
+    pub body: Result<String, Option<String>>,
+    pub value: Option<String>
+}
+
 impl CacheWrite {
     pub fn save(key: &str, req: &Request, status: &StatusCode,
-        headers: &Headers, body: Body) -> Result<String, Option<String>> {
+        headers: &Headers, body: Body) -> CacheWriteResult {
         // TODO: unsafe for event loop, see: \
         // https://docs.rs/futures/0.1.14/futures/stream/trait.Stream.html\
         //   #method.wait
@@ -27,7 +32,7 @@ impl CacheWrite {
 
         // TODO: fix next() chunk infinite wait (if no. chunk > 1)
 
-        let body_result = Body::empty()
+        let body_result = body
             .map_err(|_| ())
             .fold(Vec::new(), |mut vector, chunk| {
                 vector.extend_from_slice(&chunk);
@@ -66,27 +71,39 @@ impl CacheWrite {
                         Ok(_) => {
                             debug!("wrote cache for key: {}", key);
 
-                            Ok(body_value)
+                            CacheWriteResult {
+                                body: Ok(body_value),
+                                value: Some(value)
+                            }
                         }
                         Err(err) => {
                             warn!("could not write cache for key: {} \
                                     because: {}", key, err);
 
-                            Err(Some(body_value))
+                            CacheWriteResult {
+                                body: Err(Some(body_value)),
+                                value: Some(value)
+                            }
                         }
                     }
                 } else {
                     debug!("key: {} not cacheable, ignoring", key);
 
                     // Not cacheable, ignore
-                    Err(Some(body_value))
+                    CacheWriteResult {
+                        body: Err(Some(body_value)),
+                        value: None
+                    }
                 }
             }
             _ => {
                 error!("failed unwrapping body value for key: {}, ignoring",
                     key);
 
-                Err(None)
+                CacheWriteResult {
+                    body: Err(None),
+                    value: None
+                }
             }
         }
     }

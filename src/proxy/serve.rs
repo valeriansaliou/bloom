@@ -9,7 +9,9 @@ use futures::future::FutureResult;
 use httparse;
 use hyper;
 use hyper::{Method, StatusCode, Headers};
+use hyper::header::{IfNoneMatch, ETag, EntityTag};
 use hyper::server::{Request, Response};
+use farmhash;
 
 use super::header::ProxyHeader;
 use super::tunnel::ProxyTunnelBuilder;
@@ -80,9 +82,6 @@ impl ProxyServe {
         let ns = CacheRoute::gen_ns(shard, auth, req.version(), req.method(),
             req.path(), req.query());
 
-        // TODO: support for 304 Not Modified here (return empty content \
-        //   to ongoing specific client, but still read/populate cache normally)
-
         // TODO: implement support for Bloom-Response-Bucket
         // CONCERN: how to link this to the gen_ns() utility? We dont \
         //   know about which route is mapped to which bucket in advance. \
@@ -109,11 +108,14 @@ impl ProxyServe {
                         let ref status = tunnel_res.status();
                         let headers = tunnel_res.headers().clone();
 
-                        match CacheWrite::save(ns.as_ref(),
-                            req, status, &headers, tunnel_res.body()) {
+                        let result = CacheWrite::save(ns.as_ref(),
+                            req, status, &headers, tunnel_res.body());
+
+                        match result.body {
                             Ok(body_string) => {
                                 self.dispatch_fetched(req, status, headers,
-                                    HeaderBloomStatusValue::Miss, body_string)
+                                    HeaderBloomStatusValue::Miss, body_string,
+                                    result.value)
                             }
                             Err(body_string_values) => {
                                 match body_string_values {
@@ -121,7 +123,7 @@ impl ProxyServe {
                                         self.dispatch_fetched(req, status,
                                             headers,
                                             HeaderBloomStatusValue::Direct,
-                                            body_string)
+                                            body_string, result.value)
                                     }
                                     _ => self.dispatch_failure(req)
                                 }
@@ -137,7 +139,35 @@ impl ProxyServe {
     }
 
     fn dispatch_cached(&self, req: &Request, res_string: String) -> Response {
-        let mut headers = [httparse::EMPTY_HEADER; CACHED_PARSE_MAX_HEADERS];
+        // Process ETAG for cached content
+        let (res_hash, res_etag) = self.body_fingerprint(&res_string);
+
+        let isnt_modified = match req.headers().get::<IfNoneMatch>() {
+            Some(req_if_none_match) => {
+                (*req_if_none_match == IfNoneMatch::Items(
+                    vec![EntityTag::new(false, res_hash)]))
+            }
+            _ => false
+        };
+
+        // Not modified?
+        if isnt_modified == true {
+            // Process non-modified + cached headers
+            let mut headers = Headers::new();
+
+            headers.set::<ETag>(res_etag);
+            headers.set::<HeaderBloomStatus>(
+                HeaderBloomStatus(HeaderBloomStatusValue::Hit));
+
+            // Serve non-modified response
+            return self.respond(req, StatusCode::NotModified, headers,
+                String::from(""));
+        }
+
+        // Modified
+        let mut headers = [
+            httparse::EMPTY_HEADER; CACHED_PARSE_MAX_HEADERS
+        ];
         let mut res = httparse::Response::new(&mut headers);
 
         // Split headers from body
@@ -172,6 +202,7 @@ impl ProxyServe {
                     );
                 }
 
+                headers.set::<ETag>(res_etag);
                 headers.set::<HeaderBloomStatus>(
                     HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
@@ -188,7 +219,7 @@ impl ProxyServe {
 
     fn dispatch_fetched(&self, req: &Request, status: &StatusCode,
         mut headers: Headers, bloom_status: HeaderBloomStatusValue,
-        body_string: String) ->
+        body_string: String, result_string: Option<String>) ->
         Response {
         // Map headers to clean-up
         let mut headers_remove: Vec<String> = Vec::new();
@@ -207,6 +238,13 @@ impl ProxyServe {
             headers.remove_raw(header_remove.as_ref());
         }
 
+        // Process ETAG for content?
+        if result_string.is_some() == true {
+            let (_, res_etag) = self.body_fingerprint(&result_string.unwrap());
+
+            headers.set::<ETag>(res_etag);
+        }
+
         headers.set(HeaderBloomStatus(bloom_status));
 
         self.respond(req, *status, headers, body_string)
@@ -221,6 +259,14 @@ impl ProxyServe {
             HeaderBloomStatus(HeaderBloomStatusValue::Offline));
 
         self.respond(req, status, headers, format!("{}", status))
+    }
+
+    fn body_fingerprint(&self, body_string: &String) -> (String, ETag) {
+        let body_hash = format!("{:x}",
+            farmhash::fingerprint64(body_string.as_bytes()));
+        let body_etag = ETag(EntityTag::new(false, body_hash.clone()));
+
+        (body_hash, body_etag)
     }
 
     fn respond(&self, req: &Request, status: StatusCode, headers: Headers,
