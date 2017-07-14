@@ -83,15 +83,6 @@ impl ProxyServe {
         let ns = CacheRoute::gen_ns(shard, auth, req.version(), req.method(),
             req.path(), req.query());
 
-        // TODO: implement support for Bloom-Response-Bucket
-        // CONCERN: how to link this to the gen_ns() utility? We dont \
-        //   know about which route is mapped to which bucket in advance. \
-        //   so maybe redesign this part.  <--- FOUND OUT
-        // WAY TO GO: any route can be 'tagged' as 'bucket' using a generic \
-        //   tagging system. As buckets are only used for cache expiration, \
-        //   and not cache storage, they are only useful as 'tags'. This way \
-        //   we dont need to know them in advance.
-
         info!("tunneling for ns = {}", ns);
 
         match CacheRead::acquire(ns.as_ref()) {
@@ -140,7 +131,7 @@ impl ProxyServe {
     }
 
     fn dispatch_cached(&self, req: &Request, res_string: String) -> Response {
-        // Process ETAG for cached content
+        // Process ETag for cached content
         let (res_hash, res_etag) = self.body_fingerprint(&res_string);
 
         let isnt_modified = match req.headers().get::<IfNoneMatch>() {
@@ -151,7 +142,7 @@ impl ProxyServe {
             _ => false
         };
 
-        // Not modified?
+        // Response not modified for client?
         if isnt_modified == true {
             // Process non-modified + cached headers
             let mut headers = Headers::new();
@@ -165,7 +156,7 @@ impl ProxyServe {
                 String::from(""));
         }
 
-        // Modified
+        // Response modified
         let mut headers = [
             httparse::EMPTY_HEADER; CACHED_PARSE_MAX_HEADERS
         ];
@@ -239,7 +230,7 @@ impl ProxyServe {
             headers.remove_raw(header_remove.as_ref());
         }
 
-        // Process ETAG for content?
+        // Process ETag for content?
         if result_string.is_some() == true {
             let (_, res_etag) = self.body_fingerprint(&result_string.unwrap());
 

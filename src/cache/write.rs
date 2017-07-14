@@ -209,7 +209,8 @@ mod tests {
             true, "401 OK");
         assert_eq!(CacheWrite::is_cacheable_status(&StatusCode::BadRequest),
             false, "400 Bad Request");
-        assert_eq!(CacheWrite::is_cacheable_status(&StatusCode::InternalServerError),
-            false, "500 Internal Server Error");
+        assert_eq!(CacheWrite::is_cacheable_status(
+            &StatusCode::InternalServerError), false,
+            "500 Internal Server Error");
     }
 }
