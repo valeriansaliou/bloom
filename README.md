@@ -138,9 +138,7 @@ sudo service bloom restart
 
 Bloom is built in Rust, which can be compiled to native code for your architecture. Rust, unlike eg. Golang, doesn't carry a GC (Garbage Collector), which is usually a bad thing for high-throughput / high-load production systems (as a GC halts all program instruction execution for an amount of time that depends on how many references are kept in memory).
 
-Benchmarks are performed and updated upon major code changes, to measure Bloom performance and try to get the highest throughput for the lowest pressure on system resources (CPU / RAM). You can find them below.
-
-🚨 **TODO: benchmark**
+Note that some compromises have been made relative to how Bloom manages memory. Heap-allocated objects are heavily used for the sake of simplicify. ie. responses from your API workers are fully buffered in memory before they are served to the client; which has the benefit of draining data from your API workers as fast as your loopback / LAN goes, even if the requester client has a very slow bandwidth.
 
 ## How does it deal with authenticated routes?
 
