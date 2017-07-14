@@ -91,3 +91,36 @@ impl CacheStore {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn get_client() -> CacheStore {
+        CacheStore{
+            client: None
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn it_fails_connecting_to_cache() {
+        assert!(CacheStoreBuilder::new().client.is_none());
+    }
+
+    #[test]
+    fn it_fails_getting_cache() {
+        assert!(get_client().get("bloom:0:90d52bc6:f773d6f1").is_err());
+    }
+
+    #[test]
+    fn it_fails_setting_cache() {
+        assert!(get_client().set("bloom:0:90d52bc6:f773d6f1", "{}", 30)
+            .is_err());
+    }
+
+    #[test]
+    fn it_fails_purging_cache() {
+        assert!(get_client().purge("bloom:0:90d52bc6:f773d6f1").is_err());
+    }
+}

@@ -182,6 +182,14 @@ mod tests {
     use super::*;
 
     #[test]
+    #[should_panic]
+    fn it_fails_saving_cache() {
+        assert!(CacheWrite::save("bloom:0:90d52bc6:f773d6f1",
+            &Request::new(Method::Get, "/".parse().unwrap()), &StatusCode::Ok,
+            &Headers::new(), Body::empty()).body.is_err());
+    }
+
+    #[test]
     fn it_asserts_valid_cacheable_method() {
         assert_eq!(CacheWrite::is_cacheable_method(&Method::Get),
             true, "GET");

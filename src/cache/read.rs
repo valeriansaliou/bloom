@@ -28,3 +28,14 @@ impl CacheRead {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn it_fails_acquiring_cache() {
+        assert!(CacheRead::acquire("bloom:0:90d52bc6:f773d6f1").is_err());
+    }
+}
