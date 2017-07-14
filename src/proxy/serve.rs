@@ -41,8 +41,7 @@ impl ProxyServe {
     pub fn handle(&self, req: Request) -> ProxyServeFuture {
         info!("handled request: {} on {}", req.method(), req.path());
 
-        let res = if req.headers().has::<HeaderRequestBloomRequestShard>() ==
-            true {
+        if req.headers().has::<HeaderRequestBloomRequestShard>() == true {
             match *req.method() {
                 Method::Options
                 | Method::Head
@@ -59,16 +58,14 @@ impl ProxyServe {
             }
         } else {
             self.reject(&req, StatusCode::NotExtended)
-        };
-
-        future::ok(res)
+        }
     }
 
-    fn accept(&self, req: &Request) -> Response {
+    fn accept(&self, req: &Request) -> ProxyServeFuture {
         self.tunnel(req)
     }
 
-    fn reject(&self, req: &Request, status: StatusCode) -> Response {
+    fn reject(&self, req: &Request, status: StatusCode) -> ProxyServeFuture {
         let mut headers = Headers::new();
 
         headers.set::<HeaderBloomStatus>(
@@ -77,7 +74,7 @@ impl ProxyServe {
         self.respond(req, status, headers, format!("{}", status))
     }
 
-    fn tunnel(&self, req: &Request) -> Response {
+    fn tunnel(&self, req: &Request) -> ProxyServeFuture {
         let (auth, shard) = ProxyHeader::parse_from_request(req.headers());
 
         let ns = CacheRoute::gen_ns(shard, auth, req.version(), req.method(),
@@ -85,6 +82,7 @@ impl ProxyServe {
 
         info!("tunneling for ns = {}", ns);
 
+        // TODO: non blocking please
         match CacheRead::acquire(ns.as_ref()) {
             Ok(cached_value) => {
                 self.dispatch_cached(req, cached_value)
@@ -95,11 +93,13 @@ impl ProxyServe {
                 //   for each connection.
                 let mut tunnel = ProxyTunnelBuilder::new();
 
+                // TODO: non blocking please
                 match tunnel.run(&req, shard) {
                     Ok(tunnel_res) => {
                         let ref status = tunnel_res.status();
                         let headers = tunnel_res.headers().clone();
 
+                        // TODO: non blocking please
                         let result = CacheWrite::save(ns.as_ref(),
                             req, status, &headers, tunnel_res.body());
 
@@ -130,7 +130,8 @@ impl ProxyServe {
         }
     }
 
-    fn dispatch_cached(&self, req: &Request, res_string: String) -> Response {
+    fn dispatch_cached(&self, req: &Request, res_string: String) ->
+        ProxyServeFuture {
         // Process ETag for cached content
         let (res_hash, res_etag) = self.body_fingerprint(&res_string);
 
@@ -212,7 +213,7 @@ impl ProxyServe {
     fn dispatch_fetched(&self, req: &Request, status: &StatusCode,
         mut headers: Headers, bloom_status: HeaderBloomStatusValue,
         body_string: String, result_string: Option<String>) ->
-        Response {
+        ProxyServeFuture {
         // Map headers to clean-up
         let mut headers_remove: Vec<String> = Vec::new();
 
@@ -242,7 +243,7 @@ impl ProxyServe {
         self.respond(req, *status, headers, body_string)
     }
 
-    fn dispatch_failure(&self, req: &Request) -> Response {
+    fn dispatch_failure(&self, req: &Request) -> ProxyServeFuture {
         let status = StatusCode::BadGateway;
 
         let mut headers = Headers::new();
@@ -262,8 +263,8 @@ impl ProxyServe {
     }
 
     fn respond(&self, req: &Request, status: StatusCode, headers: Headers,
-        mut body_string: String) -> Response {
-        match *req.method() {
+        mut body_string: String) -> ProxyServeFuture {
+        let res = match *req.method() {
             Method::Get
             | Method::Post
             | Method::Patch
@@ -284,6 +285,8 @@ impl ProxyServe {
                     .with_status(status)
                     .with_headers(headers)
             }
-        }
+        };
+
+        future::ok(res)
     }
 }

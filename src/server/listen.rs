@@ -25,7 +25,7 @@ impl ServerListen {
         let server = Http::new().bind(&addr, move || {
             debug!("handled new request");
 
-            Ok(ServerRequestHandle::new())
+            Ok(ServerRequestHandle)
         }).unwrap();
 
         info!("listening on http://{}", server.local_addr().unwrap());

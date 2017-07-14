@@ -34,13 +34,9 @@ impl CacheWrite {
 
         let body_result = body
             .map_err(|_| ())
-            .fold(Vec::new(), |mut vector, chunk| {
-                vector.extend_from_slice(&chunk);
-
-                Ok(vector)
-            })
-            .and_then(|vector| {
-                String::from_utf8(vector).map_err(|_| ())
+            .concat2()
+            .and_then(|chunk| {
+                String::from_utf8(chunk.to_vec()).map_err(|_| ())
             })
             .wait();
 
