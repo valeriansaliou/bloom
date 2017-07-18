@@ -24,7 +24,6 @@ use cache::route::CacheRoute;
 use ::LINE_FEED;
 
 pub struct ProxyServeBuilder;
-
 pub struct ProxyServe;
 
 const CACHED_PARSE_MAX_HEADERS: usize = 100;
@@ -82,24 +81,16 @@ impl ProxyServe {
 
         info!("tunneling for ns = {}", ns);
 
-        // TODO: non blocking please
         match CacheRead::acquire(ns.as_ref()) {
             Ok(cached_value) => {
                 self.dispatch_cached(req, cached_value)
             },
             Err(_) => {
-                // TODO: move this to a common factory, ie global.
-                // CRITICAL: avoid spawning new threads and destroying them \
-                //   for each connection.
-                let mut tunnel = ProxyTunnelBuilder::new();
-
-                // TODO: non blocking please
-                match tunnel.run(&req, shard) {
+                match ProxyTunnelBuilder::new().run(&req, shard) {
                     Ok(tunnel_res) => {
                         let ref status = tunnel_res.status();
                         let headers = tunnel_res.headers().clone();
 
-                        // TODO: non blocking please
                         let result = CacheWrite::save(ns.as_ref(),
                             req, status, &headers, tunnel_res.body());
 

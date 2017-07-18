@@ -7,6 +7,8 @@
 use std::cmp;
 
 use bmemcached::MemcachedClient;
+use futures::future;
+use futures::future::FutureResult;
 
 use ::APP_CONF;
 
@@ -16,7 +18,7 @@ pub struct CacheStore {
     client: Option<MemcachedClient>
 }
 
-type CacheResult = Result<Option<String>, &'static str>;
+type CacheResult = FutureResult<Option<String>, &'static str>;
 
 impl CacheStoreBuilder {
     pub fn new() -> CacheStore {
@@ -41,7 +43,7 @@ impl CacheStoreBuilder {
 
 impl CacheStore {
     pub fn get(&self, key: &str) -> CacheResult {
-        match self.client {
+        let result = match self.client {
             Some(ref client) => {
                 match client.get(key) {
                     Ok(string) => Ok(Some(string)),
@@ -51,11 +53,13 @@ impl CacheStore {
             _ => {
                 Err("disconnected")
             }
-        }
+        };
+
+        future::result(result)
     }
 
     pub fn set(&self, key: &str, value: &str, ttl: u32) -> CacheResult {
-        match self.client {
+        let result = match self.client {
             Some(ref client) => {
                 // Cap TTL to 'max_key_expiration'
                 let ttl_cap = cmp::min(ttl,
@@ -63,22 +67,24 @@ impl CacheStore {
 
                 // Ensure value is not larger than 'max_key_size'
                 if value.len() > APP_CONF.memcached.max_key_size {
-                    return Err("too large")
-                }
-
-                match client.set(key, value, ttl_cap) {
-                    Ok(_) => Ok(None),
-                    _ => Err("failed")
+                    Err("too large")
+                } else {
+                    match client.set(key, value, ttl_cap) {
+                        Ok(_) => Ok(None),
+                        _ => Err("failed")
+                    }
                 }
             }
             _ => {
                 Err("disconnected")
             }
-        }
+        };
+
+        future::result(result)
     }
 
     pub fn purge(&self, key: &str) -> CacheResult {
-        match self.client {
+        let result = match self.client {
             Some(ref client) => {
                 match client.delete(key) {
                     Ok(_) => Ok(None),
@@ -88,12 +94,15 @@ impl CacheStore {
             _ => {
                 Err("disconnected")
             }
-        }
+        };
+
+        future::result(result)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use futures::Future;
     use super::*;
 
     fn get_client() -> CacheStore {
@@ -110,17 +119,17 @@ mod tests {
 
     #[test]
     fn it_fails_getting_cache() {
-        assert!(get_client().get("bloom:0:90d52bc6:f773d6f1").is_err());
+        assert!(get_client().get("bloom:0:90d52bc6:f773d6f1").wait().is_err());
     }
 
     #[test]
     fn it_fails_setting_cache() {
-        assert!(get_client().set("bloom:0:90d52bc6:f773d6f1", "{}", 30)
+        assert!(get_client().set("bloom:0:90d52bc6:f773d6f1", "{}", 30).wait()
             .is_err());
     }
 
     #[test]
     fn it_fails_purging_cache() {
-        assert!(get_client().purge("bloom:0:90d52bc6:f773d6f1").is_err());
+        assert!(get_client().purge("bloom:0:90d52bc6:f773d6f1").wait().is_err());
     }
 }

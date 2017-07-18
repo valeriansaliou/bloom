@@ -63,7 +63,7 @@ impl CacheWrite {
                         body_value);
 
                     // Write to cache
-                    match APP_CACHE_STORE.set(key, &value, ttl) {
+                    match APP_CACHE_STORE.set(key, &value, ttl).wait() {
                         Ok(_) => {
                             debug!("wrote cache for key: {}", key);
 

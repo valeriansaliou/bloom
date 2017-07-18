@@ -6,6 +6,8 @@
 
 use std::str::SplitWhitespace;
 
+use futures::Future;
+
 use super::handle::ControlShard;
 use ::APP_CACHE_STORE;
 use cache::route::CacheRoute;
@@ -91,7 +93,7 @@ impl ControlCommand {
     fn proceed_flush(variant: &str, ns: &str) -> ControlResult {
         debug!("attempting to flush {} for: {}", variant, ns);
 
-        match APP_CACHE_STORE.purge(ns) {
+        match APP_CACHE_STORE.purge(ns).wait() {
             Ok(_) => {
                 info!("flushed {} for: {}", variant, ns);
 

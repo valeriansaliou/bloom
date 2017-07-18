@@ -23,6 +23,9 @@ mod cache;
 mod control;
 mod server;
 
+use std::thread;
+use std::time::Duration;
+
 use clap::{App, Arg};
 
 use config::config::Config;
@@ -65,6 +68,21 @@ fn make_app_args() -> AppArgs {
     }
 }
 
+fn spawn_worker() {
+    let worker = thread::spawn(|| {
+        ServerListenBuilder::new().run();
+    });
+
+    if worker.join().is_err() == true {
+        error!("worker thread crashed, setting it up again");
+
+        // Prevents thread start loop floods
+        thread::sleep(Duration::from_secs(1));
+
+        spawn_worker();
+    }
+}
+
 fn main() {
     let _logger = ConfigLogger::init();
 
@@ -73,8 +91,8 @@ fn main() {
     // Run control interface (in its own thread)
     ControlListenBuilder::new().run();
 
-    // Run server (in main thread)
-    ServerListenBuilder::new().run();
+    // Run server (from main thread, maintain thread active if down)
+    spawn_worker();
 
     error!("could not start");
 }
