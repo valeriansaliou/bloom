@@ -36,6 +36,8 @@ debug = true
 debug-assertions = true
 
 [profile.release]
-opt-level = 3
+opt-level = "s"
+lto = true
+panic = "abort"
 debug = false
 debug-assertions = false
