@@ -11,7 +11,7 @@ pub struct Config {
     pub control: ConfigControl,
     pub proxy: ConfigProxy,
     pub cache: ConfigCache,
-    pub memcached: ConfigMemcached,
+    pub redis: ConfigRedis,
 }
 
 pub struct ConfigServer {
@@ -30,12 +30,11 @@ pub struct ConfigProxy {
 }
 
 pub struct ConfigCache {
-    pub ttl_default: u32,
+    pub ttl_default: usize,
 }
 
-pub struct ConfigMemcached {
+pub struct ConfigRedis {
     pub inet: SocketAddr,
     pub max_key_size: usize,
-    pub max_key_expiration: u32,
-    pub pool_size: u8,
+    pub max_key_expiration: usize,
 }

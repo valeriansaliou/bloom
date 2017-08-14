@@ -21,8 +21,7 @@ impl CacheRead {
             }
             Err(err) => {
                 error!(
-                    "could not acquire value from cache for key: {} \
-                    because: {}",
+                    "could not acquire value from cache for key: {} because: {}",
                     key,
                     err
                 );

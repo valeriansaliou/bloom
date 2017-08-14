@@ -5,8 +5,11 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::cmp;
+use std::default::Default;
 
-use bmemcached::MemcachedClient;
+use r2d2::Pool;
+use r2d2_redis::RedisConnectionManager;
+use redis::Commands;
 use futures::future;
 use futures::future::FutureResult;
 
@@ -15,37 +18,42 @@ use APP_CONF;
 pub struct CacheStoreBuilder;
 
 pub struct CacheStore {
-    client: Option<MemcachedClient>,
+    pool: Pool<RedisConnectionManager>,
 }
 
 type CacheResult = FutureResult<Option<String>, &'static str>;
 
 impl CacheStoreBuilder {
     pub fn new() -> CacheStore {
-        info!("binding to store backend at {}", APP_CONF.memcached.inet);
+        info!("binding to store backend at {}", APP_CONF.redis.inet);
 
-        let tcp_addr = format!(
-            "{}:{}",
-            APP_CONF.memcached.inet.ip(),
-            APP_CONF.memcached.inet.port()
+        let tcp_addr_raw = format!(
+            "redis://{}:{}/",
+            APP_CONF.redis.inet.ip(),
+            APP_CONF.redis.inet.port()
         );
 
-        match MemcachedClient::new(vec![tcp_addr], APP_CONF.memcached.pool_size) {
-            Ok(client_raw) => {
-                info!("bound to store backend");
+        match RedisConnectionManager::new(tcp_addr_raw.as_ref()) {
+            Ok(manager) => {
+                match Pool::new(Default::default(), manager) {
+                    Ok(pool) => {
+                        info!("bound to store backend");
 
-                CacheStore { client: Some(client_raw) }
-            }
-            Err(_) => panic!("could not connect to memcached"),
+                        CacheStore { pool: pool }
+                    }
+                    Err(_) => panic!("could not spawn redis pool"),
+                }
+            },
+            Err(_) => panic!("could not create redis connection manager"),
         }
     }
 }
 
 impl CacheStore {
     pub fn get(&self, key: &str) -> CacheResult {
-        let result = match self.client {
-            Some(ref client) => {
-                match client.get(key) {
+        let result = match self.pool.get() {
+            Ok(client) => {
+                match (*client).get(key) {
                     Ok(string) => Ok(Some(string)),
                     _ => Err("failed"),
                 }
@@ -56,17 +64,17 @@ impl CacheStore {
         future::result(result)
     }
 
-    pub fn set(&self, key: &str, value: &str, ttl: u32) -> CacheResult {
-        let result = match self.client {
-            Some(ref client) => {
+    pub fn set(&self, key: &str, value: &str, ttl: usize) -> CacheResult {
+        let result = match self.pool.get() {
+            Ok(client) => {
                 // Cap TTL to 'max_key_expiration'
-                let ttl_cap = cmp::min(ttl, APP_CONF.memcached.max_key_expiration);
+                let ttl_cap = cmp::min(ttl, APP_CONF.redis.max_key_expiration);
 
                 // Ensure value is not larger than 'max_key_size'
-                if value.len() > APP_CONF.memcached.max_key_size {
+                if value.len() > APP_CONF.redis.max_key_size {
                     Err("too large")
                 } else {
-                    match client.set(key, value, ttl_cap) {
+                    match (*client).set_ex::<_, _, ()>(key, value, ttl_cap) {
                         Ok(_) => Ok(None),
                         _ => Err("failed"),
                     }
@@ -79,9 +87,9 @@ impl CacheStore {
     }
 
     pub fn purge(&self, key: &str) -> CacheResult {
-        let result = match self.client {
-            Some(ref client) => {
-                match client.delete(key) {
+        let result = match self.pool.get() {
+            Ok(client) => {
+                match (*client).del::<_, ()>(key) {
                     Ok(_) => Ok(None),
                     _ => Err("failed"),
                 }
@@ -90,51 +98,5 @@ impl CacheStore {
         };
 
         future::result(result)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use futures::Future;
-    use super::*;
-
-    fn get_client() -> CacheStore {
-        CacheStore { client: None }
-    }
-
-    #[test]
-    #[should_panic]
-    fn it_fails_connecting_to_cache() {
-        assert!(CacheStoreBuilder::new().client.is_none());
-    }
-
-    #[test]
-    fn it_fails_getting_cache() {
-        assert!(
-            get_client()
-                .get("bloom:0:90d52bc6:f773d6f1")
-                .wait()
-                .is_err()
-        );
-    }
-
-    #[test]
-    fn it_fails_setting_cache() {
-        assert!(
-            get_client()
-                .set("bloom:0:90d52bc6:f773d6f1", "{}", 30)
-                .wait()
-                .is_err()
-        );
-    }
-
-    #[test]
-    fn it_fails_purging_cache() {
-        assert!(
-            get_client()
-                .purge("bloom:0:90d52bc6:f773d6f1")
-                .wait()
-                .is_err()
-        );
     }
 }

@@ -7,7 +7,7 @@ Bloom
 
 It is completely agnostic of your API implementation, and requires minimal changes to your existing API code to work.
 
-Bloom relies on `memcached` to store cached data. It is built in Rust and focuses on performance and low resource usage.
+Bloom relies on `redis`, [configured as a LRU cache](https://github.com/valeriansaliou/bloom/blob/master/examples/config/redis.conf) to store cached data. It is built in Rust and focuses on performance and low resource usage.
 
 **Important: Bloom works great if your API implements REST conventions. Your API needs to use HTTP read methods, namely `GET`, `HEAD`, `OPTIONS` solely as read methods (do not use HTTP GET parameters as a way to update data).**
 
@@ -31,7 +31,7 @@ _👋 You use Bloom and you want to be listed there? [Contact me](https://valeri
 * **The same Bloom server can be used for different API workers at once**, using HTTP header `Bloom-Request-Shard` (eg. Main API uses shard `0`, Search API uses shard `1`)
 * **Cache stored on buckets**, specified in your REST API responses using HTTP header `Bloom-Response-Bucket`.
 * **Cache clustered by authentication token**, no cache leak across users is possible, using the standard `Authorization` HTTP header.
-* **Cache can be expired directly from your REST API workers** (by hitting against `memcached`).
+* **Cache can be expired directly from your REST API workers** (by hitting against `redis`).
 **Configurable per-request caching strategy**, using `Bloom-Request-*` HTTP headers in the requests your Load Balancers forward to Bloom.
   * Specify caching shard for an API system with `Bloom-Request-Shard` (default shard is `0`, maximum value is `255`).
 * **Configurable per-response caching strategy**, using `Bloom-Response-*` HTTP headers in your API responses to Bloom.
@@ -52,7 +52,7 @@ NGINX Lua scripts could do that job just fine, you say! Well, I firmly believe L
 
 Bloom is installed on the same box as each of your API workers. As seen from your Load Balancers, there is a Bloom instance per API worker. This way, your Load Balancing setup (eg. Round-Robin with health checks) is not broken. Each Bloom instance can be set to be visible from its own LAN IP your Load Balancers can point to, and then those Bloom instances can point to your API worker listeners on the local loopback.
 
-Bloom acts as a Reverse Proxy of its own, and caches read HTTP methods (`GET`, `HEAD`, `OPTIONS`), while directly proxying HTTP write methods (`POST`, `PATCH`, `PUT` and others). All Bloom instances share the same cache storage on a common `memcached` instance available on the LAN.
+Bloom acts as a Reverse Proxy of its own, and caches read HTTP methods (`GET`, `HEAD`, `OPTIONS`), while directly proxying HTTP write methods (`POST`, `PATCH`, `PUT` and others). All Bloom instances share the same cache storage on a common `redis` instance available on the LAN.
 
 Bloom is built in Rust for memory safety, code elegance and especially performance. Bloom can be compiled to native code for your server architecture.
 
@@ -146,7 +146,7 @@ Authenticated routes are usually used by REST API to return data that's private 
 
 If a route is being requested without HTTP `Authorization` header (ie. the request is anonymous / public), whatever the HTTP response code, that response will be cached by Bloom.
 
-As your HTTP `Authorization` header contains sensitive authentication data (ie. username and password), Bloom stores those values hashed in `memcached` (using a cryptographic hash function). That way, a `memcached` database leak on your side will not allow an attacker to recover authentication key pairs.
+As your HTTP `Authorization` header contains sensitive authentication data (ie. username and password), Bloom stores those values hashed in `redis` (using a cryptographic hash function). That way, a `redis` database leak on your side will not allow an attacker to recover authentication key pairs.
 
 ## Can cache be programatically expired?
 

@@ -94,36 +94,29 @@ impl ConfigReader {
                 ),
             },
 
-            memcached: ConfigMemcached {
+            redis: ConfigRedis {
                 inet: ConfigReaderGetter::get_inet(
                     &conf,
-                    "memcached",
+                    "redis",
                     "inet",
                     "host",
                     "port",
-                    defaults::MEMCACHED_HOST,
-                    defaults::MEMCACHED_PORT,
+                    defaults::REDIS_HOST,
+                    defaults::REDIS_PORT,
                 ),
 
                 max_key_size: ConfigReaderGetter::get_generic(
                     &conf,
-                    "memcached",
+                    "redis",
                     "max_key_size",
-                    defaults::MEMCACHED_MAX_KEY_SIZE,
+                    defaults::REDIS_MAX_KEY_SIZE,
                 ),
 
                 max_key_expiration: ConfigReaderGetter::get_generic(
                     &conf,
-                    "memcached",
+                    "redis",
                     "max_key_expiration",
-                    defaults::MEMCACHED_MAX_KEY_EXPIRATION,
-                ),
-
-                pool_size: ConfigReaderGetter::get_generic(
-                    &conf,
-                    "memcached",
-                    "pool_size",
-                    defaults::MEMCACHED_POOL_SIZE,
+                    defaults::REDIS_MAX_KEY_EXPIRATION,
                 ),
             },
         }

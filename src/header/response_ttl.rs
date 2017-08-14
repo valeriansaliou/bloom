@@ -10,7 +10,7 @@ use hyper::Result;
 use hyper::header::{Header, Raw, Formatter, parsing};
 
 #[derive(Clone)]
-pub struct HeaderResponseBloomResponseTTL(pub u32);
+pub struct HeaderResponseBloomResponseTTL(pub usize);
 
 impl Header for HeaderResponseBloomResponseTTL {
     fn header_name() -> &'static str {
