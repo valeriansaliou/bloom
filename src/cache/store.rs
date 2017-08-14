@@ -68,61 +68,43 @@ impl CacheStoreBuilder {
 
 impl CacheStore {
     pub fn ensure(&self) -> CacheResult {
-        let result = match self.pool.get() {
-            Ok(_) => Ok(None),
-            _ => Err(CacheStoreError::Disconnected),
-        };
-
-        future::result(result)
+        get_cache_store_client!(self, _client {
+            Ok(None)
+        })
     }
 
     pub fn get(&self, key: &str) -> CacheResult {
-        let result = match self.pool.get() {
-            Ok(client) => {
-                match (*client).get(key) {
-                    Ok(string) => Ok(Some(string)),
-                    _ => Err(CacheStoreError::Failed),
-                }
+        get_cache_store_client!(self, client {
+            match (*client).get(key) {
+                Ok(string) => Ok(Some(string)),
+                _ => Err(CacheStoreError::Failed),
             }
-            _ => Err(CacheStoreError::Disconnected),
-        };
-
-        future::result(result)
+        })
     }
 
     pub fn set(&self, key: &str, value: &str, ttl: usize) -> CacheResult {
-        let result = match self.pool.get() {
-            Ok(client) => {
-                // Cap TTL to 'max_key_expiration'
-                let ttl_cap = cmp::min(ttl, APP_CONF.redis.max_key_expiration);
+        get_cache_store_client!(self, client {
+            // Cap TTL to 'max_key_expiration'
+            let ttl_cap = cmp::min(ttl, APP_CONF.redis.max_key_expiration);
 
-                // Ensure value is not larger than 'max_key_size'
-                if value.len() > APP_CONF.redis.max_key_size {
-                    Err(CacheStoreError::TooLarge)
-                } else {
-                    match (*client).set_ex::<_, _, ()>(key, value, ttl_cap) {
-                        Ok(_) => Ok(None),
-                        _ => Err(CacheStoreError::Failed),
-                    }
-                }
-            }
-            _ => Err(CacheStoreError::Disconnected),
-        };
-
-        future::result(result)
-    }
-
-    pub fn purge(&self, key: &str) -> CacheResult {
-        let result = match self.pool.get() {
-            Ok(client) => {
-                match (*client).del::<_, ()>(key) {
+            // Ensure value is not larger than 'max_key_size'
+            if value.len() > APP_CONF.redis.max_key_size {
+                Err(CacheStoreError::TooLarge)
+            } else {
+                match (*client).set_ex::<_, _, ()>(key, value, ttl_cap) {
                     Ok(_) => Ok(None),
                     _ => Err(CacheStoreError::Failed),
                 }
             }
-            _ => Err(CacheStoreError::Disconnected),
-        };
+        })
+    }
 
-        future::result(result)
+    pub fn purge(&self, key: &str) -> CacheResult {
+        get_cache_store_client!(self, client {
+            match (*client).del::<_, ()>(key) {
+                Ok(_) => Ok(None),
+                _ => Err(CacheStoreError::Failed),
+            }
+        })
     }
 }
