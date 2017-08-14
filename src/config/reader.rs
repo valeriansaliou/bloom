@@ -112,6 +112,13 @@ impl ConfigReader {
                     defaults::REDIS_MAX_KEY_SIZE,
                 ),
 
+                database: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "redis",
+                    "database",
+                    defaults::REDIS_DATABASE,
+                ),
+
                 max_key_expiration: ConfigReaderGetter::get_generic(
                     &conf,
                     "redis",

@@ -18,7 +18,8 @@ pub static PROXY_TUNNEL_THREADS: &'static str = "2";
 
 pub static CACHE_TTL_DEFAULT: &'static str = "600";
 
-pub static REDIS_HOST: &'static str = "::1";
+pub static REDIS_HOST: &'static str = "127.0.0.1";
 pub static REDIS_PORT: &'static str = "6379";
+pub static REDIS_DATABASE: &'static str = "0";
 pub static REDIS_MAX_KEY_SIZE: &'static str = "256000";
 pub static REDIS_MAX_KEY_EXPIRATION: &'static str = "2592000";

@@ -28,9 +28,10 @@ impl CacheStoreBuilder {
         info!("binding to store backend at {}", APP_CONF.redis.inet);
 
         let tcp_addr_raw = format!(
-            "redis://{}:{}/",
+            "redis://{}:{}/{}",
             APP_CONF.redis.inet.ip(),
-            APP_CONF.redis.inet.port()
+            APP_CONF.redis.inet.port(),
+            APP_CONF.redis.database,
         );
 
         match RedisConnectionManager::new(tcp_addr_raw.as_ref()) {
