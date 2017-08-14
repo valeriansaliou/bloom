@@ -22,7 +22,14 @@ pub struct CacheStore {
     pool: Pool<RedisConnectionManager>,
 }
 
-type CacheResult = FutureResult<Option<String>, &'static str>;
+#[derive(Debug)]
+pub enum CacheStoreError {
+    Disconnected,
+    Failed,
+    TooLarge,
+}
+
+type CacheResult = FutureResult<Option<String>, CacheStoreError>;
 
 impl CacheStoreBuilder {
     pub fn new() -> CacheStore {
@@ -63,7 +70,7 @@ impl CacheStore {
     pub fn ensure(&self) -> CacheResult {
         let result = match self.pool.get() {
             Ok(_) => Ok(None),
-            _ => Err("disconnected"),
+            _ => Err(CacheStoreError::Disconnected),
         };
 
         future::result(result)
@@ -74,10 +81,10 @@ impl CacheStore {
             Ok(client) => {
                 match (*client).get(key) {
                     Ok(string) => Ok(Some(string)),
-                    _ => Err("failed"),
+                    _ => Err(CacheStoreError::Failed),
                 }
             }
-            _ => Err("disconnected"),
+            _ => Err(CacheStoreError::Disconnected),
         };
 
         future::result(result)
@@ -91,15 +98,15 @@ impl CacheStore {
 
                 // Ensure value is not larger than 'max_key_size'
                 if value.len() > APP_CONF.redis.max_key_size {
-                    Err("too large")
+                    Err(CacheStoreError::TooLarge)
                 } else {
                     match (*client).set_ex::<_, _, ()>(key, value, ttl_cap) {
                         Ok(_) => Ok(None),
-                        _ => Err("failed"),
+                        _ => Err(CacheStoreError::Failed),
                     }
                 }
             }
-            _ => Err("disconnected"),
+            _ => Err(CacheStoreError::Disconnected),
         };
 
         future::result(result)
@@ -110,10 +117,10 @@ impl CacheStore {
             Ok(client) => {
                 match (*client).del::<_, ()>(key) {
                     Ok(_) => Ok(None),
-                    _ => Err("failed"),
+                    _ => Err(CacheStoreError::Failed),
                 }
             }
-            _ => Err("disconnected"),
+            _ => Err(CacheStoreError::Disconnected),
         };
 
         future::result(result)

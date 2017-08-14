@@ -98,7 +98,7 @@ impl ControlCommand {
                 Ok(ControlCommandResponse::Ok)
             }
             Err(err) => {
-                warn!("could not flush {} for: {} because: {}", variant, ns, err);
+                warn!("could not flush {} for: {} because: {:?}", variant, ns, err);
 
                 Err(None)
             }

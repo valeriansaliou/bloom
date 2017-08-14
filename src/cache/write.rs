@@ -76,7 +76,7 @@ impl CacheWrite {
                         Err(err) => {
                             warn!(
                                 "could not write cache for key: {} \
-                                    because: {}",
+                                    because: {:?}",
                                 key,
                                 err
                             );

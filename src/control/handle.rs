@@ -22,6 +22,16 @@ use cache::route::ROUTE_HASH_SIZE;
 
 pub struct ControlHandle;
 
+enum ControlHandleError {
+    Closed,
+    IncompatibleHasher,
+    NotRecognized,
+    TimedOut,
+    ConnectionAborted,
+    Interrupted,
+    Unknown,
+}
+
 #[derive(PartialEq)]
 enum ControlHandleMessageResult {
     Continue,
@@ -39,6 +49,20 @@ pub type ControlShard = u8;
 lazy_static! {
     static ref CONNECTED_BANNER: String = format!("CONNECTED <{} v{}>",
         env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+}
+
+impl ControlHandleError {
+    pub fn to_str(&self) -> &'static str {
+        match *self {
+            ControlHandleError::Closed => "closed",
+            ControlHandleError::IncompatibleHasher => "incompatible_hasher",
+            ControlHandleError::NotRecognized => "not_recognized",
+            ControlHandleError::TimedOut => "timed_out",
+            ControlHandleError::ConnectionAborted => "connection_aborted",
+            ControlHandleError::Interrupted => "interrupted",
+            ControlHandleError::Unknown => "unknown",
+        }
+    }
 }
 
 impl ControlHandle {
@@ -82,7 +106,7 @@ impl ControlHandle {
                 }
             }
             Err(err) => {
-                write!(stream, "ENDED {}{}", err, LINE_FEED).expect("write failed");
+                write!(stream, "ENDED {}{}", err.to_str(), LINE_FEED).expect("write failed");
             }
         }
     }
@@ -108,7 +132,7 @@ impl ControlHandle {
         );
     }
 
-    fn ensure_hasher(mut stream: &TcpStream) -> Result<Option<()>, &'static str> {
+    fn ensure_hasher(mut stream: &TcpStream) -> Result<Option<()>, ControlHandleError> {
         let test_value: String = thread_rng()
             .gen_ascii_chars()
             .take(HASH_VALUE_SIZE)
@@ -129,7 +153,7 @@ impl ControlHandle {
             match stream.read(&mut read) {
                 Ok(n) => {
                     if n == 0 {
-                        return Err("closed");
+                        return Err(ControlHandleError::Closed);
                     }
 
                     let mut parts = str::from_utf8(&read[0..n]).unwrap_or("").split_whitespace();
@@ -148,17 +172,17 @@ impl ControlHandle {
                             return Ok(None);
                         }
 
-                        return Err("incompatible_hasher");
+                        return Err(ControlHandleError::IncompatibleHasher);
                     }
 
-                    return Err("not_recognized");
+                    return Err(ControlHandleError::NotRecognized);
                 }
                 Err(err) => {
                     let err_reason = match err.kind() {
-                        ErrorKind::TimedOut => "timed_out",
-                        ErrorKind::ConnectionAborted => "connection_aborted",
-                        ErrorKind::Interrupted => "interrupted",
-                        _ => "unknown",
+                        ErrorKind::TimedOut => ControlHandleError::TimedOut,
+                        ErrorKind::ConnectionAborted => ControlHandleError::ConnectionAborted,
+                        ErrorKind::Interrupted => ControlHandleError::Interrupted,
+                        _ => ControlHandleError::Unknown,
                     };
 
                     return Err(err_reason);
