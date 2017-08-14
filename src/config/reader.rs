@@ -105,18 +105,39 @@ impl ConfigReader {
                     defaults::REDIS_PORT,
                 ),
 
-                max_key_size: ConfigReaderGetter::get_generic(
-                    &conf,
-                    "redis",
-                    "max_key_size",
-                    defaults::REDIS_MAX_KEY_SIZE,
-                ),
-
                 database: ConfigReaderGetter::get_generic(
                     &conf,
                     "redis",
                     "database",
                     defaults::REDIS_DATABASE,
+                ),
+
+                pool_size: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "redis",
+                    "pool_size",
+                    defaults::REDIS_POOL_SIZE,
+                ),
+
+                idle_timeout_seconds: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "redis",
+                    "idle_timeout_seconds",
+                    defaults::REDIS_IDLE_TIMEOUT_SECONDS,
+                ),
+
+                connection_timeout_seconds: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "redis",
+                    "connection_timeout_seconds",
+                    defaults::REDIS_CONNECTION_TIMEOUT_SECONDS,
+                ),
+
+                max_key_size: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "redis",
+                    "max_key_size",
+                    defaults::REDIS_MAX_KEY_SIZE,
                 ),
 
                 max_key_expiration: ConfigReaderGetter::get_generic(

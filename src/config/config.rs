@@ -36,6 +36,9 @@ pub struct ConfigCache {
 pub struct ConfigRedis {
     pub inet: SocketAddr,
     pub database: u8,
+    pub pool_size: u32,
+    pub idle_timeout_seconds: u64,
+    pub connection_timeout_seconds: u64,
     pub max_key_size: usize,
     pub max_key_expiration: usize,
 }

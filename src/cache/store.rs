@@ -5,11 +5,12 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::cmp;
-use std::default::Default;
+use std::time::Duration;
 
 use r2d2::Pool;
-use r2d2_redis::RedisConnectionManager;
-use redis::Commands;
+use r2d2::config::Config;
+use r2d2_redis::{RedisConnectionManager, Error};
+use redis::{Connection, Commands};
 use futures::future;
 use futures::future::FutureResult;
 
@@ -36,7 +37,15 @@ impl CacheStoreBuilder {
 
         match RedisConnectionManager::new(tcp_addr_raw.as_ref()) {
             Ok(manager) => {
-                match Pool::new(Default::default(), manager) {
+                let config = Config::<Connection, Error>::builder()
+                    .test_on_check_out(false)
+                    .pool_size(APP_CONF.redis.pool_size)
+                    .idle_timeout(Some(Duration::from_secs(APP_CONF.redis.idle_timeout_seconds)))
+                    .connection_timeout(Duration::from_secs(
+                        APP_CONF.redis.connection_timeout_seconds))
+                    .build();
+
+                match Pool::new(config, manager) {
                     Ok(pool) => {
                         info!("bound to store backend");
 
