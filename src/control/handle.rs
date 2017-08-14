@@ -15,8 +15,8 @@ use rand::{thread_rng, Rng};
 use super::command::ControlCommandResponse;
 use super::command::ControlCommand;
 use super::command::COMMAND_SIZE;
-use ::APP_CONF;
-use ::LINE_FEED;
+use APP_CONF;
+use LINE_FEED;
 use cache::route::CacheRoute;
 use cache::route::ROUTE_HASH_SIZE;
 
@@ -25,7 +25,7 @@ pub struct ControlHandle;
 #[derive(PartialEq)]
 enum ControlHandleMessageResult {
     Continue,
-    Close
+    Close,
 }
 
 const MAX_LINE_SIZE: usize = COMMAND_SIZE + ROUTE_HASH_SIZE + 1;
@@ -47,8 +47,7 @@ impl ControlHandle {
         ControlHandle::configure_stream(&stream, false);
 
         // Send connected banner
-        write!(stream, "{}{}", *CONNECTED_BANNER, LINE_FEED)
-            .expect("write failed");
+        write!(stream, "{}{}", *CONNECTED_BANNER, LINE_FEED).expect("write failed");
 
         // Ensure client hasher is compatible
         match Self::ensure_hasher(&stream) {
@@ -68,9 +67,10 @@ impl ControlHandle {
 
                     match stream.read(&mut read) {
                         Ok(n) => {
-                            if n == 0 || Self::on_message(
-                                &mut shard, &stream, &read[0..n]) ==
-                                ControlHandleMessageResult::Close {
+                            if n == 0 ||
+                                Self::on_message(&mut shard, &stream, &read[0..n]) ==
+                                    ControlHandleMessageResult::Close
+                            {
                                 // Should close?
                                 break;
                             }
@@ -82,8 +82,7 @@ impl ControlHandle {
                 }
             }
             Err(err) => {
-                write!(stream, "ENDED {}{}", err, LINE_FEED)
-                    .expect("write failed");
+                write!(stream, "ENDED {}{}", err, LINE_FEED).expect("write failed");
             }
         }
     }
@@ -97,23 +96,32 @@ impl ControlHandle {
 
         assert!(stream.set_nodelay(true).is_ok());
 
-        assert!(stream.set_read_timeout(Some(Duration::new(
-            tcp_timeout, 0))).is_ok());
-        assert!(stream.set_write_timeout(Some(Duration::new(
-            tcp_timeout, 0))).is_ok());
+        assert!(
+            stream
+                .set_read_timeout(Some(Duration::new(tcp_timeout, 0)))
+                .is_ok()
+        );
+        assert!(
+            stream
+                .set_write_timeout(Some(Duration::new(tcp_timeout, 0)))
+                .is_ok()
+        );
     }
 
-    fn ensure_hasher(mut stream: &TcpStream) ->
-        Result<Option<()>, &'static str> {
-        let test_value: String = thread_rng().gen_ascii_chars()
-                                    .take(HASH_VALUE_SIZE).collect();
+    fn ensure_hasher(mut stream: &TcpStream) -> Result<Option<()>, &'static str> {
+        let test_value: String = thread_rng()
+            .gen_ascii_chars()
+            .take(HASH_VALUE_SIZE)
+            .collect();
         let test_hash = CacheRoute::hash(test_value.as_str());
 
-        write!(stream, "HASHREQ {}{}", test_value, LINE_FEED)
-            .expect("write failed");
+        write!(stream, "HASHREQ {}{}", test_value, LINE_FEED).expect("write failed");
 
-        debug!("sent hasher request: {} and expecting hash: {}",
-            test_value, test_hash);
+        debug!(
+            "sent hasher request: {} and expecting hash: {}",
+            test_value,
+            test_hash
+        );
 
         loop {
             let mut read = [0; HASH_RESULT_SIZE];
@@ -121,45 +129,49 @@ impl ControlHandle {
             match stream.read(&mut read) {
                 Ok(n) => {
                     if n == 0 {
-                        return Err("closed")
+                        return Err("closed");
                     }
 
-                    let mut parts = str::from_utf8(&read[0..n])
-                                        .unwrap_or("").split_whitespace();
+                    let mut parts = str::from_utf8(&read[0..n]).unwrap_or("").split_whitespace();
 
                     if parts.next().unwrap_or("") == "HASHRES" {
                         let res_hash = parts.next().unwrap_or("");
 
-                        debug!("got hasher response: {} and expecting: {}",
-                            res_hash, test_hash);
+                        debug!(
+                            "got hasher response: {} and expecting: {}",
+                            res_hash,
+                            test_hash
+                        );
 
                         // Validate hash
-                        if res_hash.is_empty() == false &&
-                            res_hash == test_hash {
-                            return Ok(None)
+                        if res_hash.is_empty() == false && res_hash == test_hash {
+                            return Ok(None);
                         }
 
-                        return Err("incompatible_hasher")
+                        return Err("incompatible_hasher");
                     }
 
-                    return Err("not_recognized")
+                    return Err("not_recognized");
                 }
                 Err(err) => {
                     let err_reason = match err.kind() {
                         ErrorKind::TimedOut => "timed_out",
                         ErrorKind::ConnectionAborted => "connection_aborted",
                         ErrorKind::Interrupted => "interrupted",
-                        _ => "unknown"
+                        _ => "unknown",
                     };
 
-                    return Err(err_reason)
+                    return Err(err_reason);
                 }
             }
         }
     }
 
-    fn on_message(shard: &mut ControlShard, mut stream: &TcpStream,
-        message_slice: &[u8]) -> ControlHandleMessageResult {
+    fn on_message(
+        shard: &mut ControlShard,
+        mut stream: &TcpStream,
+        message_slice: &[u8],
+    ) -> ControlHandleMessageResult {
         let message = str::from_utf8(message_slice).unwrap_or("");
 
         debug!("got control message on shard {}: {}", shard, message);
@@ -167,31 +179,35 @@ impl ControlHandle {
         let mut result = ControlHandleMessageResult::Continue;
 
         let response = match Self::handle_message(shard, &message) {
-            Ok(resp) => match resp {
-                ControlCommandResponse::Ok
-                | ControlCommandResponse::Pong
-                | ControlCommandResponse::Ended
-                | ControlCommandResponse::Nil
-                | ControlCommandResponse::Void => {
-                    if resp == ControlCommandResponse::Ended {
-                        result = ControlHandleMessageResult::Close;
+            Ok(resp) => {
+                match resp {
+                    ControlCommandResponse::Ok |
+                    ControlCommandResponse::Pong |
+                    ControlCommandResponse::Ended |
+                    ControlCommandResponse::Nil |
+                    ControlCommandResponse::Void => {
+                        if resp == ControlCommandResponse::Ended {
+                            result = ControlHandleMessageResult::Close;
+                        }
+                        resp.to_str()
                     }
-                    resp.to_str()
+                    _ => ControlCommandResponse::Err.to_str(),
                 }
-                _ => ControlCommandResponse::Err.to_str()
-            },
-            _ => ControlCommandResponse::Err.to_str()
+            }
+            _ => ControlCommandResponse::Err.to_str(),
         };
 
         if response.is_empty() == false {
             write!(stream, "{}{}", response, LINE_FEED).expect("write failed");
         }
 
-        return result
+        return result;
     }
 
-    fn handle_message(shard: &mut ControlShard, message: &str) ->
-        Result<ControlCommandResponse, Option<()>> {
+    fn handle_message(
+        shard: &mut ControlShard,
+        message: &str,
+    ) -> Result<ControlCommandResponse, Option<()>> {
         let mut parts = message.split_whitespace();
         let command = parts.next().unwrap_or("");
 
@@ -204,7 +220,7 @@ impl ControlHandle {
             "PING" => ControlCommand::dispatch_ping(),
             "SHARD" => ControlCommand::dispatch_shard(shard, parts),
             "QUIT" => ControlCommand::dispatch_quit(),
-            _ => Ok(ControlCommandResponse::Nil)
+            _ => Ok(ControlCommandResponse::Nil),
         }
     }
 }

@@ -15,10 +15,8 @@ pub struct HeaderJanitor;
 
 impl HeaderJanitor {
     pub fn is_contextual(header: &HeaderView) -> bool {
-        header.is::<header::Connection>() ||
-            header.is::<header::Date>() ||
-            header.is::<header::Upgrade>() ||
-            header.is::<header::Cookie>()
+        header.is::<header::Connection>() || header.is::<header::Date>() ||
+            header.is::<header::Upgrade>() || header.is::<header::Cookie>()
     }
 
     pub fn is_internal(header: &HeaderView) -> bool {

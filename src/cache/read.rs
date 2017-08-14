@@ -6,24 +6,26 @@
 
 use futures::Future;
 
-use ::APP_CACHE_STORE;
+use APP_CACHE_STORE;
 
 pub struct CacheRead;
 
 impl CacheRead {
     pub fn acquire(key: &str) -> Result<String, &'static str> {
         match APP_CACHE_STORE.get(key).wait() {
-            Ok(Some(result)) => {
-                Ok(result)
-            }
+            Ok(Some(result)) => Ok(result),
             Ok(None) => {
                 warn!("acquired empty value from cache for key: {}", key);
 
                 Err("empty")
             }
             Err(err) => {
-                error!("could not acquire value from cache for key: {} \
-                    because: {}", key, err);
+                error!(
+                    "could not acquire value from cache for key: {} \
+                    because: {}",
+                    key,
+                    err
+                );
 
                 Err(err)
             }

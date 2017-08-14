@@ -10,12 +10,12 @@ use bmemcached::MemcachedClient;
 use futures::future;
 use futures::future::FutureResult;
 
-use ::APP_CONF;
+use APP_CONF;
 
 pub struct CacheStoreBuilder;
 
 pub struct CacheStore {
-    client: Option<MemcachedClient>
+    client: Option<MemcachedClient>,
 }
 
 type CacheResult = FutureResult<Option<String>, &'static str>;
@@ -24,19 +24,19 @@ impl CacheStoreBuilder {
     pub fn new() -> CacheStore {
         info!("binding to store backend at {}", APP_CONF.memcached.inet);
 
-        let tcp_addr = format!("{}:{}", APP_CONF.memcached.inet.ip(),
-                            APP_CONF.memcached.inet.port());
+        let tcp_addr = format!(
+            "{}:{}",
+            APP_CONF.memcached.inet.ip(),
+            APP_CONF.memcached.inet.port()
+        );
 
-        match MemcachedClient::new(
-            vec![tcp_addr], APP_CONF.memcached.pool_size) {
+        match MemcachedClient::new(vec![tcp_addr], APP_CONF.memcached.pool_size) {
             Ok(client_raw) => {
                 info!("bound to store backend");
 
-                CacheStore {
-                    client: Some(client_raw)
-                }
+                CacheStore { client: Some(client_raw) }
             }
-            Err(_) => panic!("could not connect to memcached")
+            Err(_) => panic!("could not connect to memcached"),
         }
     }
 }
@@ -47,12 +47,10 @@ impl CacheStore {
             Some(ref client) => {
                 match client.get(key) {
                     Ok(string) => Ok(Some(string)),
-                    _ => Err("failed")
+                    _ => Err("failed"),
                 }
             }
-            _ => {
-                Err("disconnected")
-            }
+            _ => Err("disconnected"),
         };
 
         future::result(result)
@@ -62,8 +60,7 @@ impl CacheStore {
         let result = match self.client {
             Some(ref client) => {
                 // Cap TTL to 'max_key_expiration'
-                let ttl_cap = cmp::min(ttl,
-                                APP_CONF.memcached.max_key_expiration);
+                let ttl_cap = cmp::min(ttl, APP_CONF.memcached.max_key_expiration);
 
                 // Ensure value is not larger than 'max_key_size'
                 if value.len() > APP_CONF.memcached.max_key_size {
@@ -71,13 +68,11 @@ impl CacheStore {
                 } else {
                     match client.set(key, value, ttl_cap) {
                         Ok(_) => Ok(None),
-                        _ => Err("failed")
+                        _ => Err("failed"),
                     }
                 }
             }
-            _ => {
-                Err("disconnected")
-            }
+            _ => Err("disconnected"),
         };
 
         future::result(result)
@@ -88,12 +83,10 @@ impl CacheStore {
             Some(ref client) => {
                 match client.delete(key) {
                     Ok(_) => Ok(None),
-                    _ => Err("failed")
+                    _ => Err("failed"),
                 }
             }
-            _ => {
-                Err("disconnected")
-            }
+            _ => Err("disconnected"),
         };
 
         future::result(result)
@@ -106,9 +99,7 @@ mod tests {
     use super::*;
 
     fn get_client() -> CacheStore {
-        CacheStore{
-            client: None
-        }
+        CacheStore { client: None }
     }
 
     #[test]
@@ -119,17 +110,31 @@ mod tests {
 
     #[test]
     fn it_fails_getting_cache() {
-        assert!(get_client().get("bloom:0:90d52bc6:f773d6f1").wait().is_err());
+        assert!(
+            get_client()
+                .get("bloom:0:90d52bc6:f773d6f1")
+                .wait()
+                .is_err()
+        );
     }
 
     #[test]
     fn it_fails_setting_cache() {
-        assert!(get_client().set("bloom:0:90d52bc6:f773d6f1", "{}", 30).wait()
-            .is_err());
+        assert!(
+            get_client()
+                .set("bloom:0:90d52bc6:f773d6f1", "{}", 30)
+                .wait()
+                .is_err()
+        );
     }
 
     #[test]
     fn it_fails_purging_cache() {
-        assert!(get_client().purge("bloom:0:90d52bc6:f773d6f1").wait().is_err());
+        assert!(
+            get_client()
+                .purge("bloom:0:90d52bc6:f773d6f1")
+                .wait()
+                .is_err()
+        );
     }
 }

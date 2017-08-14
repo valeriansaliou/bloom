@@ -20,7 +20,7 @@ impl Header for HeaderResponseBloomResponseIgnore {
 
     fn parse_header(raw: &Raw) -> Result<HeaderResponseBloomResponseIgnore> {
         if raw.eq("1") == true {
-            return Ok(HeaderResponseBloomResponseIgnore())
+            return Ok(HeaderResponseBloomResponseIgnore());
         }
         Err(Error::Header)
     }

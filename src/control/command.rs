@@ -9,7 +9,7 @@ use std::str::SplitWhitespace;
 use futures::Future;
 
 use super::handle::ControlShard;
-use ::APP_CACHE_STORE;
+use APP_CACHE_STORE;
 use cache::route::CacheRoute;
 
 #[derive(PartialEq)]
@@ -19,7 +19,7 @@ pub enum ControlCommandResponse {
     Ok,
     Pong,
     Ended,
-    Err
+    Err,
 }
 
 impl ControlCommandResponse {
@@ -30,7 +30,7 @@ impl ControlCommandResponse {
             ControlCommandResponse::Ok => "OK",
             ControlCommandResponse::Pong => "PONG",
             ControlCommandResponse::Ended => "ENDED quit",
-            ControlCommandResponse::Err => "ERR"
+            ControlCommandResponse::Err => "ERR",
         }
     }
 }
@@ -42,9 +42,10 @@ pub const COMMAND_SIZE: usize = 6;
 type ControlResult = Result<ControlCommandResponse, Option<()>>;
 
 impl ControlCommand {
-    pub fn dispatch_flush_bucket(shard: &ControlShard,
-        mut parts: SplitWhitespace) ->
-        ControlResult {
+    pub fn dispatch_flush_bucket(
+        shard: &ControlShard,
+        mut parts: SplitWhitespace,
+    ) -> ControlResult {
         let bucket = parts.next().unwrap_or("");
 
         if bucket.is_empty() == false {
@@ -56,9 +57,7 @@ impl ControlCommand {
         Err(None)
     }
 
-    pub fn dispatch_flush_auth(shard: &ControlShard,
-        mut parts: SplitWhitespace) ->
-        ControlResult {
+    pub fn dispatch_flush_auth(shard: &ControlShard, mut parts: SplitWhitespace) -> ControlResult {
         let auth = parts.next().unwrap_or("");
 
         if auth.is_empty() == false {
@@ -74,15 +73,14 @@ impl ControlCommand {
         Ok(ControlCommandResponse::Pong)
     }
 
-    pub fn dispatch_shard(shard: &mut ControlShard, mut parts: SplitWhitespace)
-        -> ControlResult {
+    pub fn dispatch_shard(shard: &mut ControlShard, mut parts: SplitWhitespace) -> ControlResult {
         match parts.next().unwrap_or("").parse::<u8>() {
             Ok(shard_to) => {
                 *shard = shard_to;
 
                 Ok(ControlCommandResponse::Ok)
             }
-            _ => Err(None)
+            _ => Err(None),
         }
     }
 
@@ -100,8 +98,7 @@ impl ControlCommand {
                 Ok(ControlCommandResponse::Ok)
             }
             Err(err) => {
-                warn!("could not flush {} for: {} because: {}", variant,
-                    ns, err);
+                warn!("could not flush {} for: {} because: {}", variant, ns, err);
 
                 Err(None)
             }

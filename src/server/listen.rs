@@ -8,7 +8,7 @@ use hyper::server::Http;
 
 use super::handle::ServerRequestHandle;
 
-use ::APP_CONF;
+use APP_CONF;
 
 pub struct ServerListenBuilder;
 pub struct ServerListen;
@@ -22,11 +22,13 @@ impl ServerListenBuilder {
 impl ServerListen {
     pub fn run(&self) {
         let addr = APP_CONF.server.inet;
-        let server = Http::new().bind(&addr, move || {
-            debug!("handled new request");
+        let server = Http::new()
+            .bind(&addr, move || {
+                debug!("handled new request");
 
-            Ok(ServerRequestHandle)
-        }).unwrap();
+                Ok(ServerRequestHandle)
+            })
+            .unwrap();
 
         info!("listening on http://{}", server.local_addr().unwrap());
 

@@ -18,14 +18,17 @@ impl ProxyHeader {
         // Request header: 'Authorization'
         let auth = match headers.get_raw("authorization") {
             None => defaults::REQUEST_AUTHORIZATION_DEFAULT,
-            Some(value) => from_utf8(value.one().unwrap_or(&[])).unwrap_or(
-                defaults::REQUEST_AUTHORIZATION_DEFAULT)
+            Some(value) => {
+                from_utf8(value.one().unwrap_or(&[])).unwrap_or(
+                    defaults::REQUEST_AUTHORIZATION_DEFAULT,
+                )
+            }
         };
 
         // Request header: 'Bloom-Request-Shard'
         let shard = match headers.get::<HeaderRequestBloomRequestShard>() {
             None => defaults::REQUEST_SHARD_DEFAULT,
-            Some(value) => value.0
+            Some(value) => value.0,
         };
 
         (auth, shard)

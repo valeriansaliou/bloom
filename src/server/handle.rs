@@ -8,7 +8,7 @@ use hyper;
 use hyper::server::{Service, Request, Response};
 
 use proxy::serve::ProxyServeFuture;
-use ::APP_PROXY_SERVE;
+use APP_PROXY_SERVE;
 
 pub struct ServerRequestHandle;
 

@@ -8,7 +8,7 @@ use std::thread;
 use std::net::TcpListener;
 
 use super::handle::ControlHandle;
-use ::APP_CONF;
+use APP_CONF;
 
 pub struct ControlListenBuilder;
 pub struct ControlListen;
@@ -28,8 +28,7 @@ impl ControlListen {
                 match stream {
                     Ok(stream) => {
                         thread::spawn(move || {
-                            debug!("control client connecting: {}",
-                                stream.peer_addr().unwrap());
+                            debug!("control client connecting: {}", stream.peer_addr().unwrap());
 
                             // Create client
                             ControlHandle::client(stream);

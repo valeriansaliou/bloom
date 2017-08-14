@@ -14,7 +14,7 @@ use ini::Ini;
 
 use super::defaults;
 use super::config::*;
-use ::APP_ARGS;
+use APP_ARGS;
 
 pub struct ConfigReader;
 struct ConfigReaderGetter;
@@ -29,83 +29,148 @@ impl ConfigReader {
 
         Config {
             server: ConfigServer {
-                inet: ConfigReaderGetter::get_inet(&conf, "server", "inet",
-                    "host", "port", defaults::SERVER_HOST,
-                    defaults::SERVER_PORT)
+                inet: ConfigReaderGetter::get_inet(
+                    &conf,
+                    "server",
+                    "inet",
+                    "host",
+                    "port",
+                    defaults::SERVER_HOST,
+                    defaults::SERVER_PORT,
+                ),
             },
 
             control: ConfigControl {
-                inet: ConfigReaderGetter::get_inet(&conf, "control", "inet",
-                    "host", "port", defaults::CONTROL_HOST,
-                    defaults::CONTROL_PORT),
+                inet: ConfigReaderGetter::get_inet(
+                    &conf,
+                    "control",
+                    "inet",
+                    "host",
+                    "port",
+                    defaults::CONTROL_HOST,
+                    defaults::CONTROL_PORT,
+                ),
 
-                tcp_timeout: ConfigReaderGetter::get_generic(&conf,
-                    "control", "tcp_timeout", defaults::CONTROL_TCP_TIMEOUT)
+                tcp_timeout: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "control",
+                    "tcp_timeout",
+                    defaults::CONTROL_TCP_TIMEOUT,
+                ),
             },
 
             proxy: ConfigProxy {
-                shard: ConfigReaderGetter::get_generic(&conf, "proxy",
-                    "shard", defaults::PROXY_SHARD),
+                shard: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "proxy",
+                    "shard",
+                    defaults::PROXY_SHARD,
+                ),
 
-                inet: ConfigReaderGetter::get_inet(&conf, "proxy", "inet",
-                    "host", "port", defaults::PROXY_HOST, defaults::PROXY_PORT),
+                inet: ConfigReaderGetter::get_inet(
+                    &conf,
+                    "proxy",
+                    "inet",
+                    "host",
+                    "port",
+                    defaults::PROXY_HOST,
+                    defaults::PROXY_PORT,
+                ),
 
-                tunnel_threads: ConfigReaderGetter::get_generic(&conf,
-                    "proxy", "tunnel_threads",
-                    defaults::PROXY_TUNNEL_THREADS)
+                tunnel_threads: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "proxy",
+                    "tunnel_threads",
+                    defaults::PROXY_TUNNEL_THREADS,
+                ),
             },
 
             cache: ConfigCache {
-                ttl_default: ConfigReaderGetter::get_generic(&conf, "cache",
-                    "ttl_default", defaults::CACHE_TTL_DEFAULT)
+                ttl_default: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "cache",
+                    "ttl_default",
+                    defaults::CACHE_TTL_DEFAULT,
+                ),
             },
 
             memcached: ConfigMemcached {
-                inet: ConfigReaderGetter::get_inet(&conf, "memcached", "inet",
-                    "host", "port", defaults::MEMCACHED_HOST,
-                    defaults::MEMCACHED_PORT),
+                inet: ConfigReaderGetter::get_inet(
+                    &conf,
+                    "memcached",
+                    "inet",
+                    "host",
+                    "port",
+                    defaults::MEMCACHED_HOST,
+                    defaults::MEMCACHED_PORT,
+                ),
 
-                max_key_size: ConfigReaderGetter::get_generic(&conf,
-                    "memcached", "max_key_size",
-                    defaults::MEMCACHED_MAX_KEY_SIZE),
+                max_key_size: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "memcached",
+                    "max_key_size",
+                    defaults::MEMCACHED_MAX_KEY_SIZE,
+                ),
 
-                max_key_expiration: ConfigReaderGetter::get_generic(&conf,
-                    "memcached", "max_key_expiration",
-                    defaults::MEMCACHED_MAX_KEY_EXPIRATION),
+                max_key_expiration: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "memcached",
+                    "max_key_expiration",
+                    defaults::MEMCACHED_MAX_KEY_EXPIRATION,
+                ),
 
-                pool_size: ConfigReaderGetter::get_generic(&conf, "memcached",
-                    "pool_size", defaults::MEMCACHED_POOL_SIZE)
-            }
+                pool_size: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "memcached",
+                    "pool_size",
+                    defaults::MEMCACHED_POOL_SIZE,
+                ),
+            },
         }
     }
 }
 
 impl ConfigReaderGetter {
     fn get_inet(
-        conf: &Ini, group: &'static str, key: &'static str,
-        key_host: &'static str, key_port: &'static str,
-        default_host: &'static str, default_port: &'static str
+        conf: &Ini,
+        group: &'static str,
+        key: &'static str,
+        key_host: &'static str,
+        key_port: &'static str,
+        default_host: &'static str,
+        default_port: &'static str,
     ) -> SocketAddr {
-        let value_host = (*conf).get_from_or(Some(group), key_host,
-            default_host).parse::<IpAddr>().unwrap();
+        let value_host = (*conf)
+            .get_from_or(Some(group), key_host, default_host)
+            .parse::<IpAddr>()
+            .unwrap();
 
-        let value_port = (*conf).get_from_or(Some(group), key_port,
-            default_port).parse::<u16>().unwrap();
+        let value_port = (*conf)
+            .get_from_or(Some(group), key_port, default_port)
+            .parse::<u16>()
+            .unwrap();
 
         let value_inet = SocketAddr::new(value_host, value_port);
 
-        debug!("parsed @{}:{} => {}", group, key,
-            value_inet);
+        debug!("parsed @{}:{} => {}", group, key, value_inet);
 
         value_inet
     }
 
     fn get_generic<T>(
-        conf: &Ini, group: &'static str, key: &'static str,
-        default: &'static str
-    ) -> T where T: Display + FromStr, <T as FromStr>::Err: Debug {
-        let value = (*conf).get_from_or(Some(group), key,
-            default).parse::<T>().unwrap();
+        conf: &Ini,
+        group: &'static str,
+        key: &'static str,
+        default: &'static str,
+    ) -> T
+    where
+        T: Display + FromStr,
+        <T as FromStr>::Err: Debug,
+    {
+        let value = (*conf)
+            .get_from_or(Some(group), key, default)
+            .parse::<T>()
+            .unwrap();
 
         debug!("parsed @{}:{} => {}", group, key, value);
 

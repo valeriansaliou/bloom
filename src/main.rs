@@ -4,9 +4,12 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-#[macro_use] extern crate log;
-#[macro_use] extern crate clap;
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate log;
+#[macro_use]
+extern crate clap;
+#[macro_use]
+extern crate lazy_static;
 extern crate ini;
 extern crate httparse;
 extern crate hyper;
@@ -37,7 +40,7 @@ use control::listen::ControlListenBuilder;
 use server::listen::ServerListenBuilder;
 
 struct AppArgs {
-    config: String
+    config: String,
 }
 
 pub static LINE_FEED: &'static str = "\r\n";
@@ -54,24 +57,22 @@ fn make_app_args() -> AppArgs {
         .version(crate_version!())
         .author(crate_authors!("\n"))
         .about(crate_description!())
-        .arg(Arg::with_name("config")
-            .short("c")
-            .long("config")
-            .help("Path to configuration file")
-            .default_value("./config.cfg")
-            .takes_value(true))
+        .arg(
+            Arg::with_name("config")
+                .short("c")
+                .long("config")
+                .help("Path to configuration file")
+                .default_value("./config.cfg")
+                .takes_value(true),
+        )
         .get_matches();
 
     // Generate owned app arguments
-    AppArgs {
-        config: String::from(matches.value_of("config").unwrap())
-    }
+    AppArgs { config: String::from(matches.value_of("config").unwrap()) }
 }
 
 fn spawn_worker() {
-    let worker = thread::spawn(|| {
-        ServerListenBuilder::new().run();
-    });
+    let worker = thread::spawn(|| { ServerListenBuilder::new().run(); });
 
     if worker.join().is_err() == true {
         error!("worker thread crashed, setting it up again");

@@ -11,31 +11,31 @@ pub struct Config {
     pub control: ConfigControl,
     pub proxy: ConfigProxy,
     pub cache: ConfigCache,
-    pub memcached: ConfigMemcached
+    pub memcached: ConfigMemcached,
 }
 
 pub struct ConfigServer {
-    pub inet: SocketAddr
+    pub inet: SocketAddr,
 }
 
 pub struct ConfigControl {
     pub inet: SocketAddr,
-    pub tcp_timeout: u64
+    pub tcp_timeout: u64,
 }
 
 pub struct ConfigProxy {
     pub shard: u8,
     pub inet: SocketAddr,
-    pub tunnel_threads: usize
+    pub tunnel_threads: usize,
 }
 
 pub struct ConfigCache {
-    pub ttl_default: u32
+    pub ttl_default: u32,
 }
 
 pub struct ConfigMemcached {
     pub inet: SocketAddr,
     pub max_key_size: usize,
     pub max_key_expiration: u32,
-    pub pool_size: u8
+    pub pool_size: u8,
 }

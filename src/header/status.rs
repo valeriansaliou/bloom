@@ -16,7 +16,7 @@ pub enum HeaderBloomStatusValue {
     Miss,
     Direct,
     Reject,
-    Offline
+    Offline,
 }
 
 #[derive(Clone)]
@@ -29,7 +29,7 @@ impl HeaderBloomStatusValue {
             HeaderBloomStatusValue::Miss => "MISS",
             HeaderBloomStatusValue::Direct => "DIRECT",
             HeaderBloomStatusValue::Reject => "REJECT",
-            HeaderBloomStatusValue::Offline => "OFFLINE"
+            HeaderBloomStatusValue::Offline => "OFFLINE",
         }
     }
 }
@@ -44,25 +44,15 @@ impl Header for HeaderBloomStatus {
         match raw.one() {
             Some(header_raw) => {
                 match str::from_utf8(header_raw) {
-                    Ok("HIT") => {
-                        Ok(HeaderBloomStatus(HeaderBloomStatusValue::Hit))
-                    }
-                    Ok("MISS") => {
-                        Ok(HeaderBloomStatus(HeaderBloomStatusValue::Miss))
-                    }
-                    Ok("DIRECT") => {
-                        Ok(HeaderBloomStatus(HeaderBloomStatusValue::Direct))
-                    }
-                    Ok("REJECT") => {
-                        Ok(HeaderBloomStatus(HeaderBloomStatusValue::Reject))
-                    }
-                    Ok("OFFLINE") => {
-                        Ok(HeaderBloomStatus(HeaderBloomStatusValue::Offline))
-                    }
-                    _ => Err(Error::Header)
+                    Ok("HIT") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Hit)),
+                    Ok("MISS") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Miss)),
+                    Ok("DIRECT") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Direct)),
+                    Ok("REJECT") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Reject)),
+                    Ok("OFFLINE") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Offline)),
+                    _ => Err(Error::Header),
                 }
             }
-            _ => Err(Error::Header)
+            _ => Err(Error::Header),
         }
     }
 
