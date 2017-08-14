@@ -37,6 +37,10 @@ impl ProxyServeBuilder {
 }
 
 impl ProxyServe {
+    pub fn ensure(&self) -> Result<(), ()> {
+        Ok(())
+    }
+
     pub fn handle(&self, req: Request) -> ProxyServeFuture {
         info!("handled request: {} on {}", req.method(), req.path());
 

@@ -32,6 +32,7 @@ use std::thread;
 use std::time::Duration;
 
 use clap::{App, Arg};
+use futures::Future;
 
 use config::config::Config;
 use config::logger::ConfigLogger;
@@ -73,6 +74,15 @@ fn make_app_args() -> AppArgs {
     AppArgs { config: String::from(matches.value_of("config").unwrap()) }
 }
 
+fn ensure_states() {
+    if APP_CACHE_STORE.ensure().wait().is_err() {
+        panic!("could not ensure cache store");
+    }
+    if APP_PROXY_SERVE.ensure().is_err() {
+        panic!("could not ensure proxy serve");
+    }
+}
+
 fn spawn_worker() {
     let worker = thread::spawn(|| { ServerListenBuilder::new().run(); });
 
@@ -90,6 +100,9 @@ fn main() {
     let _logger = ConfigLogger::init();
 
     info!("starting up");
+
+    // Ensure all states are bound
+    ensure_states();
 
     // Run control interface (in its own thread)
     ControlListenBuilder::new().run();

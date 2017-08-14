@@ -50,6 +50,15 @@ impl CacheStoreBuilder {
 }
 
 impl CacheStore {
+    pub fn ensure(&self) -> CacheResult {
+        let result = match self.pool.get() {
+            Ok(_) => Ok(None),
+            _ => Err("disconnected"),
+        };
+
+        future::result(result)
+    }
+
     pub fn get(&self, key: &str) -> CacheResult {
         let result = match self.pool.get() {
             Ok(client) => {

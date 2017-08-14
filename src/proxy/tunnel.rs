@@ -56,7 +56,7 @@ impl ProxyTunnel {
                     let mut tunnel_req = Request::new(req.method().clone(), tunnel_uri);
 
                     {
-                        let mut tunnel_headers = tunnel_req.headers_mut();
+                        let tunnel_headers = tunnel_req.headers_mut();
 
                         tunnel_headers.clone_from(req.headers());
                     }
