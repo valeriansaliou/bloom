@@ -22,6 +22,18 @@ pub enum ControlCommandResponse {
     Err,
 }
 
+#[derive(Debug)]
+pub enum CacheFlushVariant {
+    Bucket,
+    Auth,
+}
+
+pub struct ControlCommand;
+
+pub const COMMAND_SIZE: usize = 6;
+
+type ControlResult = Result<ControlCommandResponse, Option<()>>;
+
 impl ControlCommandResponse {
     pub fn to_str(&self) -> &'static str {
         match *self {
@@ -35,12 +47,6 @@ impl ControlCommandResponse {
     }
 }
 
-pub struct ControlCommand;
-
-pub const COMMAND_SIZE: usize = 6;
-
-type ControlResult = Result<ControlCommandResponse, Option<()>>;
-
 impl ControlCommand {
     pub fn dispatch_flush_bucket(
         shard: &ControlShard,
@@ -51,7 +57,7 @@ impl ControlCommand {
         if bucket.is_empty() == false {
             let ns = CacheRoute::gen_ns_from_hash(*shard, "*", bucket);
 
-            return Self::proceed_flush("bucket", ns.as_ref());
+            return Self::proceed_flush(CacheFlushVariant::Bucket, ns.as_ref());
         }
 
         Err(None)
@@ -63,7 +69,7 @@ impl ControlCommand {
         if auth.is_empty() == false {
             let ns = CacheRoute::gen_ns_from_hash(*shard, auth, "*");
 
-            return Self::proceed_flush("auth", ns.as_ref());
+            return Self::proceed_flush(CacheFlushVariant::Auth, ns.as_ref());
         }
 
         Err(None)
@@ -88,17 +94,18 @@ impl ControlCommand {
         Ok(ControlCommandResponse::Ended)
     }
 
-    fn proceed_flush(variant: &str, ns: &str) -> ControlResult {
-        debug!("attempting to flush {} for: {}", variant, ns);
+    fn proceed_flush(variant: CacheFlushVariant, ns: &str) -> ControlResult {
+        debug!("attempting to flush {:?} for: {}", variant, ns);
 
+        // TODO: purge relative to 'variant' (proceed a SCAN)
         match APP_CACHE_STORE.purge(ns).wait() {
             Ok(_) => {
-                info!("flushed {} for: {}", variant, ns);
+                info!("flushed {:?} for: {}", variant, ns);
 
                 Ok(ControlCommandResponse::Ok)
             }
             Err(err) => {
-                warn!("could not flush {} for: {} because: {:?}", variant, ns, err);
+                warn!("could not flush {:?} for: {} because: {:?}", variant, ns, err);
 
                 Err(None)
             }

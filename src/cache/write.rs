@@ -8,10 +8,12 @@ use std::str;
 use hyper::{Method, HttpVersion, StatusCode, Headers, Body};
 use futures::{Future, Stream};
 
+use super::route::CacheRoute;
 use APP_CONF;
 use APP_CACHE_STORE;
 use header::janitor::HeaderJanitor;
 use header::response_ignore::HeaderResponseBloomResponseIgnore;
+use header::response_bucket::HeaderResponseBloomResponseBucket;
 use header::response_ttl::HeaderResponseBloomResponseTTL;
 
 pub struct CacheWrite;
@@ -49,6 +51,15 @@ impl CacheWrite {
                 if Self::is_cacheable(method, status, headers) == true {
                     debug!("key: {} cacheable, writing cache", key);
 
+                    // Acquire bucket from response, or fallback to no bucket
+                    let key_bucket = match headers.get::<HeaderResponseBloomResponseBucket>() {
+                        None => None,
+                        Some(value) => {
+                            Some(CacheRoute::gen_key_bucket_with_ns(key,
+                                &CacheRoute::hash(&value.0)))
+                        },
+                    };
+
                     // Acquire TTL from response, or fallback to default TTL
                     let ttl = match headers.get::<HeaderResponseBloomResponseTTL>() {
                         None => APP_CONF.cache.ttl_default,
@@ -64,7 +75,7 @@ impl CacheWrite {
                     );
 
                     // Write to cache
-                    match APP_CACHE_STORE.set(key, &value, ttl).wait() {
+                    match APP_CACHE_STORE.set(key, &value, ttl, key_bucket).wait() {
                         Ok(_) => {
                             debug!("wrote cache for key: {}", key);
 

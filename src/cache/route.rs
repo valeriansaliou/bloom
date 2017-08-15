@@ -12,8 +12,12 @@ pub struct CacheRoute;
 pub const ROUTE_HASH_SIZE: usize = 8;
 
 impl CacheRoute {
-    pub fn gen_ns_from_hash(shard: u8, auth_hash: &str, bucket_hash: &str) -> String {
-        format!("bloom:{}:{}:{}", shard, auth_hash, bucket_hash)
+    pub fn gen_ns_from_hash(shard: u8, auth_hash: &str, route_hash: &str) -> String {
+        format!("bloom:{}:{}:{}", shard, auth_hash, route_hash)
+    }
+
+    pub fn gen_key_bucket_with_ns(ns: &str, bucket_hash: &str) -> String {
+        format!("{}:b:{}", ns, bucket_hash)
     }
 
     pub fn gen_ns(
@@ -34,15 +38,15 @@ impl CacheRoute {
         );
 
         let auth_hash = Self::hash(&authorization_raw);
-        let bucket_hash = Self::hash(&bucket_raw);
+        let route_hash = Self::hash(&bucket_raw);
 
         debug!(
             "generated bucket: {} with hash: {}",
             bucket_raw,
-            bucket_hash
+            route_hash
         );
 
-        Self::gen_ns_from_hash(shard, auth_hash.as_str(), bucket_hash.as_str())
+        Self::gen_ns_from_hash(shard, auth_hash.as_str(), route_hash.as_str())
     }
 
     pub fn hash(value: &str) -> String {

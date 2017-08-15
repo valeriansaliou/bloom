@@ -10,7 +10,7 @@ use std::time::Duration;
 use r2d2::Pool;
 use r2d2::config::Config;
 use r2d2_redis::{RedisConnectionManager, Error};
-use redis::{Connection, Commands};
+use redis::{self, Connection, Commands};
 use futures::future;
 use futures::future::FutureResult;
 
@@ -86,7 +86,8 @@ impl CacheStore {
         })
     }
 
-    pub fn set(&self, key: &str, value: &str, ttl: usize) -> CacheResult {
+    pub fn set(&self, key: &str, value: &str, ttl: usize, key_bucket: Option<String>) ->
+        CacheResult {
         get_cache_store_client!(self, client {
             // Cap TTL to 'max_key_expiration'
             let ttl_cap = cmp::min(ttl, APP_CONF.redis.max_key_expiration);
@@ -95,9 +96,27 @@ impl CacheStore {
             if value.len() > APP_CONF.redis.max_key_size {
                 Err(CacheStoreError::TooLarge)
             } else {
-                match (*client).set_ex::<_, _, ()>(key, value, ttl_cap) {
-                    Ok(_) => Ok(None),
-                    _ => Err(CacheStoreError::Failed),
+                match key_bucket {
+                    Some(key_bucket_value) => {
+                        // Bucket (MULTI operation for main data + bucket marker)
+                        let result = redis::pipe()
+                            .atomic()
+                            .cmd("SETEX").arg(key).arg(ttl_cap).arg(value).ignore()
+                            .cmd("SETEX").arg(key_bucket_value).arg(ttl_cap).arg("").ignore()
+                            .query::<()>(&*client);
+
+                        match result {
+                            Ok(_) => Ok(None),
+                            _ => Err(CacheStoreError::Failed),
+                        }
+                    },
+                    None => {
+                        // No bucket set (simple SET)
+                        match (*client).set_ex::<_, _, ()>(key, value, ttl_cap) {
+                            Ok(_) => Ok(None),
+                            _ => Err(CacheStoreError::Failed),
+                        }
+                    },
                 }
             }
         })

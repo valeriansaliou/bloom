@@ -76,11 +76,13 @@ impl ProxyServe {
         info!("tunneling for ns = {}", ns);
 
         match CacheRead::acquire(ns.as_ref()) {
-            Ok(cached_value) => self.dispatch_cached(&method, &headers, cached_value),
+            Ok(cached_value) => self.dispatch_cached(&method, &headers, &cached_value),
             Err(_) => {
                 match ProxyTunnelBuilder::new().run(&method, &uri, &headers, body, shard) {
                     Ok(tunnel_res) => {
                         let ref status = tunnel_res.status();
+
+                        // TODO: maybe avoid cloning?
                         let headers = tunnel_res.headers().clone();
 
                         let result = CacheWrite::save(
@@ -130,10 +132,10 @@ impl ProxyServe {
         &self,
         method: &Method,
         headers: &Headers,
-        res_string: String,
+        res_string: &str,
     ) -> ProxyServeFuture {
         // Process ETag for cached content
-        let (res_hash, res_etag) = self.body_fingerprint(&res_string);
+        let (res_hash, res_etag) = self.body_fingerprint(res_string);
 
         let isnt_modified = match headers.get::<IfNoneMatch>() {
             Some(req_if_none_match) => {
@@ -251,7 +253,7 @@ impl ProxyServe {
         self.respond(method, status, headers, format!("{}", status))
     }
 
-    fn body_fingerprint(&self, body_string: &String) -> (String, ETag) {
+    fn body_fingerprint(&self, body_string: &str) -> (String, ETag) {
         let body_hash = format!("{:x}", farmhash::fingerprint64(body_string.as_bytes()));
         let body_etag = ETag(EntityTag::new(false, body_hash.clone()));
 
