@@ -31,7 +31,8 @@ impl CacheRoute {
         origin: Option<&Origin>,
     ) -> String {
         let authorization_raw = format!("[{}]", authorization);
-        let bucket_raw = format!(
+        let bucket_raw =
+            format!(
             "[{}|{}|{}|{}|{}]",
             version,
             method,
@@ -62,8 +63,16 @@ mod tests {
     #[test]
     fn it_generates_valid_ns() {
         assert_eq!(
-            CacheRoute::gen_ns(0, "", HttpVersion::Http11, &Method::Get, "/", Some("")),
-            "bloom:0:90d52bc6:f773d6f1",
+            CacheRoute::gen_ns(
+                0,
+                "",
+                HttpVersion::Http11,
+                &Method::Get,
+                "/",
+                Some(""),
+                None,
+            ),
+            "bloom:0:90d52bc6:e6a8b05d",
             "[shard=0][auth=no] HTTP/1.1 GET /"
         );
         assert_eq!(
@@ -74,8 +83,9 @@ mod tests {
                 &Method::Post,
                 "/login",
                 Some(""),
+                None,
             ),
-            "bloom:0:90d52bc6:afddff64",
+            "bloom:0:90d52bc6:fbdc5f7c",
             "[shard=0][auth=no] HTTP/1.1 POST /login"
         );
         assert_eq!(
@@ -86,8 +96,9 @@ mod tests {
                 &Method::Options,
                 "/feed",
                 Some(""),
+                None,
             ),
-            "bloom:7:d42601a6:3352b2d5",
+            "bloom:7:d42601a6:2f484c4a",
             "[shard=7][auth=yes] HTTP/1.1 OPTIONS /feed"
         );
         assert_eq!(
@@ -98,8 +109,9 @@ mod tests {
                 &Method::Head,
                 "/user",
                 Some("u=1"),
+                Some(&Origin::new("https", "valeriansaliou.name", None)),
             ),
-            "bloom:80:471d2c40:e99cc313",
+            "bloom:80:471d2c40:e186dab7",
             "[shard=80][auth=yes] h2 HEAD /feed"
         );
         assert_eq!(

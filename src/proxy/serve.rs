@@ -67,8 +67,15 @@ impl ProxyServe {
         let (method, uri, version, headers, body) = req.deconstruct();
         let (auth, shard) = ProxyHeader::parse_from_request(&headers);
 
-        let ns = CacheRoute::gen_ns(shard, auth, version, &method, uri.path(), uri.query(),
-            headers.get::<Origin>());
+        let ns = CacheRoute::gen_ns(
+            shard,
+            auth,
+            version,
+            &method,
+            uri.path(),
+            uri.query(),
+            headers.get::<Origin>(),
+        );
 
         info!("tunneling for ns = {}", ns);
 
@@ -179,10 +186,12 @@ impl ProxyServe {
                 let mut headers = Headers::new();
 
                 for header in res.headers {
-                    if let (Ok(header_name), Ok(header_value)) = (
-                        String::from_utf8(Vec::from(header.name)),
-                        String::from_utf8(Vec::from(header.value))
-                    ) {
+                    if let (Ok(header_name), Ok(header_value)) =
+                        (
+                            String::from_utf8(Vec::from(header.name)),
+                            String::from_utf8(Vec::from(header.value)),
+                        )
+                    {
                         headers.set_raw(header_name, header_value);
                     }
                 }

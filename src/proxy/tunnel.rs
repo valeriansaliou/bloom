@@ -73,15 +73,15 @@ impl ProxyTunnel {
                                 &Method::Post | &Method::Patch | &Method::Put => {
                                     // TODO: blocking if non-empty, eg. if PATCH, why?
                                     tunnel_req.set_body(body);
-                                },
-                                _ => {},
+                                }
+                                _ => {}
                             }
 
                             self.core.run(self.client.request(tunnel_req))
-                        },
+                        }
                         Err(err) => Err(Error::Uri(err)),
                     }
-                },
+                }
                 None => Err(Error::Header),
             }
         } else {
