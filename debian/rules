@@ -1,11 +1,10 @@
 #!/usr/bin/make -f
 
 DISTRIBUTION = $(lsb_release -sr)
-VERSION = 0.0.3
+VERSION = 0.0.4
 PACKAGEVERSION = $(VERSION)-0~$(DISTRIBUTION)0
 TARBALL = v$(VERSION).tar.gz
 URL = https://github.com/valeriansaliou/bloom/archive/$(TARBALL)
-CARGO = ~/.cargo/bin/cargo
 
 %:
 		dh $@
@@ -16,7 +15,7 @@ override_dh_auto_build:
 override_dh_auto_install:
 		wget -N --progress=dot:mega $(URL)
 		tar --strip-components=1 -xf $(TARBALL)
-		$(CARGO) build --release
+		cargo build --release
 		strip target/release/bloom
 		mkdir debian/bloom/
 		mv target/release/bloom debian/bloom/

@@ -13,11 +13,9 @@ rust:
 env:
   matrix:
     - OS=debian DIST=jessie ARCH=i386
-    - OS=debian DIST=jessie ARCH=amd64
+    - OS=debian DIST=jessie ARCH=x86_64
 
 script:
- - git submodule update --init --recursive
- - git describe --long
  - git clone https://github.com/packpack/packpack.git packpack
  - packpack/packpack
 
