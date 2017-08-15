@@ -1,4 +1,24 @@
 #!/usr/bin/make -f
 
+DISTRIBUTION = $(shell lsb_release -sr)
+VERSION = 0.0.1
+PACKAGEVERSION = $(VERSION)-0~$(DISTRIBUTION)0
+TARBALL = v$(VERSION).tar.gz
+URL = https://github.com/valeriansaliou/bloom/archive/$(TARBALL)
+
 %:
-		dh --with quilt $@
+		dh $@
+
+override_dh_auto_clean:
+override_dh_auto_test:
+override_dh_auto_build:
+override_dh_auto_install:
+    wget -N --progress=dot:mega $(URL)
+    tar --strip-components=1 -xf $(TARBALL)
+    cargo build --release
+    strip target/release/bloom
+    mkdir debian/bloom/
+    mv target/release/bloom debian/bloom/
+
+override_dh_gencontrol:
+    dh_gencontrol -- -v$(PACKAGEVERSION)

@@ -1,0 +1,11 @@
+[Unit]
+Description=bloom daemon
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/bloom
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
