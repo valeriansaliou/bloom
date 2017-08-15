@@ -55,9 +55,10 @@ impl ControlCommand {
         let bucket = parts.next().unwrap_or("");
 
         if bucket.is_empty() == false {
-            let ns = CacheRoute::gen_ns_from_hash(*shard, "*", bucket);
+            let pattern = CacheRoute::gen_key_bucket_with_ns(
+                &CacheRoute::gen_ns_from_hash(*shard, "*", "*"), bucket);
 
-            return Self::proceed_flush(CacheFlushVariant::Bucket, ns.as_ref());
+            return Self::proceed_flush(CacheFlushVariant::Bucket, pattern.as_ref());
         }
 
         Err(None)
@@ -67,9 +68,9 @@ impl ControlCommand {
         let auth = parts.next().unwrap_or("");
 
         if auth.is_empty() == false {
-            let ns = CacheRoute::gen_ns_from_hash(*shard, auth, "*");
+            let pattern = CacheRoute::gen_ns_from_hash(*shard, auth, "*");
 
-            return Self::proceed_flush(CacheFlushVariant::Auth, ns.as_ref());
+            return Self::proceed_flush(CacheFlushVariant::Auth, pattern.as_ref());
         }
 
         Err(None)
@@ -94,18 +95,17 @@ impl ControlCommand {
         Ok(ControlCommandResponse::Ended)
     }
 
-    fn proceed_flush(variant: CacheFlushVariant, ns: &str) -> ControlResult {
-        debug!("attempting to flush {:?} for: {}", variant, ns);
+    fn proceed_flush(variant: CacheFlushVariant, pattern: &str) -> ControlResult {
+        debug!("attempting to flush {:?} for pattern: {}", variant, pattern);
 
-        // TODO: purge relative to 'variant' (proceed a SCAN)
-        match APP_CACHE_STORE.purge(ns).wait() {
+        match APP_CACHE_STORE.purge_pattern(pattern).wait() {
             Ok(_) => {
-                info!("flushed {:?} for: {}", variant, ns);
+                info!("flushed {:?} for pattern: {}", variant, pattern);
 
                 Ok(ControlCommandResponse::Ok)
             }
             Err(err) => {
-                warn!("could not flush {:?} for: {} because: {:?}", variant, ns, err);
+                warn!("could not flush {:?} for pattern: {} because: {:?}", variant, pattern, err);
 
                 Err(None)
             }

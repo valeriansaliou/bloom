@@ -14,3 +14,12 @@ macro_rules! get_cache_store_client {
         )
     )
 }
+
+macro_rules! gen_cache_store_empty_result {
+    ($pattern:expr) => (
+        match $pattern {
+            Ok(_) => Ok(None),
+            _ => Err(CacheStoreError::Failed),
+        }
+    )
+}

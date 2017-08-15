@@ -29,6 +29,9 @@ pub enum CacheStoreError {
     TooLarge,
 }
 
+// TODO
+static PURGE_SCRIPT: &'static str = r"return ARGV[1];";
+
 type CacheResult = FutureResult<Option<String>, CacheStoreError>;
 
 impl CacheStoreBuilder {
@@ -99,35 +102,32 @@ impl CacheStore {
                 match key_bucket {
                     Some(key_bucket_value) => {
                         // Bucket (MULTI operation for main data + bucket marker)
-                        let result = redis::pipe()
-                            .atomic()
-                            .cmd("SETEX").arg(key).arg(ttl_cap).arg(value).ignore()
-                            .cmd("SETEX").arg(key_bucket_value).arg(ttl_cap).arg("").ignore()
-                            .query::<()>(&*client);
-
-                        match result {
-                            Ok(_) => Ok(None),
-                            _ => Err(CacheStoreError::Failed),
-                        }
+                        gen_cache_store_empty_result!(
+                            redis::pipe()
+                                .atomic()
+                                .cmd("SETEX").arg(key).arg(ttl_cap).arg(value).ignore()
+                                .cmd("SETEX").arg(key_bucket_value).arg(ttl_cap).arg("").ignore()
+                                .query::<()>(&*client)
+                        )
                     },
                     None => {
-                        // No bucket set (simple SET)
-                        match (*client).set_ex::<_, _, ()>(key, value, ttl_cap) {
-                            Ok(_) => Ok(None),
-                            _ => Err(CacheStoreError::Failed),
-                        }
+                        gen_cache_store_empty_result!(
+                            (*client).set_ex::<_, _, ()>(key, value, ttl_cap)
+                        )
                     },
                 }
             }
         })
     }
 
-    pub fn purge(&self, key: &str) -> CacheResult {
+    pub fn purge_pattern(&self, key_pattern: &str) -> CacheResult {
         get_cache_store_client!(self, client {
-            match (*client).del::<_, ()>(key) {
-                Ok(_) => Ok(None),
-                _ => Err(CacheStoreError::Failed),
-            }
+            // Invoke keyspace cleanup script for key pattern
+            gen_cache_store_empty_result!(
+                redis::Script::new(PURGE_SCRIPT)
+                    .arg(key_pattern)
+                    .invoke::<()>(&*client)
+            )
         })
     }
 }
