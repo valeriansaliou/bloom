@@ -68,11 +68,13 @@ impl ProxyTunnel {
                         tunnel_headers.clone_from(headers);
                     }
 
-                    // Forward body
-                    // TODO: blocking, wtf?
-                    // tunnel_req.set_body(Body::from(body));
+                    // TODO: ignore the body if not POST, PATCH, etc (no need to fwd it)
 
-                    // TODO: debug
+                    // Forward body
+                    // TODO: blocking if non-empty, eg. if PATCH, why?
+                    tunnel_req.set_body(body);
+
+                    // TODO: debug (this works when the content-length is ==)
                     // tunnel_req.set_body(Body::from(
                     //     "{\"type\":\"online\",\"time\":{\"for\":60}}"));
 
