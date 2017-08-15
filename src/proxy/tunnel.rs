@@ -59,7 +59,7 @@ impl ProxyTunnel {
                 Some(ref shard_uri) => {
                     let tunnel_uri = format!("{}{}", shard_uri, uri.path()).parse().unwrap();
 
-                    let mut tunnel_req = Request::new(method.clone(), tunnel_uri);
+                    let mut tunnel_req = Request::new(method.to_owned(), tunnel_uri);
 
                     // Forward headers
                     {

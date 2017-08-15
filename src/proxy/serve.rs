@@ -81,7 +81,7 @@ impl ProxyServe {
                 match ProxyTunnelBuilder::new().run(&method, &uri, &headers, body, shard) {
                     Ok(tunnel_res) => {
                         let ref status = tunnel_res.status();
-                        let headers = tunnel_res.headers().clone();
+                        let headers = tunnel_res.headers().to_owned();
 
                         let result = CacheWrite::save(
                             ns.as_ref(),
@@ -253,7 +253,7 @@ impl ProxyServe {
 
     fn body_fingerprint(&self, body_string: &str) -> (String, ETag) {
         let body_hash = format!("{:x}", farmhash::fingerprint64(body_string.as_bytes()));
-        let body_etag = ETag(EntityTag::new(false, body_hash.clone()));
+        let body_etag = ETag(EntityTag::new(false, body_hash.to_owned()));
 
         (body_hash, body_etag)
     }
