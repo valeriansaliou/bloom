@@ -16,8 +16,9 @@ env:
     - OS=debian DIST=jessie ARCH=x86_64
 
 script:
- - git clone https://github.com/packpack/packpack.git packpack
- - packpack/packpack
+  - which cargo
+  - git clone https://github.com/packpack/packpack.git packpack
+  - packpack/packpack
 
 deploy:
   provider: packagecloud
