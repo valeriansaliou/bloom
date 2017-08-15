@@ -55,9 +55,11 @@ impl CacheWrite {
                     let key_bucket = match headers.get::<HeaderResponseBloomResponseBucket>() {
                         None => None,
                         Some(value) => {
-                            Some(CacheRoute::gen_key_bucket_with_ns(key,
-                                &CacheRoute::hash(&value.0)))
-                        },
+                            Some(CacheRoute::gen_key_bucket_with_ns(
+                                key,
+                                &CacheRoute::hash(&value.0),
+                            ))
+                        }
                     };
 
                     // Acquire TTL from response, or fallback to default TTL

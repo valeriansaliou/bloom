@@ -40,11 +40,7 @@ impl CacheRoute {
         let auth_hash = Self::hash(&authorization_raw);
         let route_hash = Self::hash(&bucket_raw);
 
-        debug!(
-            "generated bucket: {} with hash: {}",
-            bucket_raw,
-            route_hash
-        );
+        debug!("generated bucket: {} with hash: {}", bucket_raw, route_hash);
 
         Self::gen_ns_from_hash(shard, auth_hash.as_str(), route_hash.as_str())
     }

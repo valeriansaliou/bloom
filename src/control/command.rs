@@ -11,6 +11,7 @@ use futures::Future;
 use super::handle::ControlShard;
 use APP_CACHE_STORE;
 use cache::route::CacheRoute;
+use cache::store::CachePurgeVariant;
 
 #[derive(PartialEq)]
 pub enum ControlCommandResponse {
@@ -20,12 +21,6 @@ pub enum ControlCommandResponse {
     Pong,
     Ended,
     Err,
-}
-
-#[derive(Debug)]
-pub enum CacheFlushVariant {
-    Bucket,
-    Auth,
 }
 
 pub struct ControlCommand;
@@ -56,9 +51,11 @@ impl ControlCommand {
 
         if bucket.is_empty() == false {
             let pattern = CacheRoute::gen_key_bucket_with_ns(
-                &CacheRoute::gen_ns_from_hash(*shard, "*", "*"), bucket);
+                &CacheRoute::gen_ns_from_hash(*shard, "*", "*"),
+                bucket,
+            );
 
-            return Self::proceed_flush(CacheFlushVariant::Bucket, pattern.as_ref());
+            return Self::proceed_flush(CachePurgeVariant::Bucket, pattern.as_ref());
         }
 
         Err(None)
@@ -70,7 +67,7 @@ impl ControlCommand {
         if auth.is_empty() == false {
             let pattern = CacheRoute::gen_ns_from_hash(*shard, auth, "*");
 
-            return Self::proceed_flush(CacheFlushVariant::Auth, pattern.as_ref());
+            return Self::proceed_flush(CachePurgeVariant::Auth, pattern.as_ref());
         }
 
         Err(None)
@@ -95,17 +92,22 @@ impl ControlCommand {
         Ok(ControlCommandResponse::Ended)
     }
 
-    fn proceed_flush(variant: CacheFlushVariant, pattern: &str) -> ControlResult {
+    fn proceed_flush(variant: CachePurgeVariant, pattern: &str) -> ControlResult {
         debug!("attempting to flush {:?} for pattern: {}", variant, pattern);
 
-        match APP_CACHE_STORE.purge_pattern(pattern).wait() {
+        match APP_CACHE_STORE.purge_pattern(&variant, pattern).wait() {
             Ok(_) => {
                 info!("flushed {:?} for pattern: {}", variant, pattern);
 
                 Ok(ControlCommandResponse::Ok)
             }
             Err(err) => {
-                warn!("could not flush {:?} for pattern: {} because: {:?}", variant, pattern, err);
+                warn!(
+                    "could not flush {:?} for pattern: {} because: {:?}",
+                    variant,
+                    pattern,
+                    err
+                );
 
                 Err(None)
             }
