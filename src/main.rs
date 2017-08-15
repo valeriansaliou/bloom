@@ -29,10 +29,10 @@ mod control;
 mod server;
 
 use std::thread;
+use std::ops::Deref;
 use std::time::Duration;
 
 use clap::{App, Arg};
-use futures::Future;
 
 use config::config::Config;
 use config::logger::ConfigLogger;
@@ -75,15 +75,11 @@ fn make_app_args() -> AppArgs {
 }
 
 fn ensure_states() {
-    // TODO: ensure args
-    // TODO: ensure conf
-
-    if APP_CACHE_STORE.ensure().wait().is_err() {
-        panic!("could not ensure cache store");
-    }
-    if APP_PROXY_SERVE.ensure().is_err() {
-        panic!("could not ensure proxy serve");
-    }
+    // Ensure all statics are valid (a `deref` is enough to lazily initialize them)
+    APP_ARGS.deref();
+    APP_CONF.deref();
+    APP_CACHE_STORE.deref();
+    APP_PROXY_SERVE.deref();
 }
 
 fn spawn_worker() {

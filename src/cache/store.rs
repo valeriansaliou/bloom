@@ -77,12 +77,6 @@ impl CacheStoreBuilder {
 }
 
 impl CacheStore {
-    pub fn ensure(&self) -> CacheResult {
-        get_cache_store_client!(self, _client {
-            Ok(None)
-        })
-    }
-
     pub fn get(&self, key: &str) -> CacheResult {
         get_cache_store_client!(self, client {
             match (*client).get(key) {
