@@ -14,11 +14,14 @@ env:
   matrix:
     - OS=debian DIST=jessie ARCH=i386
     - OS=debian DIST=jessie ARCH=x86_64
+  on:
+    tags: true
 
 script:
-  - which cargo
   - git clone https://github.com/packpack/packpack.git packpack
   - packpack/packpack
+  on:
+    tags: true
 
 deploy:
   provider: packagecloud
