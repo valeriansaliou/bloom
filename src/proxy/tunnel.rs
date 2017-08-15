@@ -70,7 +70,7 @@ impl ProxyTunnel {
 
                     // Forward body
                     // TODO: blocking, wtf?
-                    tunnel_req.set_body(Body::from(body));
+                    // tunnel_req.set_body(Body::from(body));
 
                     // TODO: debug
                     // tunnel_req.set_body(Body::from(
