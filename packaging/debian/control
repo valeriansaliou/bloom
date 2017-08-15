@@ -3,7 +3,7 @@ Section: net
 Priority: ext
 Maintainer: Valerian Saliou <valerian@valeriansaliou.name>
 Standards-Version: 3.9.4
-Build-Depends: rustc (>= 1.18), cargo (>= 0.17), debhelper (>= 9), gcc (>= 6), wget, ca-certificates
+Build-Depends: wget, ca-certificates
 Homepage: https://github.com/valeriansaliou/bloom
 
 Package: bloom
