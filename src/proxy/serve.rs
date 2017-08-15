@@ -47,55 +47,55 @@ impl ProxyServe {
         if req.headers().has::<HeaderRequestBloomRequestShard>() == true {
             match *req.method() {
                 Method::Options | Method::Head | Method::Get | Method::Post | Method::Patch |
-                Method::Put | Method::Delete => self.accept(&req),
-                _ => self.reject(&req, StatusCode::MethodNotAllowed),
+                Method::Put | Method::Delete => self.accept(req),
+                _ => self.reject(req, StatusCode::MethodNotAllowed),
             }
         } else {
-            self.reject(&req, StatusCode::NotExtended)
+            self.reject(req, StatusCode::NotExtended)
         }
     }
 
-    fn accept(&self, req: &Request) -> ProxyServeFuture {
+    fn accept(&self, req: Request) -> ProxyServeFuture {
         self.tunnel(req)
     }
 
-    fn reject(&self, req: &Request, status: StatusCode) -> ProxyServeFuture {
+    fn reject(&self, req: Request, status: StatusCode) -> ProxyServeFuture {
         let mut headers = Headers::new();
 
         headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Reject));
 
-        self.respond(req, status, headers, format!("{}", status))
+        self.respond(&req.method(), status, headers, format!("{}", status))
     }
 
-    fn tunnel(&self, req: &Request) -> ProxyServeFuture {
-        let (auth, shard) = ProxyHeader::parse_from_request(req.headers());
+    fn tunnel(&self, req: Request) -> ProxyServeFuture {
+        let (method, uri, version, headers, body) = req.deconstruct();
+        let (auth, shard) = ProxyHeader::parse_from_request(&headers);
 
-        let ns = CacheRoute::gen_ns(
-            shard,
-            auth,
-            req.version(),
-            req.method(),
-            req.path(),
-            req.query(),
-        );
+        let ns = CacheRoute::gen_ns(shard, auth, version, &method, uri.path(), uri.query());
 
         info!("tunneling for ns = {}", ns);
 
         match CacheRead::acquire(ns.as_ref()) {
-            Ok(cached_value) => self.dispatch_cached(req, cached_value),
+            Ok(cached_value) => self.dispatch_cached(&method, &headers, cached_value),
             Err(_) => {
-                match ProxyTunnelBuilder::new().run(&req, shard) {
+                match ProxyTunnelBuilder::new().run(&method, &uri, &headers, body, shard) {
                     Ok(tunnel_res) => {
                         let ref status = tunnel_res.status();
                         let headers = tunnel_res.headers().clone();
 
-                        let result =
-                            CacheWrite::save(ns.as_ref(), req, status, &headers, tunnel_res.body());
+                        let result = CacheWrite::save(
+                            ns.as_ref(),
+                            &method,
+                            &version,
+                            status,
+                            &headers,
+                            tunnel_res.body(),
+                        );
 
                         match result.body {
                             Ok(body_string) => {
                                 self.dispatch_fetched(
-                                    req,
+                                    &method,
                                     status,
                                     headers,
                                     HeaderBloomStatusValue::Miss,
@@ -107,7 +107,7 @@ impl ProxyServe {
                                 match body_string_values {
                                     Some(body_string) => {
                                         self.dispatch_fetched(
-                                            req,
+                                            &method,
                                             status,
                                             headers,
                                             HeaderBloomStatusValue::Direct,
@@ -115,22 +115,27 @@ impl ProxyServe {
                                             result.value,
                                         )
                                     }
-                                    _ => self.dispatch_failure(req),
+                                    _ => self.dispatch_failure(&method),
                                 }
                             }
                         }
                     }
-                    _ => self.dispatch_failure(req),
+                    _ => self.dispatch_failure(&method),
                 }
             }
         }
     }
 
-    fn dispatch_cached(&self, req: &Request, res_string: String) -> ProxyServeFuture {
+    fn dispatch_cached(
+        &self,
+        method: &Method,
+        headers: &Headers,
+        res_string: String,
+    ) -> ProxyServeFuture {
         // Process ETag for cached content
         let (res_hash, res_etag) = self.body_fingerprint(&res_string);
 
-        let isnt_modified = match req.headers().get::<IfNoneMatch>() {
+        let isnt_modified = match headers.get::<IfNoneMatch>() {
             Some(req_if_none_match) => {
                 (*req_if_none_match == IfNoneMatch::Items(vec![EntityTag::new(false, res_hash)]))
             }
@@ -146,7 +151,7 @@ impl ProxyServe {
             headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
             // Serve non-modified response
-            return self.respond(req, StatusCode::NotModified, headers, String::from(""));
+            return self.respond(method, StatusCode::NotModified, headers, String::from(""));
         }
 
         // Response modified
@@ -187,19 +192,19 @@ impl ProxyServe {
                 headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
                 // Serve cached response
-                self.respond(req, status, headers, res_body_string)
+                self.respond(method, status, headers, res_body_string)
             }
             Err(err) => {
                 error!("failed parsing cached response: {}", err);
 
-                self.dispatch_failure(req)
+                self.dispatch_failure(method)
             }
         }
     }
 
     fn dispatch_fetched(
         &self,
-        req: &Request,
+        method: &Method,
         status: &StatusCode,
         mut headers: Headers,
         bloom_status: HeaderBloomStatusValue,
@@ -233,17 +238,17 @@ impl ProxyServe {
 
         headers.set(HeaderBloomStatus(bloom_status));
 
-        self.respond(req, *status, headers, body_string)
+        self.respond(method, *status, headers, body_string)
     }
 
-    fn dispatch_failure(&self, req: &Request) -> ProxyServeFuture {
+    fn dispatch_failure(&self, method: &Method) -> ProxyServeFuture {
         let status = StatusCode::BadGateway;
 
         let mut headers = Headers::new();
 
         headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Offline));
 
-        self.respond(req, status, headers, format!("{}", status))
+        self.respond(method, status, headers, format!("{}", status))
     }
 
     fn body_fingerprint(&self, body_string: &String) -> (String, ETag) {
@@ -255,13 +260,13 @@ impl ProxyServe {
 
     fn respond(
         &self,
-        req: &Request,
+        method: &Method,
         status: StatusCode,
         headers: Headers,
         mut body_string: String,
     ) -> ProxyServeFuture {
-        let res = match *req.method() {
-            Method::Get | Method::Post | Method::Patch | Method::Put => {
+        let res = match method {
+            &Method::Get | &Method::Post | &Method::Patch | &Method::Put => {
                 // Ensure body string ends w/ a new line in any case, this \
                 //   fixes an 'infinite loop' issue w/ Hyper
                 if body_string.ends_with(LINE_FEED) == false {

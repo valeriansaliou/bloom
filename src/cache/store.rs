@@ -35,7 +35,8 @@ impl CacheStoreBuilder {
     pub fn new() -> CacheStore {
         info!("binding to store backend at {}", APP_CONF.redis.inet);
 
-        let tcp_addr_raw = format!(
+        let tcp_addr_raw =
+            format!(
             "redis://{}:{}/{}",
             APP_CONF.redis.inet.ip(),
             APP_CONF.redis.inet.port(),
@@ -47,9 +48,12 @@ impl CacheStoreBuilder {
                 let config = Config::<Connection, Error>::builder()
                     .test_on_check_out(false)
                     .pool_size(APP_CONF.redis.pool_size)
-                    .idle_timeout(Some(Duration::from_secs(APP_CONF.redis.idle_timeout_seconds)))
+                    .idle_timeout(Some(
+                        Duration::from_secs(APP_CONF.redis.idle_timeout_seconds),
+                    ))
                     .connection_timeout(Duration::from_secs(
-                        APP_CONF.redis.connection_timeout_seconds))
+                        APP_CONF.redis.connection_timeout_seconds,
+                    ))
                     .build();
 
                 match Pool::new(config, manager) {
@@ -60,7 +64,7 @@ impl CacheStoreBuilder {
                     }
                     Err(_) => panic!("could not spawn redis pool"),
                 }
-            },
+            }
             Err(_) => panic!("could not create redis connection manager"),
         }
     }

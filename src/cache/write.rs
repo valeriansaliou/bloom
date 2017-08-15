@@ -6,7 +6,6 @@
 
 use std::str;
 use hyper::{Method, HttpVersion, StatusCode, Headers, Body};
-use hyper::server::Request;
 use futures::{Future, Stream};
 
 use APP_CONF;
@@ -25,7 +24,8 @@ pub struct CacheWriteResult {
 impl CacheWrite {
     pub fn save(
         key: &str,
-        req: &Request,
+        method: &Method,
+        version: &HttpVersion,
         status: &StatusCode,
         headers: &Headers,
         body: Body,
@@ -46,7 +46,7 @@ impl CacheWrite {
             Ok(body_value) => {
                 debug!("checking whether to write cache for key: {}", key);
 
-                if Self::is_cacheable(&req.method(), status, headers) == true {
+                if Self::is_cacheable(method, status, headers) == true {
                     debug!("key: {} cacheable, writing cache", key);
 
                     // Acquire TTL from response, or fallback to default TTL
@@ -58,7 +58,7 @@ impl CacheWrite {
                     // Generate storable value
                     let value = format!(
                         "{}\n{}\n{}",
-                        CacheWrite::generate_chain_banner(&req.version(), status),
+                        CacheWrite::generate_chain_banner(version, status),
                         CacheWrite::generate_chain_headers(headers),
                         body_value
                     );
