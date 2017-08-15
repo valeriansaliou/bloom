@@ -4,6 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+pub static SERVER_LOG_LEVEL: &'static str = "warn";
 pub static SERVER_HOST: &'static str = "::1";
 pub static SERVER_PORT: &'static str = "80";
 

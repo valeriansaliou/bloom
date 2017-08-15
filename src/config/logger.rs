@@ -22,9 +22,9 @@ impl log::Log for ConfigLogger {
 }
 
 impl ConfigLogger {
-    pub fn init() -> Result<(), SetLoggerError> {
+    pub fn init(level: LogLevelFilter) -> Result<(), SetLoggerError> {
         log::set_logger(|max_log_level| {
-            max_log_level.set(LogLevelFilter::Debug);
+            max_log_level.set(level);
             Box::new(ConfigLogger)
         })
     }

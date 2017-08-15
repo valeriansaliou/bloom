@@ -96,7 +96,7 @@ fn spawn_worker() {
 }
 
 fn main() {
-    let _logger = ConfigLogger::init();
+    let _logger = ConfigLogger::init(APP_CONF.server.log_level);
 
     info!("starting up");
 

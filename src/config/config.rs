@@ -5,6 +5,7 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::net::SocketAddr;
+use log::LogLevelFilter;
 
 pub struct Config {
     pub server: ConfigServer,
@@ -15,6 +16,7 @@ pub struct Config {
 }
 
 pub struct ConfigServer {
+    pub log_level: LogLevelFilter,
     pub inet: SocketAddr,
 }
 

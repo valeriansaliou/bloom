@@ -29,6 +29,13 @@ impl ConfigReader {
 
         Config {
             server: ConfigServer {
+                log_level: ConfigReaderGetter::get_generic(
+                    &conf,
+                    "server",
+                    "log_level",
+                    defaults::SERVER_LOG_LEVEL,
+                ),
+
                 inet: ConfigReaderGetter::get_inet(
                     &conf,
                     "server",
