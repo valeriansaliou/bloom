@@ -1,3 +1,34 @@
+sudo: required
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.cache
+
 language: rust
 rust:
   - nightly
+
+env:
+  matrix:
+    - OS=debian DIST=jessie ARCH=i386
+    - OS=debian DIST=jessie ARCH=amd64
+
+script:
+ - git submodule update --init --recursive
+ - git describe --long
+ - git clone https://github.com/packpack/packpack.git packpack
+ - packpack/packpack
+
+deploy:
+  provider: packagecloud
+  username: ${PACKAGECLOUD_USER}
+  repository: ${PACKAGECLOUD_REPO}
+  token: ${PACKAGECLOUD_TOKEN}
+  dist: ${OS}/${DIST}
+  package_glob: build/*.deb
+  skip_cleanup: true
+  on:
+    tags: true
+    condition: -n "${OS}" && -n "${DIST}" && -n "${PACKAGECLOUD_TOKEN}"
