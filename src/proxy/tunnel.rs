@@ -68,15 +68,14 @@ impl ProxyTunnel {
                                 tunnel_headers.clone_from(headers);
                             }
 
-                            // TODO: ignore the body if not POST, PATCH, etc (no need to fwd it)
-
-                            // Forward body
-                            // TODO: blocking if non-empty, eg. if PATCH, why?
-                            tunnel_req.set_body(body);
-
-                            // TODO: debug (this works when the content-length is ==)
-                            // tunnel_req.set_body(Body::from(
-                            //     "{\"type\":\"online\",\"time\":{\"for\":60}}"));
+                            // Forward body?
+                            match method {
+                                &Method::Post | &Method::Patch | &Method::Put => {
+                                    // TODO: blocking if non-empty, eg. if PATCH, why?
+                                    tunnel_req.set_body(body);
+                                },
+                                _ => {},
+                            }
 
                             self.core.run(self.client.request(tunnel_req))
                         },

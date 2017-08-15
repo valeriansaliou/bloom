@@ -9,7 +9,7 @@ use futures::future::FutureResult;
 use httparse;
 use hyper;
 use hyper::{Method, StatusCode, Headers};
-use hyper::header::{IfNoneMatch, ETag, EntityTag};
+use hyper::header::{Origin, IfNoneMatch, ETag, EntityTag};
 use hyper::server::{Request, Response};
 use farmhash;
 
@@ -67,7 +67,8 @@ impl ProxyServe {
         let (method, uri, version, headers, body) = req.deconstruct();
         let (auth, shard) = ProxyHeader::parse_from_request(&headers);
 
-        let ns = CacheRoute::gen_ns(shard, auth, version, &method, uri.path(), uri.query());
+        let ns = CacheRoute::gen_ns(shard, auth, version, &method, uri.path(), uri.query(),
+            headers.get::<Origin>());
 
         info!("tunneling for ns = {}", ns);
 

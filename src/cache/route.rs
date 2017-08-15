@@ -5,6 +5,7 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use hyper::{Method, HttpVersion};
+use hyper::header::Origin;
 use farmhash;
 
 pub struct CacheRoute;
@@ -27,14 +28,16 @@ impl CacheRoute {
         method: &Method,
         path: &str,
         query: Option<&str>,
+        origin: Option<&Origin>,
     ) -> String {
         let authorization_raw = format!("[{}]", authorization);
         let bucket_raw = format!(
-            "[{}][{}][{}][{}]",
+            "[{}|{}|{}|{}|{}]",
             version,
             method,
             path,
-            query.unwrap_or("")
+            query.unwrap_or(""),
+            origin.unwrap_or(&Origin::null()),
         );
 
         let auth_hash = Self::hash(&authorization_raw);
