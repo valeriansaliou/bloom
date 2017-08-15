@@ -1,0 +1,13 @@
+Source: bloom
+Section: net
+Priority: ext
+Maintainer: Valerian Saliou <valerian@valeriansaliou.name>
+Standards-Version: 3.9.4
+Build-Depends: rustc (>= 1.18.0), cargo (>= 0.17.0), debhelper (>> 8.1.3)
+Homepage: https://github.com/valeriansaliou/bloom
+
+Package: bloom
+Architecture: any
+Depends:
+Provides: bloom-server
+Description: HTTP REST API caching middleware, to be used between load balancers and REST API workers.
