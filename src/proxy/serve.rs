@@ -81,8 +81,6 @@ impl ProxyServe {
                 match ProxyTunnelBuilder::new().run(&method, &uri, &headers, body, shard) {
                     Ok(tunnel_res) => {
                         let ref status = tunnel_res.status();
-
-                        // TODO: maybe avoid cloning?
                         let headers = tunnel_res.headers().clone();
 
                         let result = CacheWrite::save(
