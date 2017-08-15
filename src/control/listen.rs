@@ -28,7 +28,9 @@ impl ControlListen {
                 match stream {
                     Ok(stream) => {
                         thread::spawn(move || {
-                            debug!("control client connecting: {}", stream.peer_addr().unwrap());
+                            if let Ok(peer_addr) = stream.peer_addr() {
+                                debug!("control client connecting: {}", peer_addr);
+                            }
 
                             // Create client
                             ControlHandle::client(stream);

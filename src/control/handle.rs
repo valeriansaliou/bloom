@@ -99,9 +99,7 @@ impl ControlHandle {
                                 break;
                             }
                         }
-                        Err(_) => {
-                            panic!("stream down");
-                        }
+                        Err(_) => panic!("stream down"),
                     }
                 }
             }

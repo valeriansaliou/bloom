@@ -182,10 +182,12 @@ impl ProxyServe {
                 let mut headers = Headers::new();
 
                 for header in res.headers {
-                    headers.set_raw(
-                        String::from_utf8(Vec::from(header.name)).unwrap(),
-                        String::from_utf8(Vec::from(header.value)).unwrap(),
-                    );
+                    if let (Ok(header_name), Ok(header_value)) = (
+                        String::from_utf8(Vec::from(header.name)),
+                        String::from_utf8(Vec::from(header.value))
+                    ) {
+                        headers.set_raw(header_name, header_value);
+                    }
                 }
 
                 headers.set::<ETag>(res_etag);
@@ -230,8 +232,8 @@ impl ProxyServe {
         }
 
         // Process ETag for content?
-        if result_string.is_some() == true {
-            let (_, res_etag) = self.body_fingerprint(&result_string.unwrap());
+        if let Some(result_string_value) = result_string {
+            let (_, res_etag) = self.body_fingerprint(&result_string_value);
 
             headers.set::<ETag>(res_etag);
         }

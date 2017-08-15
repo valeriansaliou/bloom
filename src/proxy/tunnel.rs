@@ -57,29 +57,32 @@ impl ProxyTunnel {
             // Route to target shard
             match self.shards[shard as usize] {
                 Some(ref shard_uri) => {
-                    let tunnel_uri = format!("{}{}", shard_uri, uri.path()).parse().unwrap();
+                    match format!("{}{}", shard_uri, uri.path()).parse() {
+                        Ok(tunnel_uri) => {
+                            let mut tunnel_req = Request::new(method.to_owned(), tunnel_uri);
 
-                    let mut tunnel_req = Request::new(method.to_owned(), tunnel_uri);
+                            // Forward headers
+                            {
+                                let tunnel_headers = tunnel_req.headers_mut();
 
-                    // Forward headers
-                    {
-                        let tunnel_headers = tunnel_req.headers_mut();
+                                tunnel_headers.clone_from(headers);
+                            }
 
-                        tunnel_headers.clone_from(headers);
+                            // TODO: ignore the body if not POST, PATCH, etc (no need to fwd it)
+
+                            // Forward body
+                            // TODO: blocking if non-empty, eg. if PATCH, why?
+                            tunnel_req.set_body(body);
+
+                            // TODO: debug (this works when the content-length is ==)
+                            // tunnel_req.set_body(Body::from(
+                            //     "{\"type\":\"online\",\"time\":{\"for\":60}}"));
+
+                            self.core.run(self.client.request(tunnel_req))
+                        },
+                        Err(err) => Err(Error::Uri(err)),
                     }
-
-                    // TODO: ignore the body if not POST, PATCH, etc (no need to fwd it)
-
-                    // Forward body
-                    // TODO: blocking if non-empty, eg. if PATCH, why?
-                    tunnel_req.set_body(body);
-
-                    // TODO: debug (this works when the content-length is ==)
-                    // tunnel_req.set_body(Body::from(
-                    //     "{\"type\":\"online\",\"time\":{\"for\":60}}"));
-
-                    self.core.run(self.client.request(tunnel_req))
-                }
+                },
                 None => Err(Error::Header),
             }
         } else {

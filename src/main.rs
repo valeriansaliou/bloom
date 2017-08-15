@@ -75,6 +75,9 @@ fn make_app_args() -> AppArgs {
 }
 
 fn ensure_states() {
+    // TODO: ensure args
+    // TODO: ensure conf
+
     if APP_CACHE_STORE.ensure().wait().is_err() {
         panic!("could not ensure cache store");
     }
