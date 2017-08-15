@@ -180,7 +180,8 @@ mod tests {
         assert!(
             CacheWrite::save(
                 "bloom:0:90d52bc6:f773d6f1",
-                &Request::new(Method::Get, "/".parse().unwrap()),
+                &Method::Get,
+                &HttpVersion::Http11,
                 &StatusCode::Ok,
                 &Headers::new(),
                 Body::empty(),
