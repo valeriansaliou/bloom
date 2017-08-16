@@ -21,7 +21,8 @@ override_dh_auto_install:
 		tar -xf $(ENV_TARBALL)
 		strip bloom/bloom
 		mkdir debian/bloom/
-		mv bloom/bloom bloom/config.cfg debian/bloom/
+		mv bloom/bloom debian/bloom/bloom
+		mv bloom/config.cfg debian/bloom/bloom.cfg
 		rm -r bloom/
 
 override_dh_gencontrol:
