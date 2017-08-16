@@ -27,6 +27,4 @@ deploy:
   package_glob: build/*.{deb,rpm}
   skip_cleanup: true
   on:
-    branch: master
     tags: true
-    condition: -n "${OS}" && -n "${DIST}" && -n "${PACKAGECLOUD_TOKEN}"
