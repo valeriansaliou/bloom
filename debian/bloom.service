@@ -1,10 +1,12 @@
 [Unit]
-Description=bloom daemon
+Description=Bloom HTTP REST API caching middleware
 After=network.target
 
 [Service]
 Type=forking
-ExecStart=/usr/bin/bloom
+User=bloom
+Group=bloom
+ExecStart=/usr/bin/bloom -c /etc/bloom.cfg
 Restart=on-failure
 
 [Install]
