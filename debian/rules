@@ -13,7 +13,7 @@ override_dh_auto_clean:
 override_dh_auto_test:
 override_dh_auto_build:
 override_dh_auto_install:
-		curl https://sh.rustup.rs -sSf | sh
+		curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
 		wget -N --progress=dot:mega $(URL)
 		tar --strip-components=1 -xf $(TARBALL)
 		~/.cargo/bin/cargo build --release
