@@ -13,10 +13,12 @@ cache:
 env:
   matrix:
     - OS=debian DIST=jessie ARCH=x86_64
+  on:
+    branch: master
+    tags: true
 
 script:
-  - git clone https://github.com/packpack/packpack.git packpack
-  - packpack/packpack
+  - git clone https://github.com/packpack/packpack.git packpack && packpack/packpack
 
 deploy:
   provider: packagecloud
@@ -27,6 +29,4 @@ deploy:
   package_glob: build/*.{deb,rpm}
   skip_cleanup: true
   on:
-    branch: master
-    tags: true
     condition: -n "${OS}" && -n "${DIST}" && -n "${PACKAGECLOUD_TOKEN}"
