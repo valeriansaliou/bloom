@@ -127,7 +127,7 @@ sudo apt-get install bloom
 **3️⃣ Edit the pre-filled Bloom configuration file:**
 
 ```bash
-sudo nano /etc/bloom/bloom.cfg
+sudo nano /etc/bloom.cfg
 ```
 
 **4️⃣ Restart Bloom:**
