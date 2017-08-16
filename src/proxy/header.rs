@@ -5,7 +5,6 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str::from_utf8;
-
 use hyper::header::Headers;
 
 use super::defaults;

@@ -5,7 +5,6 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str::SplitWhitespace;
-
 use futures::Future;
 
 use super::handle::ControlShard;

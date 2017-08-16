@@ -6,7 +6,6 @@
 
 use std::cmp;
 use std::time::Duration;
-
 use r2d2::Pool;
 use r2d2::config::Config;
 use r2d2_redis::{RedisConnectionManager, Error};

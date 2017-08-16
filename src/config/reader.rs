@@ -9,7 +9,6 @@ use std::fmt::Debug;
 use std::fmt::Display;
 use std::net::IpAddr;
 use std::net::SocketAddr;
-
 use ini::Ini;
 
 use super::defaults;

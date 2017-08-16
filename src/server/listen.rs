@@ -4,11 +4,18 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use std::cell::Cell;
+use std::sync::{Arc, Mutex};
 use hyper::server::Http;
+use tokio_core::reactor::Remote;
 
 use super::handle::ServerRequestHandle;
-
 use APP_CONF;
+
+lazy_static! {
+    pub static ref LISTEN_REMOTE: Arc<Mutex<Cell<Option<Remote>>>> =
+        Arc::new(Mutex::new(Cell::new(None)));
+}
 
 pub struct ServerListenBuilder;
 pub struct ServerListen;
@@ -29,6 +36,12 @@ impl ServerListen {
                 Ok(ServerRequestHandle)
             })
             .unwrap();
+
+        // Assign remote, used later on by the proxy client
+        LISTEN_REMOTE
+            .lock()
+            .unwrap()
+            .set(Some(server.handle().remote().clone()));
 
         info!("listening on http://{}", server.local_addr().unwrap());
 

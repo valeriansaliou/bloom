@@ -4,8 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use futures::future;
-use futures::future::FutureResult;
+use futures::future::{self, Future};
 use httparse;
 use hyper;
 use hyper::{Method, StatusCode, Headers};
@@ -28,7 +27,7 @@ pub struct ProxyServe;
 
 const CACHED_PARSE_MAX_HEADERS: usize = 100;
 
-pub type ProxyServeFuture = FutureResult<Response, hyper::Error>;
+pub type ProxyServeFuture = Box<Future<Item = Response, Error = hyper::Error>>;
 
 impl ProxyServeBuilder {
     pub fn new() -> ProxyServe {
@@ -273,22 +272,22 @@ impl ProxyServe {
         headers: Headers,
         mut body_string: String,
     ) -> ProxyServeFuture {
-        let res = match method {
-            &Method::Get | &Method::Post | &Method::Patch | &Method::Put => {
-                // Ensure body string ends w/ a new line in any case, this \
-                //   fixes an 'infinite loop' issue w/ Hyper
-                if body_string.ends_with(LINE_FEED) == false {
-                    body_string.push_str(LINE_FEED);
+        future::finished(
+            match method {
+                &Method::Get | &Method::Post | &Method::Patch | &Method::Put => {
+                    // Ensure body string ends w/ a new line in any case, this \
+                    //   fixes an 'infinite loop' issue w/ Hyper
+                    if body_string.ends_with(LINE_FEED) == false {
+                        body_string.push_str(LINE_FEED);
+                    }
+
+                    Response::new()
+                        .with_status(status)
+                        .with_headers(headers)
+                        .with_body(body_string)
                 }
-
-                Response::new()
-                    .with_status(status)
-                    .with_headers(headers)
-                    .with_body(body_string)
+                _ => Response::new().with_status(status).with_headers(headers),
             }
-            _ => Response::new().with_status(status).with_headers(headers),
-        };
-
-        future::ok(res)
+        ).boxed()
     }
 }

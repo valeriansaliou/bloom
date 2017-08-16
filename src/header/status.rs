@@ -6,7 +6,6 @@
 
 use std::str;
 use std::fmt;
-
 use hyper::{Result, Error};
 use hyper::header::{Header, Raw, Formatter};
 

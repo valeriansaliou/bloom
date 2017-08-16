@@ -9,6 +9,7 @@ use hyper::client::HttpConnector;
 use hyper::server::Response;
 use tokio_core::reactor::Core;
 
+use server::listen::LISTEN_REMOTE;
 use APP_CONF;
 
 const MAX_SHARDS: u8 = 1;
@@ -16,6 +17,11 @@ const MAX_SHARDS: u8 = 1;
 lazy_static! {
     static ref SHARD_URI: Uri = format!("http://{}:{}", APP_CONF.proxy.inet.ip(),
         APP_CONF.proxy.inet.port()).parse().unwrap();
+}
+
+thread_local! {
+    static TUNNEL_CLIENT: Client<HttpConnector> = Client::new(&LISTEN_REMOTE.lock().unwrap()
+        .get_mut().clone().unwrap().handle().unwrap());
 }
 
 pub struct ProxyTunnelBuilder;
@@ -29,6 +35,9 @@ pub struct ProxyTunnel {
 impl ProxyTunnelBuilder {
     pub fn new() -> ProxyTunnel {
         // TODO: keep a pool of connections active? (re-use existing connectors)
+        // See: https://gist.github.com/mockersf/6ae921598913c3b59799bf2a33546922
+        // See: https://github.com/hyperium/hyper/issues/1189
+
         let core = Core::new().unwrap();
         let handle = core.handle();
         let client = Client::configure()
