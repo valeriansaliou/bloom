@@ -3,8 +3,7 @@
 DISTRIBUTION = $(shell lsb_release -sr)
 VERSION = 0.0.5
 PACKAGEVERSION = $(VERSION)-0~$(DISTRIBUTION)0
-TARBALL = v$(VERSION)
-URL = https://github.com/valeriansaliou/bloom/archive/
+URL = https://github.com/valeriansaliou/bloom/releases/download/v$(VERSION)/
 
 %:
 		dh $@
@@ -14,15 +13,16 @@ override_dh_auto_test:
 override_dh_auto_build:
 override_dh_auto_install:
 		$(eval ENV_ARCH := $(shell uname -m))
-		$(eval ENV_TARBALL := $(TARBALL)-$(ENV_ARCH).tar.gz)
+		$(eval ENV_TARBALL := v$(VERSION)-$(ENV_ARCH).tar.gz)
 
 		echo "Target: $(URL)$(ENV_TARBALL)"
 
 		wget -N --progress=dot:mega $(URL)$(ENV_TARBALL)
-		tar --strip-components=1 -xf $(ENV_TARBALL)
-		strip target/release/bloom
+		tar -xf $(ENV_TARBALL)
+		strip bloom/bloom
 		mkdir debian/bloom/
-		mv target/release/{bloom,config.cfg} debian/bloom/
+		mv bloom/bloom bloom/config.cfg debian/bloom/
+		rm -r bloom/
 
 override_dh_gencontrol:
 		dh_gencontrol -- -v$(PACKAGEVERSION)
