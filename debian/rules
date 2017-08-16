@@ -1,12 +1,10 @@
 #!/usr/bin/make -f
 
-USER = $(whoami)
-DISTRIBUTION = $(lsb_release -sr)
+DISTRIBUTION = $(shell lsb_release -sr)
 VERSION = 0.0.5
 PACKAGEVERSION = $(VERSION)-0~$(DISTRIBUTION)0
 TARBALL = v$(VERSION).tar.gz
 URL = https://github.com/valeriansaliou/bloom/archive/$(TARBALL)
-BUILD_ENV_DIR = /tmp/build/env
 
 %:
 		dh $@
@@ -15,12 +13,13 @@ override_dh_auto_clean:
 override_dh_auto_test:
 override_dh_auto_build:
 override_dh_auto_install:
-		sudo mkdir -p $(BUILD_ENV_DIR)
-		sudo chown $(USER):$(USER) $(BUILD_ENV_DIR)
-		HOME=$(BUILD_ENV_DIR) CARGO_HOME=$(BUILD_ENV_DIR) RUSTUP_HOME=$(BUILD_ENV_DIR) bash -c 'curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly'
+		$(eval BUILD_ENV_DIR := $(shell mktemp -d))
+		echo "BUILD_ENV_DIR = $(BUILD_ENV_DIR)"
+		export CARGO_HOME=$(BUILD_ENV_DIR) RUSTUP_HOME=$(BUILD_ENV_DIR)
+		curl https://sh.rustup.rs -sSf | HOME=$(BUILD_ENV_DIR) sh -s -- -y --default-toolchain nightly
 		wget -N --progress=dot:mega $(URL)
 		tar --strip-components=1 -xf $(TARBALL)
-		$(BUILD_ENV_DIR)/bin/cargo build --release
+		HOME=$(BUILD_ENV_DIR) $(BUILD_ENV_DIR)/.cargo/bin/cargo build --release
 		strip target/release/bloom
 		mkdir debian/bloom/
 		mv target/release/bloom debian/bloom/
