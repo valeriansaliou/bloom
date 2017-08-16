@@ -1,2 +1,2 @@
-debian/bloom/bloom usr/bin/
-debian/bloom/bloom.cfg etc/
+bloom/bloom usr/bin/
+bloom/bloom.cfg etc/

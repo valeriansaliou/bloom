@@ -20,10 +20,7 @@ override_dh_auto_install:
 		wget -N --progress=dot:mega $(URL)$(ENV_TARBALL)
 		tar -xf $(ENV_TARBALL)
 		strip bloom/bloom
-		mkdir debian/bloom/
-		mv bloom/bloom debian/bloom/bloom
-		mv bloom/config.cfg debian/bloom/bloom.cfg
-		rm -r bloom/
+		mv bloom/config.cfg bloom/bloom.cfg
 
 override_dh_gencontrol:
 		dh_gencontrol -- -v$(PACKAGEVERSION)
