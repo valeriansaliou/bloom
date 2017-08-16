@@ -25,3 +25,13 @@ We consider here the packaging flow of Bloom version `0.1` for Debian, for targe
   2. `git tag -a 0.1` insert description eg. `0.1-0-8aca211` and save
   3. `git push origin 0.1:0.1`
   4. Quickly upload the archive files as GitHub releases before the build triggers, named as eg. `v0.1-x86_64.tar.gz`
+
+Cargo configuration for custom Linux linkers (`~/.cargo/config`):
+
+```toml
+[target.x86_64-unknown-linux-musl]
+linker = "x86_64-linux-musl-gcc"
+
+[target.i686-unknown-linux-musl]
+linker = "i486-linux-musl-gcc"
+```
