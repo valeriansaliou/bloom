@@ -3,8 +3,8 @@
 DISTRIBUTION = $(shell lsb_release -sr)
 VERSION = 0.0.5
 PACKAGEVERSION = $(VERSION)-0~$(DISTRIBUTION)0
-TARBALL = v$(VERSION).tar.gz
-URL = https://github.com/valeriansaliou/bloom/archive/$(TARBALL)
+TARBALL = v$(VERSION)
+URL = https://github.com/valeriansaliou/bloom/archive/
 
 %:
 		dh $@
@@ -13,16 +13,16 @@ override_dh_auto_clean:
 override_dh_auto_test:
 override_dh_auto_build:
 override_dh_auto_install:
-		$(eval BUILD_ENV_DIR := $(shell mktemp -d))
-		echo "BUILD_ENV_DIR = $(BUILD_ENV_DIR)"
-		export CARGO_HOME=$(BUILD_ENV_DIR) RUSTUP_HOME=$(BUILD_ENV_DIR)
-		curl https://sh.rustup.rs -sSf | HOME=$(BUILD_ENV_DIR) sh -s -- -y --default-toolchain nightly
-		wget -N --progress=dot:mega $(URL)
-		tar --strip-components=1 -xf $(TARBALL)
-		HOME=$(BUILD_ENV_DIR) $(BUILD_ENV_DIR)/.cargo/bin/cargo build --release
+		$(eval ENV_ARCH := $(shell uname -m))
+		$(eval ENV_TARBALL := $(TARBALL)-$(ENV_ARCH).tar.gz)
+
+		echo "Target: $(URL)$(ENV_TARBALL)"
+
+		wget -N --progress=dot:mega $(URL)$(ENV_TARBALL)
+		tar --strip-components=1 -xf $(ENV_TARBALL)
 		strip target/release/bloom
 		mkdir debian/bloom/
-		mv target/release/bloom debian/bloom/
+		mv target/release/{bloom,config.cfg} debian/bloom/
 
 override_dh_gencontrol:
 		dh_gencontrol -- -v$(PACKAGEVERSION)
