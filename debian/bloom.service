@@ -3,7 +3,7 @@ Description=Bloom HTTP REST API caching middleware
 After=network.target
 
 [Service]
-Type=forking
+Type=simple
 User=bloom
 Group=bloom
 ExecStart=/usr/bin/bloom -c /etc/bloom.cfg
