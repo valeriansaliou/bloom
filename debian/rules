@@ -6,7 +6,7 @@ VERSION = 0.0.5
 PACKAGEVERSION = $(VERSION)-0~$(DISTRIBUTION)0
 TARBALL = v$(VERSION).tar.gz
 URL = https://github.com/valeriansaliou/bloom/archive/$(TARBALL)
-BUILD_ENV_DIR = /tmp/build/env/
+BUILD_ENV_DIR = /tmp/build/env
 
 %:
 		dh $@
