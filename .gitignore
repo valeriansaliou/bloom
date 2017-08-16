@@ -3,3 +3,6 @@ target/*
 *~
 *#
 .cargo
+
+build/
+packpack/
