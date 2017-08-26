@@ -4,10 +4,9 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use futures::future::{self, Future};
+use futures::future::{self, Future, BoxFuture};
 use httparse;
-use hyper;
-use hyper::{Method, StatusCode, Headers};
+use hyper::{Error, Method, StatusCode, Headers};
 use hyper::header::{Origin, IfNoneMatch, ETag, EntityTag};
 use hyper::server::{Request, Response};
 use farmhash;
@@ -27,7 +26,7 @@ pub struct ProxyServe;
 
 const CACHED_PARSE_MAX_HEADERS: usize = 100;
 
-pub type ProxyServeFuture = Box<Future<Item = Response, Error = hyper::Error>>;
+pub type ProxyServeFuture = BoxFuture<Response, Error>;
 
 impl ProxyServeBuilder {
     pub fn new() -> ProxyServe {
@@ -79,52 +78,53 @@ impl ProxyServe {
         info!("tunneling for ns = {}", ns);
 
         match CacheRead::acquire(ns.as_ref()) {
-            Ok(cached_value) => self.dispatch_cached(&method, &headers, &cached_value),
+            Ok(cached_value) => {
+                self.dispatch_cached(&method, &headers, &cached_value)
+            },
             Err(_) => {
-                match ProxyTunnelBuilder::new().run(&method, &uri, &headers, body, shard) {
-                    Ok(tunnel_res) => {
-                        let ref status = tunnel_res.status();
-                        let headers = tunnel_res.headers().to_owned();
+                ProxyTunnelBuilder::new().run(&method, &uri, &headers, body, shard)
+                    // .map(|tunnel_res| {
+                    //     let ref status = tunnel_res.status();
+                    //     let headers = tunnel_res.headers().to_owned();
 
-                        let result = CacheWrite::save(
-                            ns.as_ref(),
-                            &method,
-                            &version,
-                            status,
-                            &headers,
-                            tunnel_res.body(),
-                        );
+                    //     let result = CacheWrite::save(
+                    //         ns.as_ref(),
+                    //         &method,
+                    //         &version,
+                    //         status,
+                    //         &headers,
+                    //         tunnel_res.body(),
+                    //     );
 
-                        match result.body {
-                            Ok(body_string) => {
-                                self.dispatch_fetched(
-                                    &method,
-                                    status,
-                                    headers,
-                                    HeaderBloomStatusValue::Miss,
-                                    body_string,
-                                    result.value,
-                                )
-                            }
-                            Err(body_string_values) => {
-                                match body_string_values {
-                                    Some(body_string) => {
-                                        self.dispatch_fetched(
-                                            &method,
-                                            status,
-                                            headers,
-                                            HeaderBloomStatusValue::Direct,
-                                            body_string,
-                                            result.value,
-                                        )
-                                    }
-                                    _ => self.dispatch_failure(&method),
-                                }
-                            }
-                        }
-                    }
-                    _ => self.dispatch_failure(&method),
-                }
+                    //     match result.body {
+                    //         Ok(body_string) => {
+                    //             self.dispatch_fetched(
+                    //                 &method,
+                    //                 status,
+                    //                 headers,
+                    //                 HeaderBloomStatusValue::Miss,
+                    //                 body_string,
+                    //                 result.value,
+                    //             )
+                    //         }
+                    //         Err(body_string_values) => {
+                    //             match body_string_values {
+                    //                 Some(body_string) => {
+                    //                     self.dispatch_fetched(
+                    //                         &method,
+                    //                         status,
+                    //                         headers,
+                    //                         HeaderBloomStatusValue::Direct,
+                    //                         body_string,
+                    //                         result.value,
+                    //                     )
+                    //                 }
+                    //                 _ => self.dispatch_failure(&method),
+                    //             }
+                    //         }
+                    //     }
+                    // })
+                    // .or_else(|_| self.dispatch_failure(&method))
             }
         }
     }
