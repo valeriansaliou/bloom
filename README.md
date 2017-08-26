@@ -33,8 +33,8 @@ _👋 You use Bloom and you want to be listed there? [Contact me](https://valeri
 * **The same Bloom server can be used for different API workers at once**, using HTTP header `Bloom-Request-Shard` (eg. Main API uses shard `0`, Search API uses shard `1`)
 * **Cache stored on buckets**, specified in your REST API responses using HTTP header `Bloom-Response-Bucket`.
 * **Cache clustered by authentication token**, no cache leak across users is possible, using the standard `Authorization` HTTP header.
-* **Cache can be expired directly from your REST API workers** (by hitting against `redis`).
-**Configurable per-request caching strategy**, using `Bloom-Request-*` HTTP headers in the requests your Load Balancers forward to Bloom.
+* **Cache can be expired directly from your REST API workers**, via a control channel.
+* **Configurable per-request caching strategy**, using `Bloom-Request-*` HTTP headers in the requests your Load Balancers forward to Bloom.
   * Specify caching shard for an API system with `Bloom-Request-Shard` (default shard is `0`, maximum value is `255`).
 * **Configurable per-response caching strategy**, using `Bloom-Response-*` HTTP headers in your API responses to Bloom.
   * Disable all cache for an API route with `Bloom-Response-Ignore`.
