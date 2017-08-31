@@ -51,7 +51,6 @@ impl CacheStoreBuilder {
         match RedisConnectionManager::new(tcp_addr_raw.as_ref()) {
             Ok(manager) => {
                 let config = Config::<Connection, Error>::builder()
-                    .test_on_check_out(false)
                     .pool_size(APP_CONF.redis.pool_size)
                     .idle_timeout(Some(
                         Duration::from_secs(APP_CONF.redis.idle_timeout_seconds),
