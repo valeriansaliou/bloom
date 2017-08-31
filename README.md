@@ -84,7 +84,7 @@ Use the sample [config.cfg](https://github.com/valeriansaliou/bloom/blob/master/
 
 Make sure to properly configure the `[proxy]` section so that Bloom points to your API worker host and port.
 
-Each available configuration option is commented below, with allowed values:
+**Available configuration options are commented below, with allowed values:**
 
 **[server]**
 
