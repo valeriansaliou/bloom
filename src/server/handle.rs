@@ -7,8 +7,7 @@
 use hyper;
 use hyper::server::{Service, Request, Response};
 
-use proxy::serve::ProxyServeFuture;
-use APP_PROXY_SERVE;
+use proxy::serve::{ProxyServe, ProxyServeFuture};
 
 pub struct ServerRequestHandle;
 
@@ -21,6 +20,6 @@ impl Service for ServerRequestHandle {
     fn call(&self, req: Request) -> ProxyServeFuture {
         debug!("called proxy serve");
 
-        APP_PROXY_SERVE.handle(req)
+        ProxyServe::handle(req)
     }
 }

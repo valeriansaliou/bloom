@@ -4,7 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use futures::{future, Future, BoxFuture};
+use futures::{future, Future};
 use hyper::{Error, Client, Method, Uri, Headers, Body, Request};
 use hyper::client::{HttpConnector, Response};
 
@@ -20,7 +20,7 @@ lazy_static! {
 
 thread_local! {
     static TUNNEL_CLIENT: Client<HttpConnector> = Client::new(&LISTEN_REMOTE.lock().unwrap()
-        .get_mut().clone().unwrap().handle().unwrap());
+        .get_mut().to_owned().unwrap().handle().unwrap());
 }
 
 pub struct ProxyTunnelBuilder;
@@ -29,7 +29,7 @@ pub struct ProxyTunnel {
     shards: [Option<&'static Uri>; MAX_SHARDS as usize],
 }
 
-pub type ProxyTunnelFuture = BoxFuture<Response, Error>;
+pub type ProxyTunnelFuture = Box<Future<Item = Response, Error = Error>>;
 
 impl ProxyTunnelBuilder {
     pub fn new() -> ProxyTunnel {
@@ -51,41 +51,46 @@ impl ProxyTunnel {
     ) -> ProxyTunnelFuture {
         if shard < MAX_SHARDS {
             // Route to target shard
-            // match self.shards[shard as usize] {
-            //     Some(ref shard_uri) => {
-            //         match format!("{}{}", shard_uri, uri.path()).parse() {
-            //             Ok(tunnel_uri) => {
-            //                 let mut tunnel_req = Request::new(method.to_owned(), tunnel_uri);
+            match self.shards[shard as usize] {
+                Some(ref shard_uri) => {
+                    let mut tunnel_uri = format!("{}{}", shard_uri, uri.path());
 
-            //                 // Forward headers
-            //                 {
-            //                     let tunnel_headers = tunnel_req.headers_mut();
+                    if let Some(query) = uri.query() {
+                        tunnel_uri.push_str("?");
+                        tunnel_uri.push_str(query);
+                    }
 
-            //                     tunnel_headers.clone_from(headers);
-            //                 }
+                    match tunnel_uri.parse() {
+                        Ok(tunnel_uri) => {
+                            let mut tunnel_req = Request::new(method.to_owned(), tunnel_uri);
 
-            //                 // Forward body?
-            //                 match method {
-            //                     &Method::Post | &Method::Patch | &Method::Put => {
-            //                         // TODO: blocking if non-empty, eg. if PATCH, why?
-            //                         tunnel_req.set_body(body);
-            //                     }
-            //                     _ => {}
-            //                 }
+                            // Forward headers
+                            {
+                                let tunnel_headers = tunnel_req.headers_mut();
 
-            //                 TUNNEL_CLIENT.with(|client| client.request(tunnel_req))
-            //             }
-            //             Err(err) => future::err(Error::Uri(err)).boxed(),
-            //         }
-            //     }
-            //     None => future::err(Error::Header).boxed(),
-            // }
+                                tunnel_headers.clone_from(headers);
+                            }
 
-            // TODO
-            future::err(Error::Header).boxed()
+                            // Forward body?
+                            match method {
+                                &Method::Post | &Method::Patch | &Method::Put => {
+                                    tunnel_req.set_body(body);
+                                }
+                                _ => {}
+                            }
+
+                            TUNNEL_CLIENT.with(|client| {
+                                Box::new(client.request(tunnel_req))
+                            })
+                        }
+                        Err(err) => Box::new(future::err(Error::Uri(err))),
+                    }
+                }
+                None => Box::new(future::err(Error::Header)),
+            }
         } else {
             // Shard out of bounds
-            future::err(Error::Header).boxed()
+            Box::new(future::err(Error::Header))
         }
     }
 }

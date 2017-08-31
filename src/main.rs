@@ -38,7 +38,6 @@ use config::config::Config;
 use config::logger::ConfigLogger;
 use config::reader::ConfigReader;
 use cache::store::{CacheStore, CacheStoreBuilder};
-use proxy::serve::{ProxyServe, ProxyServeBuilder};
 use control::listen::ControlListenBuilder;
 use server::listen::ServerListenBuilder;
 
@@ -52,7 +51,6 @@ lazy_static! {
     static ref APP_ARGS: AppArgs = make_app_args();
     static ref APP_CONF: Config = ConfigReader::make();
     static ref APP_CACHE_STORE: CacheStore = CacheStoreBuilder::new();
-    static ref APP_PROXY_SERVE: ProxyServe = ProxyServeBuilder::new();
 }
 
 fn make_app_args() -> AppArgs {
@@ -79,7 +77,6 @@ fn ensure_states() {
     APP_ARGS.deref();
     APP_CONF.deref();
     APP_CACHE_STORE.deref();
-    APP_PROXY_SERVE.deref();
 }
 
 fn spawn_worker() {
