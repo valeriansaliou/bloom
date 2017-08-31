@@ -26,7 +26,7 @@ impl CacheRead {
             match APP_CACHE_STORE.get(key) {
                 Ok(Some(result)) => Ok(result),
                 Ok(None) => {
-                    warn!("acquired empty value from cache for key: {}", key);
+                    info!("acquired empty value from cache for key: {}", key);
 
                     Err(CacheReadError::Empty)
                 }

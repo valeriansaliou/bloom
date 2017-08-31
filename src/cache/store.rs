@@ -9,7 +9,7 @@ use std::time::Duration;
 use r2d2::Pool;
 use r2d2::config::Config;
 use r2d2_redis::{RedisConnectionManager, Error};
-use redis::{self, Connection, Commands};
+use redis::{self, Value, Connection, Commands};
 
 use APP_CONF;
 
@@ -23,6 +23,8 @@ pub struct CacheStore {
 pub enum CacheStoreError {
     Disconnected,
     Failed,
+    Invalid,
+    Corrupted,
     TooLarge,
 }
 
@@ -76,8 +78,21 @@ impl CacheStoreBuilder {
 impl CacheStore {
     pub fn get(&self, key: &str) -> CacheResult {
         get_cache_store_client!(self, client {
-            match (*client).get(key) {
-                Ok(string) => Ok(Some(string)),
+            match (*client).get::<_, Value>(key) {
+                Ok(value) => {
+                    match value {
+                        Value::Data(bytes) => {
+                            // Decode raw bytes to string
+                            if let Ok(string) = String::from_utf8(bytes) {
+                                Ok(Some(string))
+                            } else {
+                                Err(CacheStoreError::Corrupted)
+                            }
+                        },
+                        Value::Nil => Ok(None),
+                        _ => Err(CacheStoreError::Invalid),
+                    }
+                },
                 _ => Err(CacheStoreError::Failed),
             }
         })
