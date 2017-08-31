@@ -5,7 +5,6 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use hyper::Method;
-use futures::Future;
 
 use super::check::CacheCheck;
 
@@ -24,7 +23,7 @@ impl CacheRead {
         if CacheCheck::from_request(method) == true {
             debug!("key: {} cacheable, reading cache", key);
 
-            match APP_CACHE_STORE.get(key).wait() {
+            match APP_CACHE_STORE.get(key) {
                 Ok(Some(result)) => Ok(result),
                 Ok(None) => {
                     warn!("acquired empty value from cache for key: {}", key);

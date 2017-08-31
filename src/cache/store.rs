@@ -10,8 +10,6 @@ use r2d2::Pool;
 use r2d2::config::Config;
 use r2d2_redis::{RedisConnectionManager, Error};
 use redis::{self, Connection, Commands};
-use futures::future;
-use futures::future::FutureResult;
 
 use APP_CONF;
 
@@ -34,7 +32,7 @@ pub enum CachePurgeVariant {
     Auth,
 }
 
-type CacheResult = FutureResult<Option<String>, CacheStoreError>;
+type CacheResult = Result<Option<String>, CacheStoreError>;
 
 impl CacheStoreBuilder {
     pub fn new() -> CacheStore {

@@ -5,7 +5,6 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str::SplitWhitespace;
-use futures::Future;
 
 use super::handle::ControlShard;
 use APP_CACHE_STORE;
@@ -94,7 +93,7 @@ impl ControlCommand {
     fn proceed_flush(variant: CachePurgeVariant, pattern: &str) -> ControlResult {
         debug!("attempting to flush {:?} for pattern: {}", variant, pattern);
 
-        match APP_CACHE_STORE.purge_pattern(&variant, pattern).wait() {
+        match APP_CACHE_STORE.purge_pattern(&variant, pattern) {
             Ok(_) => {
                 info!("flushed {:?} for pattern: {}", variant, pattern);
 

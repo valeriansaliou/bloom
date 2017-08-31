@@ -6,12 +6,10 @@
 
 macro_rules! get_cache_store_client {
     ($self:ident, $client:ident $code:block) => (
-        future::result(
-            match $self.pool.get() {
-                Ok($client) => $code,
-                _ => Err(CacheStoreError::Disconnected),
-            }
-        )
+        match $self.pool.get() {
+            Ok($client) => $code,
+            _ => Err(CacheStoreError::Disconnected),
+        }
     )
 }
 
