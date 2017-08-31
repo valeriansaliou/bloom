@@ -4,35 +4,47 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use hyper::Method;
 use futures::Future;
+
+use super::check::CacheCheck;
 
 use APP_CACHE_STORE;
 
 pub struct CacheRead;
 
 pub enum CacheReadError {
+    PassThrough,
     Empty,
     StoreFailure,
 }
 
 impl CacheRead {
-    pub fn acquire(key: &str) -> Result<String, CacheReadError> {
-        match APP_CACHE_STORE.get(key).wait() {
-            Ok(Some(result)) => Ok(result),
-            Ok(None) => {
-                warn!("acquired empty value from cache for key: {}", key);
+    pub fn acquire(key: &str, method: &Method) -> Result<String, CacheReadError> {
+        if CacheCheck::from_request(method) == true {
+            debug!("key: {} cacheable, reading cache", key);
 
-                Err(CacheReadError::Empty)
-            }
-            Err(err) => {
-                error!(
-                    "could not acquire value from cache for key: {} because: {:?}",
-                    key,
-                    err
-                );
+            match APP_CACHE_STORE.get(key).wait() {
+                Ok(Some(result)) => Ok(result),
+                Ok(None) => {
+                    warn!("acquired empty value from cache for key: {}", key);
 
-                Err(CacheReadError::StoreFailure)
+                    Err(CacheReadError::Empty)
+                }
+                Err(err) => {
+                    error!(
+                        "could not acquire value from cache for key: {} because: {:?}",
+                        key,
+                        err
+                    );
+
+                    Err(CacheReadError::StoreFailure)
+                }
             }
+        } else {
+            debug!("key: {} not cacheable, ignoring (will pass through)", key);
+
+            Err(CacheReadError::PassThrough)
         }
     }
 }
@@ -44,6 +56,6 @@ mod tests {
     #[test]
     #[should_panic]
     fn it_fails_acquiring_cache() {
-        assert!(CacheRead::acquire("bloom:0:90d52bc6:f773d6f1").is_err());
+        assert!(CacheRead::acquire("bloom:0:90d52bc6:f773d6f1", &Method::Get).is_err());
     }
 }

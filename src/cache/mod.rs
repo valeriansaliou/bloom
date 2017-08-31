@@ -7,6 +7,8 @@
 #[macro_use]
 mod macros;
 
+mod check;
+
 pub mod store;
 pub mod route;
 pub mod read;

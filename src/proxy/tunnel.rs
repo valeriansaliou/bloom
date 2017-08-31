@@ -34,9 +34,7 @@ pub type ProxyTunnelFuture = Box<Future<Item = Response, Error = Error>>;
 impl ProxyTunnelBuilder {
     pub fn new() -> ProxyTunnel {
         // We support only 1 shard for now.
-        ProxyTunnel {
-            shards: [Some(&*SHARD_URI)],
-        }
+        ProxyTunnel { shards: [Some(&*SHARD_URI)] }
     }
 }
 
@@ -79,9 +77,7 @@ impl ProxyTunnel {
                                 _ => {}
                             }
 
-                            TUNNEL_CLIENT.with(|client| {
-                                Box::new(client.request(tunnel_req))
-                            })
+                            TUNNEL_CLIENT.with(|client| Box::new(client.request(tunnel_req)))
                         }
                         Err(err) => Box::new(future::err(Error::Uri(err))),
                     }

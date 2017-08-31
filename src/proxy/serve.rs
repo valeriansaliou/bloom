@@ -70,7 +70,7 @@ impl ProxyServe {
 
         info!("tunneling for ns = {}", ns);
 
-        match CacheRead::acquire(ns.as_ref()) {
+        match CacheRead::acquire(ns.as_ref(), &method) {
             Ok(cached_value) => Self::dispatch_cached(&method, &headers, &cached_value),
             Err(_) => {
                 // Clone method value for closures. Sadly, it looks like Rust borrow checker \
@@ -79,7 +79,8 @@ impl ProxyServe {
                 let method_failure = method.to_owned();
 
                 Box::new(
-                    ProxyTunnelBuilder::new().run(&method, &uri, &headers, body, shard)
+                    ProxyTunnelBuilder::new()
+                        .run(&method, &uri, &headers, body, shard)
                         .and_then(move |tunnel_res| {
                             let res_status = tunnel_res.status();
                             let res_headers = tunnel_res.headers().to_owned();
@@ -93,46 +94,40 @@ impl ProxyServe {
                                 tunnel_res.body(),
                             )
                         })
-                        .and_then(move |result| {
-                            match result.body {
-                                Ok(body_string) => {
-                                    Self::dispatch_fetched(
-                                        &method_success,
-                                        &result.status,
-                                        result.headers,
-                                        HeaderBloomStatusValue::Miss,
-                                        body_string,
-                                        result.value,
-                                    )
-                                }
-                                Err(body_string_values) => {
-                                    match body_string_values {
-                                        Some(body_string) => {
-                                            Self::dispatch_fetched(
-                                                &method_success,
-                                                &result.status,
-                                                result.headers,
-                                                HeaderBloomStatusValue::Direct,
-                                                body_string,
-                                                result.value,
-                                            )
-                                        }
-                                        _ => Self::dispatch_failure(&method_success),
+                        .and_then(move |result| match result.body {
+                            Ok(body_string) => {
+                                Self::dispatch_fetched(
+                                    &method_success,
+                                    &result.status,
+                                    result.headers,
+                                    HeaderBloomStatusValue::Miss,
+                                    body_string,
+                                    result.value,
+                                )
+                            }
+                            Err(body_string_values) => {
+                                match body_string_values {
+                                    Some(body_string) => {
+                                        Self::dispatch_fetched(
+                                            &method_success,
+                                            &result.status,
+                                            result.headers,
+                                            HeaderBloomStatusValue::Direct,
+                                            body_string,
+                                            result.value,
+                                        )
                                     }
+                                    _ => Self::dispatch_failure(&method_success),
                                 }
                             }
                         })
-                        .or_else(move |_| Self::dispatch_failure(&method_failure))
+                        .or_else(move |_| Self::dispatch_failure(&method_failure)),
                 )
             }
         }
     }
 
-    fn dispatch_cached(
-        method: &Method,
-        headers: &Headers,
-        res_string: &str,
-    ) -> ProxyServeFuture {
+    fn dispatch_cached(method: &Method, headers: &Headers, res_string: &str) -> ProxyServeFuture {
         // Process ETag for cached content
         let (res_hash, res_etag) = Self::body_fingerprint(res_string);
 
@@ -268,22 +263,20 @@ impl ProxyServe {
         headers: Headers,
         mut body_string: String,
     ) -> ProxyServeFuture {
-        Box::new(future::ok(
-            match method {
-                &Method::Get | &Method::Post | &Method::Patch | &Method::Put => {
-                    // Ensure body string ends w/ a new line in any case, this \
-                    //   fixes an 'infinite loop' issue w/ Hyper
-                    if body_string.ends_with(LINE_FEED) == false {
-                        body_string.push_str(LINE_FEED);
-                    }
-
-                    Response::new()
-                        .with_status(status)
-                        .with_headers(headers)
-                        .with_body(body_string)
+        Box::new(future::ok(match method {
+            &Method::Get | &Method::Post | &Method::Patch | &Method::Put => {
+                // Ensure body string ends w/ a new line in any case, this \
+                //   fixes an 'infinite loop' issue w/ Hyper
+                if body_string.ends_with(LINE_FEED) == false {
+                    body_string.push_str(LINE_FEED);
                 }
-                _ => Response::new().with_status(status).with_headers(headers),
+
+                Response::new()
+                    .with_status(status)
+                    .with_headers(headers)
+                    .with_body(body_string)
             }
-        ))
+            _ => Response::new().with_status(status).with_headers(headers),
+        }))
     }
 }

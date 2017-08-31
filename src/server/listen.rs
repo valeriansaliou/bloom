@@ -38,10 +38,12 @@ impl ServerListen {
             .unwrap();
 
         // Assign remote, used later on by the proxy client
-        LISTEN_REMOTE
-            .lock()
-            .unwrap()
-            .set(Some(server.handle().remote().to_owned()));
+        LISTEN_REMOTE.lock().unwrap().set(Some(
+            server
+                .handle()
+                .remote()
+                .to_owned(),
+        ));
 
         info!("listening on http://{}", server.local_addr().unwrap());
 
