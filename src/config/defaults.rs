@@ -15,7 +15,6 @@ pub static CONTROL_TCP_TIMEOUT: &'static str = "300";
 pub static PROXY_SHARD: &'static str = "0";
 pub static PROXY_HOST: &'static str = "::1";
 pub static PROXY_PORT: &'static str = "3000";
-pub static PROXY_TUNNEL_THREADS: &'static str = "2";
 
 pub static CACHE_TTL_DEFAULT: &'static str = "600";
 

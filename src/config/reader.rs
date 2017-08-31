@@ -82,13 +82,6 @@ impl ConfigReader {
                     defaults::PROXY_HOST,
                     defaults::PROXY_PORT,
                 ),
-
-                tunnel_threads: ConfigReaderGetter::get_generic(
-                    &conf,
-                    "proxy",
-                    "tunnel_threads",
-                    defaults::PROXY_TUNNEL_THREADS,
-                ),
             },
 
             cache: ConfigCache {

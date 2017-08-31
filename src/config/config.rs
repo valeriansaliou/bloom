@@ -28,7 +28,6 @@ pub struct ConfigControl {
 pub struct ConfigProxy {
     pub shard: u8,
     pub inet: SocketAddr,
-    pub tunnel_threads: usize,
 }
 
 pub struct ConfigCache {
