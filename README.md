@@ -112,7 +112,7 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 * `host` (type: _string_, allowed: IPv4 / IPv6, default: `127.0.0.1`) — Target Redis host
 * `port` (type: _integer_, allowed: TCP ports, default: `6379`) — Target Redis TCP port
 * `database` (type: _integer_, allowed: `0` to `255`, default: `0`) — Target Redis database
-* `pool_size` (type: _integer_, allowed: `0` to `(2^32)-1`, default: `8`) — Connection pool size to Redis
+* `pool_size` (type: _integer_, allowed: `0` to `(2^32)-1`, default: `8`) — Redis connection pool size
 * `idle_timeout_seconds` (type: _integer_, allowed: seconds, default: `600`) — Timeout of idle/dead pool connections to Redis
 * `connection_timeout_seconds` (type: _integer_, allowed: seconds, default: `1`) — Timeout in seconds to consider Redis dead and emit a `DIRECT` connection to API without using cache (keep this low, as when Redis goes down it will dictate how much time to wait before ignoring Redis response and proxying directly)
 * `max_key_size` (type: _integer_, allowed: bytes, default: `256000`) — Maximum data size in bytes to store in Redis for a key (safeguard to prevent very large responses to be cached)
