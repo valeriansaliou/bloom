@@ -84,6 +84,40 @@ Use the sample [config.cfg](https://github.com/valeriansaliou/bloom/blob/master/
 
 Make sure to properly configure the `[proxy]` section so that Bloom points to your API worker host and port.
 
+Each available configuration option is commented below, with allowed values:
+
+**[server]**
+
+* `log_level` (type: _string_, allowed: `debug`, `info`, `warn`, `error`, default: `warn`) — Verbosity of logging, set it to `error` in production
+* `host` (type: _string_, allowed: IPv4 / IPv6, default: `::1`) — Host the Bloom proxy should listen on
+* `port` (type: _integer_, allowed: TCP ports, default: `8080`) — TCP port the Bloom proxy should listen on
+
+**[control]**
+
+* `host` (type: _string_, allowed: IPv4 / IPv6, default: `::1`) — Host Bloom Control should listen on
+* `port` (type: _integer_, allowed: TCP ports, default: `811`) — TCP port Bloom Control should listen on
+* `tcp_timeout` (type: _integer_, allowed: seconds, default: `300`) — Timeout of idle/dead client connections to Bloom Control
+
+**[proxy]**
+
+* `host` (type: _string_, allowed: IPv4 / IPv6, default: `127.0.0.1`) — Target host to proxy to (ie. where the API listens)
+* `port` (type: _integer_, allowed: TCP ports, default: `3040`) — Target TCP port to proxy to (ie. where the API listens)
+
+**[cache]**
+
+* `ttl_default` (type: _integer_, allowed: seconds, default: `600`) — Default cache TTL in seconds, when no `Bloom-Response-TTL` provided
+
+**[redis]**
+
+* `host` (type: _string_, allowed: IPv4 / IPv6, default: `127.0.0.1`) — Target Redis host
+* `port` (type: _integer_, allowed: TCP ports, default: `6379`) — Target Redis TCP port
+* `database` (type: _integer_, allowed: `0` to `255`, default: `0`) — Target Redis database
+* `pool_size` (type: _integer_, allowed: `0` to `(2^32)-1`, default: `8`) — Connection pool size to Redis
+* `idle_timeout_seconds` (type: _integer_, allowed: seconds, default: `600`) — Timeout of idle/dead pool connections to Redis
+* `connection_timeout_seconds` (type: _integer_, allowed: seconds, default: `1`) — Timeout in seconds to consider Redis dead and emit a `DIRECT` connection to API without using cache (keep this low, as when Redis goes down it will dictate how much time to wait before ignoring Redis response and proxying directly)
+* `max_key_size` (type: _integer_, allowed: bytes, default: `256000`) — Maximum data size in bytes to store in Redis for a key (safeguard to prevent very large responses to be cached)
+* `max_key_expiration` (type: _integer_, allowed: seconds, default: `2592000`) — Maximum TTL for a cached key in Redis (prevents erroneous `Bloom-Response-TTL` values)
+
 ### Run Bloom
 
 Bloom can be run as such:

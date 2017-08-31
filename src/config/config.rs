@@ -26,7 +26,6 @@ pub struct ConfigControl {
 }
 
 pub struct ConfigProxy {
-    pub shard: u8,
     pub inet: SocketAddr,
 }
 

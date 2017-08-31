@@ -12,7 +12,6 @@ pub static CONTROL_HOST: &'static str = "::1";
 pub static CONTROL_PORT: &'static str = "811";
 pub static CONTROL_TCP_TIMEOUT: &'static str = "300";
 
-pub static PROXY_SHARD: &'static str = "0";
 pub static PROXY_HOST: &'static str = "::1";
 pub static PROXY_PORT: &'static str = "3000";
 

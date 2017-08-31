@@ -66,13 +66,6 @@ impl ConfigReader {
             },
 
             proxy: ConfigProxy {
-                shard: ConfigReaderGetter::get_generic(
-                    &conf,
-                    "proxy",
-                    "shard",
-                    defaults::PROXY_SHARD,
-                ),
-
                 inet: ConfigReaderGetter::get_inet(
                     &conf,
                     "proxy",
