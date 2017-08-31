@@ -116,7 +116,7 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 * `idle_timeout_seconds` (type: _integer_, allowed: seconds, default: `600`) — Timeout of idle/dead pool connections to Redis
 * `connection_timeout_seconds` (type: _integer_, allowed: seconds, default: `1`) — Timeout in seconds to consider Redis dead and emit a `DIRECT` connection to API without using cache (keep this low, as when Redis is down it dictates how much time to wait before ignoring Redis response and proxying directly)
 * `max_key_size` (type: _integer_, allowed: bytes, default: `256000`) — Maximum data size in bytes to store in Redis for a key (safeguard to prevent very large responses to be cached)
-* `max_key_expiration` (type: _integer_, allowed: seconds, default: `2592000`) — Maximum TTL for a cached key in Redis (prevents erroneous `Bloom-Response-TTL` values)
+* `max_key_expiration` (type: _integer_, allowed: seconds, default: `2592000`) — Maximum TTL for a key cached in Redis (prevents erroneous `Bloom-Response-TTL` values)
 
 ### Run Bloom
 
