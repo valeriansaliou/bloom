@@ -18,7 +18,7 @@ coveralls = { repository = "valeriansaliou/bloom", branch = "master", service = 
 [dependencies]
 log = "0.3"
 rust-ini = "0.10"
-clap = "2.25"
+clap = { version = "2.26", default-features = false }
 lazy_static = "0.2"
 futures = "0.1"
 httparse = "1.2"
@@ -29,8 +29,6 @@ r2d2_redis = "0.6"
 redis = "0.8"
 farmhash = "1.1"
 rand = "0.3"
-
-[dev-dependencies]
 
 [profile.dev]
 opt-level = 0
