@@ -24,6 +24,6 @@ pub static REDIS_PORT: &'static str = "6379";
 pub static REDIS_DATABASE: &'static str = "0";
 pub static REDIS_POOL_SIZE: &'static str = "8";
 pub static REDIS_IDLE_TIMEOUT_SECONDS: &'static str = "600";
-pub static REDIS_CONNECTION_TIMEOUT_SECONDS: &'static str = "5";
+pub static REDIS_CONNECTION_TIMEOUT_SECONDS: &'static str = "1";
 pub static REDIS_MAX_KEY_SIZE: &'static str = "256000";
 pub static REDIS_MAX_KEY_EXPIRATION: &'static str = "2592000";
