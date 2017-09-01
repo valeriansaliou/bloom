@@ -35,7 +35,7 @@ _👋 You use Bloom and you want to be listed there? [Contact me](https://valeri
 * **Cache clustered by authentication token**, no cache leak across users is possible, using the standard `Authorization` HTTP header.
 * **Cache can be expired directly from your REST API workers**, via a control channel.
 * **Configurable per-request caching strategy**, using `Bloom-Request-*` HTTP headers in the requests your Load Balancers forward to Bloom.
-  * Specify caching shard for an API system with `Bloom-Request-Shard` (default shard is `0`, maximum value is `255`).
+  * Specify caching shard for an API system with `Bloom-Request-Shard` (default shard is `0`, maximum value is `15`).
 * **Configurable per-response caching strategy**, using `Bloom-Response-*` HTTP headers in your API responses to Bloom.
   * Disable all cache for an API route with `Bloom-Response-Ignore`.
   * Specify caching bucket for an API route with `Bloom-Response-Bucket`.
@@ -100,7 +100,7 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 
 **[[proxy.shard]]**
 
-* `shard` (type: _integer_, allowed: `0` to `255`, default: `0`) — Shard index (routed using `Bloom-Request-Shard` in requests to Bloom)
+* `shard` (type: _integer_, allowed: `0` to `15`, default: `0`) — Shard index (routed using `Bloom-Request-Shard` in requests to Bloom)
 * `inet` (type: _string_, allowed: IPv4 / IPv6 + port, default: `127.0.0.1:3040`) — Target host and TCP port to proxy to for this shard (ie. where the API listens)
 
 **[cache]**
@@ -141,7 +141,7 @@ proxy_pass http://(...)
 proxy_set_header Bloom-Request-Shard 0;
 ```
 
-**Notice: a shard number is an integer from 0 to 255 (8-bit unsigned number).**
+**Notice: a shard number is an integer from 0 to 15 (8-bit unsigned number, capped to 16 shards).**
 
 ## How to install it on Debian & Ubuntu?
 

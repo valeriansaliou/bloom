@@ -73,7 +73,7 @@ fn make_app_args() -> AppArgs {
         .get_matches();
 
     // Generate owned app arguments
-    AppArgs { config: String::from(matches.value_of("config").unwrap()) }
+    AppArgs { config: String::from(matches.value_of("config").expect("invalid config value")) }
 }
 
 fn ensure_states() {

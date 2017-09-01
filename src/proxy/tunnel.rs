@@ -11,12 +11,10 @@ use hyper::client::{HttpConnector, Response};
 use server::listen::LISTEN_REMOTE;
 use APP_CONF;
 
-const MAX_SHARDS: u8 = 1;
+const MAX_SHARDS: u8 = 16;
 
 lazy_static! {
-    // TODO: use the "shard" index value from config, and panic! if duplicate
-    static ref SHARD_URI: Uri = format!("http://{}:{}", APP_CONF.proxy.shard[0].inet.ip(),
-        APP_CONF.proxy.shard[0].inet.port()).parse().unwrap();
+    static ref SHARD_REGISTER: [Option<Uri>; MAX_SHARDS as usize] = map_shards();
 }
 
 thread_local! {
@@ -24,24 +22,40 @@ thread_local! {
         .get_mut().to_owned().unwrap().handle().unwrap());
 }
 
-pub struct ProxyTunnelBuilder;
-
-pub struct ProxyTunnel {
-    shards: [Option<&'static Uri>; MAX_SHARDS as usize],
-}
+pub struct ProxyTunnel;
 
 pub type ProxyTunnelFuture = Box<Future<Item = Response, Error = Error>>;
 
-impl ProxyTunnelBuilder {
-    pub fn new() -> ProxyTunnel {
-        // We support only 1 shard for now.
-        ProxyTunnel { shards: [Some(&*SHARD_URI)] }
+fn map_shards() -> [Option<Uri>; MAX_SHARDS as usize] {
+    // Notice: this array cannot be initialized using the short format, as hyper::Uri doesnt \
+    //   implement the Copy trait, hence the ugly hardcoded initialization vector w/ Nones.
+    let mut shards = [
+        None, None, None, None, None, None, None, None,
+        None, None, None, None, None, None, None, None
+    ];
+
+    for shard in &APP_CONF.proxy.shard {
+        // Shard number overflows?
+        if shard.shard >= MAX_SHARDS {
+            panic!("shard number overflows maximum of {} shards", MAX_SHARDS);
+        }
+
+        // Store this shard
+        shards[shard.shard as usize] = Some(
+            format!(
+                "http://{}:{}",
+                APP_CONF.proxy.shard[0].inet.ip(),
+                APP_CONF.proxy.shard[0].inet.port()
+            ).parse()
+                .expect("could not build shard uri"),
+        );
     }
+
+    shards
 }
 
 impl ProxyTunnel {
     pub fn run(
-        &mut self,
         method: &Method,
         uri: &Uri,
         headers: &Headers,
@@ -50,7 +64,7 @@ impl ProxyTunnel {
     ) -> ProxyTunnelFuture {
         if shard < MAX_SHARDS {
             // Route to target shard
-            match self.shards[shard as usize] {
+            match SHARD_REGISTER[shard as usize] {
                 Some(ref shard_uri) => {
                     let mut tunnel_uri = format!("{}{}", shard_uri, uri.path());
 

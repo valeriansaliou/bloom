@@ -35,7 +35,7 @@ impl ServerListen {
 
                 Ok(ServerRequestHandle)
             })
-            .unwrap();
+            .expect("error binding server");
 
         // Assign remote, used later on by the proxy client
         LISTEN_REMOTE.lock().unwrap().set(Some(
@@ -47,6 +47,6 @@ impl ServerListen {
 
         info!("listening on http://{}", server.local_addr().unwrap());
 
-        server.run().unwrap();
+        server.run().expect("error running server");
     }
 }

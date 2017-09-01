@@ -12,7 +12,7 @@ use hyper::server::{Request, Response};
 use farmhash;
 
 use super::header::ProxyHeader;
-use super::tunnel::ProxyTunnelBuilder;
+use super::tunnel::ProxyTunnel;
 use header::janitor::HeaderJanitor;
 use header::request_shard::HeaderRequestBloomRequestShard;
 use header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
@@ -79,8 +79,7 @@ impl ProxyServe {
                 let method_failure = method.to_owned();
 
                 Box::new(
-                    ProxyTunnelBuilder::new()
-                        .run(&method, &uri, &headers, body, shard)
+                    ProxyTunnel::run(&method, &uri, &headers, body, shard)
                         .and_then(move |tunnel_res| {
                             let res_status = tunnel_res.status();
                             let res_headers = tunnel_res.headers().to_owned();

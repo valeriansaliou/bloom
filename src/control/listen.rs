@@ -22,7 +22,7 @@ impl ControlListenBuilder {
 impl ControlListen {
     pub fn run(&self) {
         thread::spawn(move || {
-            let listener = TcpListener::bind(APP_CONF.control.inet).unwrap();
+            let listener = TcpListener::bind(APP_CONF.control.inet).expect("error binding control");
 
             for stream in listener.incoming() {
                 match stream {
