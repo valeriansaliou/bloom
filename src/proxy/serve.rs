@@ -264,12 +264,6 @@ impl ProxyServe {
     ) -> ProxyServeFuture {
         Box::new(future::ok(match method {
             &Method::Get | &Method::Post | &Method::Patch | &Method::Put => {
-                // Ensure body string ends w/ a new line in any case, this \
-                //   fixes an 'infinite loop' issue w/ Hyper
-                if body_string.ends_with(LINE_FEED) == false {
-                    body_string.push_str(LINE_FEED);
-                }
-
                 Response::new()
                     .with_status(status)
                     .with_headers(headers)
