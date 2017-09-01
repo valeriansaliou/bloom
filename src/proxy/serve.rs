@@ -142,7 +142,7 @@ impl ProxyServe {
             // Process non-modified + cached headers
             let mut headers = Headers::new();
 
-            headers.set::<ETag>(res_etag);
+            ProxyHeader::set_common(&mut headers, res_etag);
             headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
             // Serve non-modified response
@@ -187,7 +187,7 @@ impl ProxyServe {
                     }
                 }
 
-                headers.set::<ETag>(res_etag);
+                ProxyHeader::set_common(&mut headers, res_etag);
                 headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
                 // Serve cached response
@@ -231,7 +231,7 @@ impl ProxyServe {
         if let Some(result_string_value) = result_string {
             let (_, res_etag) = Self::body_fingerprint(&result_string_value);
 
-            headers.set::<ETag>(res_etag);
+            ProxyHeader::set_common(&mut headers, res_etag);
         }
 
         headers.set(HeaderBloomStatus(bloom_status));
@@ -260,7 +260,7 @@ impl ProxyServe {
         method: &Method,
         status: StatusCode,
         headers: Headers,
-        mut body_string: String,
+        body_string: String,
     ) -> ProxyServeFuture {
         Box::new(future::ok(match method {
             &Method::Get | &Method::Post | &Method::Patch | &Method::Put => {

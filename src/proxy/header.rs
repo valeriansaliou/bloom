@@ -5,7 +5,8 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::str::from_utf8;
-use hyper::header::Headers;
+use hyper::Headers;
+use hyper::header::{ETag, CacheControl, CacheDirective};
 
 use super::defaults;
 use header::request_shard::HeaderRequestBloomRequestShard;
@@ -31,5 +32,14 @@ impl ProxyHeader {
         };
 
         (auth, shard)
+    }
+
+    pub fn set_common(headers: &mut Headers, etag: ETag) {
+        headers.set(CacheControl(vec![
+            CacheDirective::MustRevalidate,
+            CacheDirective::Private
+        ]));
+
+        headers.set::<ETag>(etag);
     }
 }
