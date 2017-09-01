@@ -98,7 +98,7 @@ fn spawn_worker() {
 
 fn main() {
     let _logger = ConfigLogger::init(
-        LogLevelFilter::from_str(&APP_CONF.server.log_level).expect("invalid log level")
+        LogLevelFilter::from_str(&APP_CONF.server.log_level).expect("invalid log level"),
     );
 
     info!("starting up");
