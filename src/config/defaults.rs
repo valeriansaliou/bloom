@@ -4,24 +4,60 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-pub static SERVER_LOG_LEVEL: &'static str = "warn";
-pub static SERVER_HOST: &'static str = "::1";
-pub static SERVER_PORT: &'static str = "80";
+use std::net::SocketAddr;
 
-pub static CONTROL_HOST: &'static str = "::1";
-pub static CONTROL_PORT: &'static str = "811";
-pub static CONTROL_TCP_TIMEOUT: &'static str = "300";
+pub fn server_log_level() -> String {
+    "warn".to_string()
+}
 
-pub static PROXY_HOST: &'static str = "::1";
-pub static PROXY_PORT: &'static str = "3000";
+pub fn server_inet() -> SocketAddr {
+    "[::1]:8080".parse().unwrap()
+}
 
-pub static CACHE_TTL_DEFAULT: &'static str = "600";
+pub fn control_inet() -> SocketAddr {
+    "[::1]:811".parse().unwrap()
+}
 
-pub static REDIS_HOST: &'static str = "127.0.0.1";
-pub static REDIS_PORT: &'static str = "6379";
-pub static REDIS_DATABASE: &'static str = "0";
-pub static REDIS_POOL_SIZE: &'static str = "8";
-pub static REDIS_IDLE_TIMEOUT_SECONDS: &'static str = "600";
-pub static REDIS_CONNECTION_TIMEOUT_SECONDS: &'static str = "1";
-pub static REDIS_MAX_KEY_SIZE: &'static str = "256000";
-pub static REDIS_MAX_KEY_EXPIRATION: &'static str = "2592000";
+pub fn control_tcp_timeout() -> u64 {
+    300
+}
+
+pub fn proxy_shard_shard() -> u8 {
+    0
+}
+
+pub fn proxy_shard_inet() -> SocketAddr {
+    "[::1]:3000".parse().unwrap()
+}
+
+pub fn cache_ttl_default() -> usize {
+    600
+}
+
+pub fn redis_inet() -> SocketAddr {
+    "127.0.0.1:6379".parse().unwrap()
+}
+
+pub fn redis_database() -> u8 {
+    0
+}
+
+pub fn redis_pool_size() -> u32 {
+    8
+}
+
+pub fn redis_idle_timeout_seconds() -> u64 {
+    600
+}
+
+pub fn redis_connection_timeout_seconds() -> u64 {
+    1
+}
+
+pub fn redis_max_key_size() -> usize {
+    256000
+}
+
+pub fn redis_max_key_expiration() -> usize {
+    2592000
+}

@@ -5,8 +5,10 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::net::SocketAddr;
-use log::LogLevelFilter;
 
+use super::defaults;
+
+#[derive(Deserialize)]
 pub struct Config {
     pub server: ConfigServer,
     pub control: ConfigControl,
@@ -15,30 +17,64 @@ pub struct Config {
     pub redis: ConfigRedis,
 }
 
+#[derive(Deserialize)]
 pub struct ConfigServer {
-    pub log_level: LogLevelFilter,
+    #[serde(default = "defaults::server_log_level")]
+    pub log_level: String,
+
+    #[serde(default = "defaults::server_inet")]
     pub inet: SocketAddr,
 }
 
+#[derive(Deserialize)]
 pub struct ConfigControl {
+    #[serde(default = "defaults::control_inet")]
     pub inet: SocketAddr,
+
+    #[serde(default = "defaults::control_tcp_timeout")]
     pub tcp_timeout: u64,
 }
 
+#[derive(Deserialize)]
 pub struct ConfigProxy {
+    pub shard: Vec<ConfigProxyShard>,
+}
+
+#[derive(Deserialize)]
+pub struct ConfigProxyShard {
+    #[serde(default = "defaults::proxy_shard_shard")]
+    pub shard: u8,
+
+    #[serde(default = "defaults::proxy_shard_inet")]
     pub inet: SocketAddr,
 }
 
+#[derive(Deserialize)]
 pub struct ConfigCache {
+    #[serde(default = "defaults::cache_ttl_default")]
     pub ttl_default: usize,
 }
 
+#[derive(Deserialize)]
 pub struct ConfigRedis {
+    #[serde(default = "defaults::redis_inet")]
     pub inet: SocketAddr,
+
+    #[serde(default = "defaults::redis_database")]
     pub database: u8,
+
+    #[serde(default = "defaults::redis_pool_size")]
     pub pool_size: u32,
+
+    #[serde(default = "defaults::redis_idle_timeout_seconds")]
     pub idle_timeout_seconds: u64,
+
+    #[serde(default = "defaults::redis_connection_timeout_seconds")]
     pub connection_timeout_seconds: u64,
+
+    #[serde(default = "defaults::redis_max_key_size")]
     pub max_key_size: usize,
+
+    #[serde(default = "defaults::redis_max_key_expiration")]
     pub max_key_expiration: usize,
 }

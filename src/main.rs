@@ -10,7 +10,9 @@ extern crate log;
 extern crate clap;
 #[macro_use]
 extern crate lazy_static;
-extern crate ini;
+#[macro_use]
+extern crate serde_derive;
+extern crate toml;
 extern crate httparse;
 extern crate hyper;
 extern crate tokio_core;
@@ -31,8 +33,10 @@ mod server;
 use std::thread;
 use std::ops::Deref;
 use std::time::Duration;
+use std::str::FromStr;
 
 use clap::{App, Arg};
+use log::LogLevelFilter;
 
 use config::config::Config;
 use config::logger::ConfigLogger;
@@ -93,7 +97,9 @@ fn spawn_worker() {
 }
 
 fn main() {
-    let _logger = ConfigLogger::init(APP_CONF.server.log_level);
+    let _logger = ConfigLogger::init(
+        LogLevelFilter::from_str(&APP_CONF.server.log_level).expect("invalid log level")
+    );
 
     info!("starting up");
 

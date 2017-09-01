@@ -14,8 +14,9 @@ use APP_CONF;
 const MAX_SHARDS: u8 = 1;
 
 lazy_static! {
-    static ref SHARD_URI: Uri = format!("http://{}:{}", APP_CONF.proxy.inet.ip(),
-        APP_CONF.proxy.inet.port()).parse().unwrap();
+    // TODO: use the "shard" index value from config, and panic! if duplicate
+    static ref SHARD_URI: Uri = format!("http://{}:{}", APP_CONF.proxy.shard[0].inet.ip(),
+        APP_CONF.proxy.shard[0].inet.port()).parse().unwrap();
 }
 
 thread_local! {
