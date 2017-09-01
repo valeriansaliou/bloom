@@ -48,9 +48,16 @@ impl CacheCheck {
             StatusCode::MethodNotAllowed |
             StatusCode::Gone |
             StatusCode::UriTooLong |
+            StatusCode::UnsupportedMediaType |
+            StatusCode::RangeNotSatisfiable |
+            StatusCode::ExpectationFailed |
+            StatusCode::ImATeapot |
             StatusCode::Locked |
             StatusCode::FailedDependency |
-            StatusCode::NotImplemented => true,
+            StatusCode::PreconditionRequired |
+            StatusCode::RequestHeaderFieldsTooLarge |
+            StatusCode::NotImplemented |
+            StatusCode::NotExtended => true,
             _ => false,
         }
     }
