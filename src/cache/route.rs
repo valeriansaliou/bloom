@@ -71,7 +71,7 @@ mod tests {
                 Some(""),
                 None,
             ),
-            "bloom:0:90d52bc6:e6a8b05d",
+            "bloom:0:dc56d17a:e6a8b05d",
             "[shard=0][auth=no] HTTP/1.1 GET /"
         );
         assert_eq!(
@@ -84,7 +84,7 @@ mod tests {
                 Some(""),
                 None,
             ),
-            "bloom:0:90d52bc6:fbdc5f7c",
+            "bloom:0:dc56d17a:fbdc5f7c",
             "[shard=0][auth=no] HTTP/1.1 POST /login"
         );
         assert_eq!(
@@ -97,7 +97,7 @@ mod tests {
                 Some(""),
                 None,
             ),
-            "bloom:7:d42601a6:2f484c4a",
+            "bloom:7:6d0f1448:2f484c4a",
             "[shard=7][auth=yes] HTTP/1.1 OPTIONS /feed"
         );
         assert_eq!(
@@ -110,7 +110,7 @@ mod tests {
                 Some("u=1"),
                 Some(&Origin::new("https", "valeriansaliou.name", None)),
             ),
-            "bloom:80:471d2c40:e186dab7",
+            "bloom:80:d73f0f31:e186dab7",
             "[shard=80][auth=yes] h2 HEAD /feed"
         );
         assert_eq!(
