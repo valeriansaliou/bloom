@@ -30,7 +30,6 @@ impl CacheRoute {
         query: Option<&str>,
         origin: Option<&Origin>,
     ) -> String {
-        let authorization_raw = format!("[{}]", authorization);
         let bucket_raw =
             format!(
             "[{}|{}|{}|{}|{}]",
@@ -41,7 +40,7 @@ impl CacheRoute {
             origin.unwrap_or(&Origin::null()),
         );
 
-        let auth_hash = Self::hash(&authorization_raw);
+        let auth_hash = Self::hash(authorization);
         let route_hash = Self::hash(&bucket_raw);
 
         debug!("generated bucket: {} with hash: {}", bucket_raw, route_hash);
