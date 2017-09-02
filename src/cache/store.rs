@@ -114,13 +114,17 @@ impl CacheStore {
             } else {
                 match key_buckets {
                     Some(key_buckets_value) => {
+                        let mut pipeline = redis::pipe();
+
+                        pipeline.set_ex(key, value, ttl_cap).ignore();
+
+                        for key_bucket_value in key_buckets_value {
+                            pipeline.set_ex(key_bucket_value, "", ttl_cap).ignore();
+                        }
+
                         // Bucket (MULTI operation for main data + bucket marker)
                         gen_cache_store_empty_result!(
-                            redis::pipe()
-                                .atomic()
-                                .set_ex(key, value, ttl_cap).ignore()
-                                .set_ex(key_buckets_value, "", ttl_cap).ignore()
-                                .query::<()>(&*client)
+                            pipeline.query::<()>(&*client)
                         )
                     },
                     None => {
