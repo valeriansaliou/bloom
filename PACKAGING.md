@@ -21,14 +21,16 @@ We consider here the packaging flow of Bloom version `0.1` for Debian, for targe
     1. `mkdir bloom`
     2. `mv target/x86_64-unknown-linux-musl/release/bloom bloom/`
     3. `cp config.cfg bloom/`
-    4. `tar -czvf v0.1-x86_64.tar.gz bloom`
+    4. `tar -czvf v0.1-amd64.tar.gz bloom`
     5. `rm -r bloom/`
 
 5. **How to trigger a Debian build from Travis CI:**
     1. `git describe --always --long` eg. gives `8aca211` (copy this)
     2. `git tag -a 0.1` insert description eg. `0.1-0-8aca211` and save
     3. `git push origin 0.1:0.1`
-    4. Quickly upload the archive files as GitHub releases before the build triggers, named as eg. `v0.1-x86_64.tar.gz`
+    4. Quickly upload the archive files as GitHub releases before the build triggers, named as eg. `v0.1-amd64.tar.gz`
+
+Notice: upon packaging `x86_64` becomes `amd64` and `i686` becomes `i386`.
 
 Cargo configuration for custom Linux linkers (`~/.cargo/config`):
 
