@@ -93,7 +93,7 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 
 **[control]**
 
-* `inet` (type: _string_, allowed: IPv4 / IPv6 + port, default: `[::1]:811`) — Host and TCP port Bloom Control should listen on
+* `inet` (type: _string_, allowed: IPv4 / IPv6 + port, default: `[::1]:8811`) — Host and TCP port Bloom Control should listen on
 * `tcp_timeout` (type: _integer_, allowed: seconds, default: `300`) — Timeout of idle/dead client connections to Bloom Control
 
 **[proxy]**
@@ -191,7 +191,7 @@ As your HTTP `Authorization` header contains sensitive authentication data (ie. 
 
 Yes. As your existing API workers perform the database updates on their end, they are already well aware of when data - _that might be cached by Bloom_ - gets stale. Therefore, Bloom provides an efficient way to tell it to expire cache for a given bucket. This system is called **Bloom Control**.
 
-Bloom can be configured to listen on a TCP socket to expose a cache control interface. The default TCP port is 811. Bloom implements a basic Command-ACK protocol.
+Bloom can be configured to listen on a TCP socket to expose a cache control interface. The default TCP port is 8811. Bloom implements a basic Command-ACK protocol.
 
 This way, your API worker (or any other worker in your infrastructure) can either tell Bloom to:
 
@@ -209,7 +209,7 @@ This way, your API worker (or any other worker in your infrastructure) can eithe
 **⬇️ Control flow example:**
 
 ```bash
-telnet bloom.local 811
+telnet bloom.local 8811
 Trying ::1...
 Connected to bloom.local.
 Escape character is '^]'.

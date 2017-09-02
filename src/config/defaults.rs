@@ -15,7 +15,7 @@ pub fn server_inet() -> SocketAddr {
 }
 
 pub fn control_inet() -> SocketAddr {
-    "[::1]:811".parse().unwrap()
+    "[::1]:8811".parse().unwrap()
 }
 
 pub fn control_tcp_timeout() -> u64 {
