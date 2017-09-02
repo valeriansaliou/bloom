@@ -12,11 +12,9 @@ override_dh_auto_clean:
 override_dh_auto_test:
 override_dh_auto_build:
 override_dh_auto_install:
-		$(eval ENV_KERNEL := $(shell uname -a))
-		$(eval ENV_ARCH := $(shell uname -m))
+		$(eval ENV_ARCH := $(shell dpkg --print-architecture))
 		$(eval ENV_TARBALL := v$(VERSION)-$(ENV_ARCH).tar.gz)
 
-		echo "Kernel: $(ENV_KERNEL)"
 		echo "Architecture: $(ENV_ARCH)"
 		echo "Target: $(URL)$(ENV_TARBALL)"
 
