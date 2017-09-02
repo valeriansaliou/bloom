@@ -5,6 +5,7 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::thread;
+use std::process;
 use std::net::TcpListener;
 
 use super::handle::ControlHandle;
@@ -22,27 +23,35 @@ impl ControlListenBuilder {
 impl ControlListen {
     pub fn run(&self) {
         thread::spawn(move || {
-            let listener = TcpListener::bind(APP_CONF.control.inet).expect("error binding control");
+            match TcpListener::bind(APP_CONF.control.inet) {
+                Ok(listener) => {
+                    for stream in listener.incoming() {
+                        match stream {
+                            Ok(stream) => {
+                                thread::spawn(move || {
+                                    if let Ok(peer_addr) = stream.peer_addr() {
+                                        debug!("control client connecting: {}", peer_addr);
+                                    }
 
-            for stream in listener.incoming() {
-                match stream {
-                    Ok(stream) => {
-                        thread::spawn(move || {
-                            if let Ok(peer_addr) = stream.peer_addr() {
-                                debug!("control client connecting: {}", peer_addr);
+                                    // Create client
+                                    ControlHandle::client(stream);
+                                });
                             }
+                            Err(err) => {
+                                warn!("error handling stream: {}", err);
+                            }
+                        }
+                    }
 
-                            // Create client
-                            ControlHandle::client(stream);
-                        });
-                    }
-                    Err(err) => {
-                        warn!("error handling stream: {}", err);
-                    }
+                    info!("listening on tcp://{}", APP_CONF.control.inet);
+                },
+                Err(err) => {
+                    error!("error binding control listener: {}", err);
+
+                    // Exit Bloom
+                    process::exit(1);
                 }
             }
-
-            info!("listening on tcp://{}", APP_CONF.control.inet);
         });
     }
 }
