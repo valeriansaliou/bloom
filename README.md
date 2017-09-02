@@ -112,6 +112,7 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 **[redis]**
 
 * `inet` (type: _string_, allowed: IPv4 / IPv6 + port, default: `127.0.0.1:6379`) — Target Redis host and TCP port
+* `password` (type: _string_, allowed: password values, default: none) — Redis password (if no password, dont set this key)
 * `database` (type: _integer_, allowed: `0` to `255`, default: `0`) — Target Redis database
 * `pool_size` (type: _integer_, allowed: `0` to `(2^32)-1`, default: `8`) — Redis connection pool size
 * `idle_timeout_seconds` (type: _integer_, allowed: seconds, default: `600`) — Timeout of idle/dead pool connections to Redis

@@ -66,6 +66,8 @@ pub struct ConfigRedis {
     #[serde(default = "defaults::redis_inet")]
     pub inet: SocketAddr,
 
+    pub password: Option<String>,
+
     #[serde(default = "defaults::redis_database")]
     pub database: u8,
 
