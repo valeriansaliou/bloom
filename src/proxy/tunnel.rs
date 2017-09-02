@@ -4,6 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use std::time::Duration;
 use futures::{future, Future};
 use hyper::{Error, Client, Method, Uri, Headers, Body, Request};
 use hyper::client::{HttpConnector, Response};
@@ -12,6 +13,7 @@ use server::listen::LISTEN_REMOTE;
 use APP_CONF;
 
 const MAX_SHARDS: u8 = 16;
+const CLIENT_KEEP_ALIVE_TIMEOUT_SECONDS: u64 = 30;
 
 lazy_static! {
     static ref SHARD_REGISTER: [Option<Uri>; MAX_SHARDS as usize] = map_shards();
@@ -28,6 +30,7 @@ pub type ProxyTunnelFuture = Box<Future<Item = Response, Error = Error>>;
 fn make_client() -> Client<HttpConnector> {
     Client::configure()
         .keep_alive(true)
+        .keep_alive_timeout(Some(Duration::from_secs(CLIENT_KEEP_ALIVE_TIMEOUT_SECONDS)))
         .build(
             &LISTEN_REMOTE
                 .lock().unwrap()
