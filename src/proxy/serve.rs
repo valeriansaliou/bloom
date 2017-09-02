@@ -13,7 +13,6 @@ use farmhash;
 
 use super::header::ProxyHeader;
 use super::tunnel::ProxyTunnel;
-use header::janitor::HeaderJanitor;
 use header::request_shard::HeaderRequestBloomRequestShard;
 use header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
 use cache::read::CacheRead;
@@ -81,33 +80,12 @@ impl ProxyServe {
                 Box::new(
                     ProxyTunnel::run(&method, &uri, &headers, body, shard)
                         .and_then(move |tunnel_res| {
-                            let res_status = tunnel_res.status();
-                            let mut res_headers = tunnel_res.headers().to_owned();
-
-                            // Map headers to clean-up
-                            let mut headers_remove: Vec<String> = Vec::new();
-
-                            for header_view in res_headers.iter() {
-                                // Do not forward contextual and internal headers \
-                                //   (ie. 'Bloom-Response-*' headers)
-                                if HeaderJanitor::is_contextual(&header_view) == true ||
-                                    HeaderJanitor::is_internal(&header_view) == true
-                                {
-                                    headers_remove.push(String::from(header_view.name()));
-                                }
-                            }
-
-                            // Proceed headers clean-up
-                            for header_remove in headers_remove.iter() {
-                                res_headers.remove_raw(header_remove.as_ref());
-                            }
-
                             CacheWrite::save(
                                 ns,
                                 method,
                                 version,
-                                res_status,
-                                res_headers,
+                                tunnel_res.status(),
+                                tunnel_res.headers().to_owned(),
                                 tunnel_res.body(),
                             )
                         })

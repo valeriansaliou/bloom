@@ -4,7 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::header;
+use hyper::{header, Headers};
 use hyper::header::HeaderView;
 
 use super::response_bucket::HeaderResponseBloomResponseBucket;
@@ -14,6 +14,24 @@ use super::response_ttl::HeaderResponseBloomResponseTTL;
 pub struct HeaderJanitor;
 
 impl HeaderJanitor {
+    pub fn clean(headers: &mut Headers) {
+        // Map headers to clean-up
+        let mut headers_remove: Vec<String> = Vec::new();
+
+        for header_view in headers.iter() {
+            // Do not forward contextual and internal headers (ie. 'Bloom-Response-*' headers)
+            if Self::is_contextual(&header_view) == true ||
+                Self::is_internal(&header_view) == true {
+                headers_remove.push(String::from(header_view.name()));
+            }
+        }
+
+        // Proceed headers clean-up
+        for header_remove in headers_remove.iter() {
+            headers.remove_raw(header_remove.as_ref());
+        }
+    }
+
     pub fn is_contextual(header: &HeaderView) -> bool {
         header.is::<header::Connection>() || header.is::<header::Date>() ||
             header.is::<header::Upgrade>() || header.is::<header::Cookie>()

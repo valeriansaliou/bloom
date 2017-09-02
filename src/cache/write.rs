@@ -33,7 +33,7 @@ impl CacheWrite {
         method: Method,
         version: HttpVersion,
         status: StatusCode,
-        headers: Headers,
+        mut headers: Headers,
         body: Body,
     ) -> CacheWriteResultFuture {
         Box::new(
@@ -72,6 +72,9 @@ impl CacheWrite {
                                     None => APP_CONF.cache.ttl_default,
                                     Some(value) => value.0,
                                 };
+
+                                // Clean headers before they get stored
+                                HeaderJanitor::clean(&mut headers);
 
                                 // Generate storable value
                                 let value = format!(
