@@ -82,7 +82,25 @@ impl ProxyServe {
                     ProxyTunnel::run(&method, &uri, &headers, body, shard)
                         .and_then(move |tunnel_res| {
                             let res_status = tunnel_res.status();
-                            let res_headers = tunnel_res.headers().to_owned();
+                            let mut res_headers = tunnel_res.headers().to_owned();
+
+                            // Map headers to clean-up
+                            let mut headers_remove: Vec<String> = Vec::new();
+
+                            for header_view in res_headers.iter() {
+                                // Do not forward contextual and internal headers \
+                                //   (ie. 'Bloom-Response-*' headers)
+                                if HeaderJanitor::is_contextual(&header_view) == true ||
+                                    HeaderJanitor::is_internal(&header_view) == true
+                                {
+                                    headers_remove.push(String::from(header_view.name()));
+                                }
+                            }
+
+                            // Proceed headers clean-up
+                            for header_remove in headers_remove.iter() {
+                                res_headers.remove_raw(header_remove.as_ref());
+                            }
 
                             CacheWrite::save(
                                 ns,
@@ -209,24 +227,6 @@ impl ProxyServe {
         body_string: String,
         result_string: Option<String>,
     ) -> ProxyServeFuture {
-        // Map headers to clean-up
-        let mut headers_remove: Vec<String> = Vec::new();
-
-        for header_view in headers.iter() {
-            // Do not forward contextual and internal headers \
-            //   (ie. 'Bloom-Response-*' headers)
-            if HeaderJanitor::is_contextual(&header_view) == true ||
-                HeaderJanitor::is_internal(&header_view) == true
-            {
-                headers_remove.push(String::from(header_view.name()));
-            }
-        }
-
-        // Proceed headers clean-up
-        for header_remove in headers_remove.iter() {
-            headers.remove_raw(header_remove.as_ref());
-        }
-
         // Process ETag for content?
         if let Some(result_string_value) = result_string {
             let (_, res_etag) = Self::body_fingerprint(&result_string_value);
