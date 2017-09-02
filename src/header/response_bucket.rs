@@ -9,7 +9,7 @@ use hyper::Result;
 use hyper::header::{Header, Raw, Formatter, parsing};
 
 #[derive(Clone)]
-pub struct HeaderResponseBloomResponseBucket(pub String);
+pub struct HeaderResponseBloomResponseBucket(pub Vec<String>);
 
 impl Header for HeaderResponseBloomResponseBucket {
     fn header_name() -> &'static str {
@@ -18,7 +18,7 @@ impl Header for HeaderResponseBloomResponseBucket {
     }
 
     fn parse_header(raw: &Raw) -> Result<HeaderResponseBloomResponseBucket> {
-        parsing::from_one_raw_str(raw).map(HeaderResponseBloomResponseBucket)
+        parsing::from_comma_delimited(raw).map(HeaderResponseBloomResponseBucket)
     }
 
     fn fmt_header(&self, f: &mut Formatter) -> fmt::Result {
@@ -28,6 +28,6 @@ impl Header for HeaderResponseBloomResponseBucket {
 
 impl fmt::Display for HeaderResponseBloomResponseBucket {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&self.0, f)
+        parsing::fmt_comma_delimited(f, &self.0)
     }
 }

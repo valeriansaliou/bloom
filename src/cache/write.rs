@@ -45,18 +45,25 @@ impl CacheWrite {
                             debug!("checking whether to write cache for key: {}", &key);
 
                             if APP_CONF.cache.disable_write == false &&
-                                CacheCheck::from_response(&method, &status, &headers) == true {
+                                CacheCheck::from_response(&method, &status, &headers) == true
+                            {
                                 debug!("key: {} cacheable, writing cache", &key);
 
                                 // Acquire bucket from response, or fallback to no bucket
-                                let key_bucket =
+                                let key_buckets =
                                     match headers.get::<HeaderResponseBloomResponseBucket>() {
                                         None => None,
                                         Some(value) => {
-                                            Some(CacheRoute::gen_key_bucket_with_ns(
-                                                &key,
-                                                &CacheRoute::hash(&value.0),
-                                            ))
+                                            Some(
+                                                value.0.iter()
+                                                    .map(|value| {
+                                                        CacheRoute::gen_key_bucket_with_ns(
+                                                            &key,
+                                                            &CacheRoute::hash(value)
+                                                        )
+                                                    })
+                                                    .collect::<Vec<String>>()
+                                            )
                                         }
                                     };
 
@@ -75,7 +82,7 @@ impl CacheWrite {
                                 );
 
                                 // Write to cache
-                                match APP_CACHE_STORE.set(&key, &value, ttl, key_bucket) {
+                                match APP_CACHE_STORE.set(&key, &value, ttl, key_buckets) {
                                     Ok(_) => {
                                         debug!("wrote cache for key: {}", &key);
 

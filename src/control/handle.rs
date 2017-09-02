@@ -97,12 +97,12 @@ impl ControlHandle {
                                 // Should close?
                                 break;
                             }
-                        },
+                        }
                         Err(err) => {
                             info!("closing control thread with traceback: {}", err);
 
                             panic!("closing control channel");
-                        },
+                        }
                     }
                 }
             }

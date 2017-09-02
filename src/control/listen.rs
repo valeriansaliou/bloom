@@ -44,7 +44,7 @@ impl ControlListen {
                     }
 
                     info!("listening on tcp://{}", APP_CONF.control.inet);
-                },
+                }
                 Err(err) => {
                     error!("error binding control listener: {}", err);
 

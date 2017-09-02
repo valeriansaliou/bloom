@@ -9,7 +9,7 @@ use std::time::Duration;
 use r2d2::Pool;
 use r2d2::config::Config;
 use r2d2_redis::{RedisConnectionManager, Error};
-use redis::{self, Value, Connection, Commands};
+use redis::{self, Value, Connection, Commands, PipelineCommands};
 
 use APP_CONF;
 
@@ -102,7 +102,7 @@ impl CacheStore {
         key: &str,
         value: &str,
         ttl: usize,
-        key_bucket: Option<String>,
+        key_buckets: Option<Vec<String>>,
     ) -> CacheResult {
         get_cache_store_client!(self, client {
             // Cap TTL to 'max_key_expiration'
@@ -112,14 +112,14 @@ impl CacheStore {
             if value.len() > APP_CONF.redis.max_key_size {
                 Err(CacheStoreError::TooLarge)
             } else {
-                match key_bucket {
-                    Some(key_bucket_value) => {
+                match key_buckets {
+                    Some(key_buckets_value) => {
                         // Bucket (MULTI operation for main data + bucket marker)
                         gen_cache_store_empty_result!(
                             redis::pipe()
                                 .atomic()
-                                .cmd("SETEX").arg(key).arg(ttl_cap).arg(value).ignore()
-                                .cmd("SETEX").arg(key_bucket_value).arg(ttl_cap).arg("").ignore()
+                                .set_ex(key, value, ttl_cap).ignore()
+                                .set_ex(key_buckets_value, "", ttl_cap).ignore()
                                 .query::<()>(&*client)
                         )
                     },

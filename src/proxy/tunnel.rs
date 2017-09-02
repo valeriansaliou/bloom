@@ -31,20 +31,36 @@ fn make_client() -> Client<HttpConnector> {
     Client::configure()
         .keep_alive(true)
         .keep_alive_timeout(Some(Duration::from_secs(CLIENT_KEEP_ALIVE_TIMEOUT_SECONDS)))
-        .build(
-            &LISTEN_REMOTE
-                .lock().unwrap()
-                .get_mut().to_owned().unwrap()
-                .handle().unwrap()
-        )
+        .build(&LISTEN_REMOTE
+            .lock()
+            .unwrap()
+            .get_mut()
+            .to_owned()
+            .unwrap()
+            .handle()
+            .unwrap())
 }
 
 fn map_shards() -> [Option<Uri>; MAX_SHARDS as usize] {
     // Notice: this array cannot be initialized using the short format, as hyper::Uri doesnt \
     //   implement the Copy trait, hence the ugly hardcoded initialization vector w/ Nones.
     let mut shards = [
-        None, None, None, None, None, None, None, None,
-        None, None, None, None, None, None, None, None
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
     ];
 
     for shard in &APP_CONF.proxy.shard {
