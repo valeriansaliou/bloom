@@ -18,13 +18,23 @@ lazy_static! {
 }
 
 thread_local! {
-    static TUNNEL_CLIENT: Client<HttpConnector> = Client::new(&LISTEN_REMOTE.lock().unwrap()
-        .get_mut().to_owned().unwrap().handle().unwrap());
+    static TUNNEL_CLIENT: Client<HttpConnector> = make_client();
 }
 
 pub struct ProxyTunnel;
 
 pub type ProxyTunnelFuture = Box<Future<Item = Response, Error = Error>>;
+
+fn make_client() -> Client<HttpConnector> {
+    Client::configure()
+        .keep_alive(true)
+        .build(
+            &LISTEN_REMOTE
+                .lock().unwrap()
+                .get_mut().to_owned().unwrap()
+                .handle().unwrap()
+        )
+}
 
 fn map_shards() -> [Option<Uri>; MAX_SHARDS as usize] {
     // Notice: this array cannot be initialized using the short format, as hyper::Uri doesnt \
