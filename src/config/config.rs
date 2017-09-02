@@ -53,6 +53,12 @@ pub struct ConfigProxyShard {
 pub struct ConfigCache {
     #[serde(default = "defaults::cache_ttl_default")]
     pub ttl_default: usize,
+
+    #[serde(default = "defaults::cache_disable_read")]
+    pub disable_read: bool,
+
+    #[serde(default = "defaults::cache_disable_write")]
+    pub disable_write: bool,
 }
 
 #[derive(Deserialize)]

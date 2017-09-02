@@ -44,7 +44,8 @@ impl CacheWrite {
                         Ok(body_value) => {
                             debug!("checking whether to write cache for key: {}", &key);
 
-                            if CacheCheck::from_response(&method, &status, &headers) == true {
+                            if APP_CONF.cache.disable_write == false &&
+                                CacheCheck::from_response(&method, &status, &headers) == true {
                                 debug!("key: {} cacheable, writing cache", &key);
 
                                 // Acquire bucket from response, or fallback to no bucket

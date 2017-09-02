@@ -106,6 +106,8 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 **[cache]**
 
 * `ttl_default` (type: _integer_, allowed: seconds, default: `600`) — Default cache TTL in seconds, when no `Bloom-Response-TTL` provided
+* `disable_read` (type: _boolean_, allowed: `true`, `false`, default: `false`) — Whether to disable cache reads (useful for testing)
+* `disable_write` (type: _boolean_, allowed: `true`, `false`, default: `false`) — Whether to disable cache writes (useful for testing)
 
 **[redis]**
 

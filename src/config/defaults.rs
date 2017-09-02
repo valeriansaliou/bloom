@@ -34,6 +34,14 @@ pub fn cache_ttl_default() -> usize {
     600
 }
 
+pub fn cache_disable_read() -> bool {
+    false
+}
+
+pub fn cache_disable_write() -> bool {
+    false
+}
+
 pub fn redis_inet() -> SocketAddr {
     "127.0.0.1:6379".parse().unwrap()
 }

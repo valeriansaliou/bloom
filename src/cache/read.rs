@@ -8,6 +8,7 @@ use hyper::Method;
 
 use super::check::CacheCheck;
 
+use APP_CONF;
 use APP_CACHE_STORE;
 
 pub struct CacheRead;
@@ -20,7 +21,7 @@ pub enum CacheReadError {
 
 impl CacheRead {
     pub fn acquire(key: &str, method: &Method) -> Result<String, CacheReadError> {
-        if CacheCheck::from_request(method) == true {
+        if APP_CONF.cache.disable_read == false && CacheCheck::from_request(method) == true {
             debug!("key: {} cacheable, reading cache", key);
 
             match APP_CACHE_STORE.get(key) {
