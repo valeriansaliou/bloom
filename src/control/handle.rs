@@ -44,6 +44,8 @@ const HASH_RESULT_SIZE: usize = 7 + ROUTE_HASH_SIZE + LINE_END_GAP + 1;
 const SHARD_DEFAULT: ControlShard = 0;
 const TCP_TIMEOUT_NON_ESTABLISHED: u64 = 20;
 
+pub static BUFFER_LINE_SEPARATOR: u8 = '\n' as u8;
+
 pub type ControlShard = u8;
 
 lazy_static! {
@@ -85,18 +87,43 @@ impl ControlHandle {
                 // Select default shard
                 let mut shard = SHARD_DEFAULT;
 
+                // Initialize packet buffer
+                let mut buffer = Vec::new();
+
                 // Wait for incoming messages
-                loop {
+                'handler: loop {
                     let mut read = [0; MAX_LINE_SIZE];
 
                     match stream.read(&mut read) {
                         Ok(n) => {
-                            if n == 0 ||
-                                Self::on_message(&mut shard, &stream, &read[0..n]) ==
-                                    ControlHandleMessageResult::Close
-                            {
-                                // Should close?
+                            // Should close?
+                            if n == 0 {
                                 break;
+                            }
+
+                            // Buffer chunk
+                            buffer.extend_from_slice(&read[0..n]);
+
+                            // Should handle this chunk? (terminated)
+                            if buffer[buffer.len() - 1] == BUFFER_LINE_SEPARATOR {
+                                {
+                                    // Handle all buffered chunks as lines
+                                    let buffer_split = buffer.split(|value| {
+                                        value == &BUFFER_LINE_SEPARATOR
+                                    });
+
+                                    for line in buffer_split {
+                                        if Self::on_message(&mut shard, &stream, line) ==
+                                            ControlHandleMessageResult::Close
+                                        {
+                                            // Should close?
+                                            break 'handler;
+                                        }
+                                    }
+                                }
+
+                                // Reset buffer
+                                buffer.clear();
                             }
                         }
                         Err(err) => {
