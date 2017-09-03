@@ -108,9 +108,8 @@ impl ControlHandle {
                             if buffer[buffer.len() - 1] == BUFFER_LINE_SEPARATOR {
                                 {
                                     // Handle all buffered chunks as lines
-                                    let buffer_split = buffer.split(|value| {
-                                        value == &BUFFER_LINE_SEPARATOR
-                                    });
+                                    let buffer_split =
+                                        buffer.split(|value| value == &BUFFER_LINE_SEPARATOR);
 
                                     for line in buffer_split {
                                         if Self::on_message(&mut shard, &stream, line) ==

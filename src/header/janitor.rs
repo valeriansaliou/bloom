@@ -21,7 +21,8 @@ impl HeaderJanitor {
         for header_view in headers.iter() {
             // Do not forward contextual and internal headers (ie. 'Bloom-Response-*' headers)
             if Self::is_contextual(&header_view) == true ||
-                Self::is_internal(&header_view) == true {
+                Self::is_internal(&header_view) == true
+            {
                 headers_remove.push(String::from(header_view.name()));
             }
         }

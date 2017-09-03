@@ -55,14 +55,16 @@ impl CacheWrite {
                                         None => None,
                                         Some(value) => {
                                             Some(
-                                                value.0.iter()
+                                                value
+                                                    .0
+                                                    .iter()
                                                     .map(|value| {
                                                         CacheRoute::gen_key_bucket_with_ns(
                                                             &key,
-                                                            &CacheRoute::hash(value)
+                                                            &CacheRoute::hash(value),
                                                         )
                                                     })
-                                                    .collect::<Vec<String>>()
+                                                    .collect::<Vec<String>>(),
                                             )
                                         }
                                     };

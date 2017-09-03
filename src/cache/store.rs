@@ -42,10 +42,11 @@ impl CacheStoreBuilder {
 
         let addr_auth = match APP_CONF.redis.password {
             Some(ref password) => format!(":{}@", password),
-            None => "".to_string()
+            None => "".to_string(),
         };
 
-        let tcp_addr_raw = format!(
+        let tcp_addr_raw =
+            format!(
             "redis://{}{}:{}/{}",
             &addr_auth,
             APP_CONF.redis.inet.ip(),
