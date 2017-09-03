@@ -51,7 +51,7 @@ pub fn redis_database() -> u8 {
 }
 
 pub fn redis_pool_size() -> u32 {
-    8
+    16
 }
 
 pub fn redis_idle_timeout_seconds() -> u64 {
