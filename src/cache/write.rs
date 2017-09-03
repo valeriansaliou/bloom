@@ -13,7 +13,7 @@ use super::check::CacheCheck;
 use APP_CONF;
 use APP_CACHE_STORE;
 use header::janitor::HeaderJanitor;
-use header::response_bucket::HeaderResponseBloomResponseBucket;
+use header::response_buckets::HeaderResponseBloomResponseBuckets;
 use header::response_ttl::HeaderResponseBloomResponseTTL;
 
 pub struct CacheWrite;
@@ -51,7 +51,7 @@ impl CacheWrite {
 
                                 // Acquire bucket from response, or fallback to no bucket
                                 let key_buckets =
-                                    match headers.get::<HeaderResponseBloomResponseBucket>() {
+                                    match headers.get::<HeaderResponseBloomResponseBuckets>() {
                                         None => None,
                                         Some(value) => {
                                             Some(

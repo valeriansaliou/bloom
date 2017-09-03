@@ -7,7 +7,7 @@
 use hyper::{header, Headers};
 use hyper::header::HeaderView;
 
-use super::response_bucket::HeaderResponseBloomResponseBucket;
+use super::response_buckets::HeaderResponseBloomResponseBuckets;
 use super::response_ignore::HeaderResponseBloomResponseIgnore;
 use super::response_ttl::HeaderResponseBloomResponseTTL;
 
@@ -38,7 +38,7 @@ impl HeaderJanitor {
     }
 
     pub fn is_internal(header: &HeaderView) -> bool {
-        header.is::<HeaderResponseBloomResponseBucket>() ||
+        header.is::<HeaderResponseBloomResponseBuckets>() ||
             header.is::<HeaderResponseBloomResponseIgnore>() ||
             header.is::<HeaderResponseBloomResponseTTL>()
     }
