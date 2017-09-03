@@ -1,6 +1,6 @@
 [package]
 name = "bloom"
-version = "1.4.0"
+version = "1.5.0"
 description = "HTTP REST API caching middleware, to be used between load balancers and REST API workers."
 readme = "README.md"
 license = "MPL2"
