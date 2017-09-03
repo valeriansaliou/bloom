@@ -30,6 +30,9 @@ pub type CacheWriteResultFuture = Box<Future<Item = CacheWriteResult, Error = Er
 impl CacheWrite {
     pub fn save(
         key: String,
+        key_mask: String,
+        auth_hash: String,
+        shard: u8,
         method: Method,
         version: HttpVersion,
         status: StatusCode,
@@ -50,24 +53,27 @@ impl CacheWrite {
                                 debug!("key: {} cacheable, writing cache", &key);
 
                                 // Acquire bucket from response, or fallback to no bucket
-                                let key_buckets =
+                                let mut key_tags =
                                     match headers.get::<HeaderResponseBloomResponseBuckets>() {
-                                        None => None,
+                                        None => Vec::new(),
                                         Some(value) => {
-                                            Some(
-                                                value
-                                                    .0
-                                                    .iter()
-                                                    .map(|value| {
-                                                        CacheRoute::gen_key_bucket_with_ns(
-                                                            &key,
-                                                            &CacheRoute::hash(value),
-                                                        )
-                                                    })
-                                                    .collect::<Vec<String>>(),
-                                            )
+                                            value
+                                                .0
+                                                .iter()
+                                                .map(|value| {
+                                                    CacheRoute::gen_key_bucket_from_hash(
+                                                        shard,
+                                                        &CacheRoute::hash(value),
+                                                    )
+                                                })
+                                                .collect::<Vec<String>>()
                                         }
                                     };
+
+                                key_tags.push(CacheRoute::gen_key_auth_from_hash(
+                                    shard,
+                                    &auth_hash,
+                                ));
 
                                 // Acquire TTL from response, or fallback to default TTL
                                 let ttl = match headers.get::<HeaderResponseBloomResponseTTL>() {
@@ -87,7 +93,7 @@ impl CacheWrite {
                                 );
 
                                 // Write to cache
-                                match APP_CACHE_STORE.set(&key, &value, ttl, key_buckets) {
+                                match APP_CACHE_STORE.set(&key, &key_mask, &value, ttl, key_tags) {
                                     Ok(_) => {
                                         debug!("wrote cache for key: {}", &key);
 
@@ -166,7 +172,10 @@ mod tests {
     fn it_fails_saving_cache() {
         assert!(
             CacheWrite::save(
-                "bloom:0:90d52bc6:f773d6f1".to_string(),
+                "bloom:0:c:90d52bc6:f773d6f1".to_string(),
+                "90d52bc6:f773d6f1".to_string(),
+                "90d52bc6".to_string(),
+                0,
                 Method::Get,
                 HttpVersion::Http11,
                 StatusCode::Ok,

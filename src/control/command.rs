@@ -48,12 +48,9 @@ impl ControlCommand {
         let bucket = parts.next().unwrap_or("");
 
         if bucket.is_empty() == false {
-            let pattern = CacheRoute::gen_key_bucket_with_ns(
-                &CacheRoute::gen_ns_from_hash(*shard, "*", "*"),
-                bucket,
-            );
+            let bucket_key = CacheRoute::gen_key_bucket_from_hash(*shard, bucket);
 
-            return Self::proceed_flush(CachePurgeVariant::Bucket, pattern.as_ref());
+            return Self::proceed_flush(CachePurgeVariant::Bucket, shard, &bucket_key);
         }
 
         Err(None)
@@ -63,9 +60,9 @@ impl ControlCommand {
         let auth = parts.next().unwrap_or("");
 
         if auth.is_empty() == false {
-            let pattern = CacheRoute::gen_ns_from_hash(*shard, auth, "*");
+            let auth_key = CacheRoute::gen_key_auth_from_hash(*shard, auth);
 
-            return Self::proceed_flush(CachePurgeVariant::Auth, pattern.as_ref());
+            return Self::proceed_flush(CachePurgeVariant::Auth, shard, &auth_key);
         }
 
         Err(None)
@@ -90,10 +87,14 @@ impl ControlCommand {
         Ok(ControlCommandResponse::Ended)
     }
 
-    fn proceed_flush(variant: CachePurgeVariant, pattern: &str) -> ControlResult {
+    fn proceed_flush(
+        variant: CachePurgeVariant,
+        shard: &ControlShard,
+        pattern: &str,
+    ) -> ControlResult {
         debug!("attempting to flush {:?} for pattern: {}", variant, pattern);
 
-        match APP_CACHE_STORE.purge_pattern(&variant, pattern) {
+        match APP_CACHE_STORE.purge_tag(&variant, *shard, pattern) {
             Ok(_) => {
                 info!("flushed {:?} for pattern: {}", variant, pattern);
 

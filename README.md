@@ -9,7 +9,7 @@ It is completely agnostic of your API implementation, and requires minimal chang
 
 Bloom relies on `redis`, [configured as a cache](https://github.com/valeriansaliou/bloom/blob/master/examples/config/redis.conf) to store cached data. It is built in Rust and focuses on performance and low resource usage.
 
-**Important: Bloom works great if your API implements REST conventions. Your API needs to use HTTP read methods, namely `GET`, `HEAD` solely as read methods (do not use HTTP GET parameters as a way to update data).**
+**Important: Bloom works great if your API implements REST conventions. Your API needs to use HTTP read methods, namely `GET`, `HEAD`, `OPTIONS` solely as read methods (do not use HTTP GET parameters as a way to update data).**
 
 :newspaper: The Bloom project was initially announced in [a post on my personal journal](https://journal.valeriansaliou.name/announcing-bloom-a-rest-api-caching-middleware/).
 

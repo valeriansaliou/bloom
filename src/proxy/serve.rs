@@ -58,9 +58,11 @@ impl ProxyServe {
         let (method, uri, version, headers, body) = req.deconstruct();
         let (auth, shard) = ProxyHeader::parse_from_request(&headers);
 
-        let ns = CacheRoute::gen_ns(
+        let auth_hash = CacheRoute::hash(auth);
+
+        let (ns, ns_mask) = CacheRoute::gen_key_cache(
             shard,
-            auth,
+            &auth_hash,
             version,
             &method,
             uri.path(),
@@ -83,6 +85,9 @@ impl ProxyServe {
                         .and_then(move |tunnel_res| {
                             CacheWrite::save(
                                 ns,
+                                ns_mask,
+                                auth_hash,
+                                shard,
                                 method,
                                 version,
                                 tunnel_res.status(),

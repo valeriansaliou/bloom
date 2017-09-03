@@ -11,6 +11,7 @@ use r2d2::config::Config;
 use r2d2_redis::{RedisConnectionManager, Error};
 use redis::{self, Value, Connection, Commands, PipelineCommands};
 
+use super::route::ROUTE_PREFIX;
 use APP_CONF;
 
 pub struct CacheStoreBuilder;
@@ -108,9 +109,10 @@ impl CacheStore {
     pub fn set(
         &self,
         key: &str,
+        key_mask: &str,
         value: &str,
         ttl: usize,
-        key_buckets: Option<Vec<String>>,
+        key_tags: Vec<String>,
     ) -> CacheResult {
         get_cache_store_client!(self, client {
             // Cap TTL to 'max_key_expiration'
@@ -120,37 +122,31 @@ impl CacheStore {
             if value.len() > APP_CONF.redis.max_key_size {
                 Err(CacheStoreError::TooLarge)
             } else {
-                match key_buckets {
-                    Some(key_buckets_value) => {
-                        let mut pipeline = redis::pipe();
+                let mut pipeline = redis::pipe();
 
-                        pipeline.set_ex(key, value, ttl_cap).ignore();
+                pipeline.set_ex(key, value, ttl_cap).ignore();
 
-                        for key_bucket_value in key_buckets_value {
-                            pipeline.set_ex(key_bucket_value, "", ttl_cap).ignore();
-                        }
-
-                        // Bucket (MULTI operation for main data + bucket marker)
-                        gen_cache_store_empty_result!(
-                            pipeline.query::<()>(&*client)
-                        )
-                    },
-                    None => {
-                        gen_cache_store_empty_result!(
-                            (*client).set_ex::<_, _, ()>(key, value, ttl_cap)
-                        )
-                    },
+                for key_tag in key_tags {
+                    // TODO: bump TTL to maximum TTL of stored key
+                    pipeline.sadd(key_tag, key_mask).ignore();
                 }
+
+                // Bucket (MULTI operation for main data + bucket marker)
+                gen_cache_store_empty_result!(
+                    pipeline.query::<()>(&*client)
+                )
             }
         })
     }
 
-    pub fn purge_pattern(&self, variant: &CachePurgeVariant, key_pattern: &str) -> CacheResult {
+    pub fn purge_tag(&self, variant: &CachePurgeVariant, shard: u8, key_tag: &str) -> CacheResult {
         get_cache_store_client!(self, client {
-            // Invoke keyspace cleanup script for key pattern
+            // Invoke keyspace cleanup script for key tag
             gen_cache_store_empty_result!(
                 redis::Script::new(variant.get_script())
-                    .arg(key_pattern)
+                    .arg(ROUTE_PREFIX)
+                    .arg(shard)
+                    .arg(key_tag)
                     .invoke::<()>(&*client)
             )
         })
@@ -160,33 +156,18 @@ impl CacheStore {
 impl CachePurgeVariant {
     fn get_script(&self) -> &'static str {
         match *self {
-            CachePurgeVariant::Bucket => {
-                r#"
-                    local re = '^(.+):b:.+$'
-                    local targets = {}
-
-                    for _, bucket_key in pairs(redis.call('KEYS', ARGV[1])) do
-                        local base_key = bucket_key:match(re)
-
-                        if base_key then
-                            table.insert(targets, base_key)
-                        end
-
-                        table.insert(targets, bucket_key)
-                    end
-
-                    if next(targets) then
-                        redis.call('DEL', unpack(targets))
-                    end
-                "#
-            }
+            CachePurgeVariant::Bucket |
             CachePurgeVariant::Auth => {
                 r#"
-                    local targets = redis.call('KEYS', ARGV[1])
+                    local targets = {}
 
-                    if next(targets) then
-                        redis.call('DEL', unpack(targets))
+                    for _, tag in pairs(redis.call('SMEMBERS', ARGV[3])) do
+                        table.insert(targets, ARGV[1] .. ":" .. ARGV[2] .. ":c:" .. tag)
                     end
+
+                    table.insert(targets, ARGV[3])
+
+                    redis.call('DEL', unpack(targets))
                 "#
             }
         }

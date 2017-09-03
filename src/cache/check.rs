@@ -22,7 +22,7 @@ impl CacheCheck {
 
     fn is_cacheable_method(method: &Method) -> bool {
         match *method {
-            Method::Get | Method::Head => true,
+            Method::Get | Method::Head | Method::Options => true,
             _ => false,
         }
     }
@@ -78,7 +78,7 @@ mod tests {
         assert_eq!(CacheCheck::is_cacheable_method(&Method::Head), true, "HEAD");
         assert_eq!(
             CacheCheck::is_cacheable_method(&Method::Options),
-            false,
+            true,
             "OPTIONS"
         );
         assert_eq!(
