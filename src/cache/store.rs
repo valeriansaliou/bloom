@@ -127,8 +127,8 @@ impl CacheStore {
                 pipeline.set_ex(key, value, ttl_cap).ignore();
 
                 for key_tag in key_tags {
-                    // TODO: bump TTL to maximum TTL of stored key
-                    pipeline.sadd(key_tag, key_mask).ignore();
+                    pipeline.sadd(&key_tag, key_mask).ignore();
+                    pipeline.expire(&key_tag, APP_CONF.redis.max_key_expiration);
                 }
 
                 // Bucket (MULTI operation for main data + bucket marker)
