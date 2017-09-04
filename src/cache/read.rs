@@ -29,21 +29,20 @@ impl CacheRead {
             debug!("key: {} cacheable, reading cache", &key);
 
             Box::new(
-                APP_CACHE_STORE.get(key.to_string())
-                    .and_then(|acquired| {
-                        if let Some(result) = acquired {
-                            future::ok(Ok(result))
-                        } else {
-                            info!("acquired empty value from cache");
+                APP_CACHE_STORE
+                    .get(key.to_string())
+                    .and_then(|acquired| if let Some(result) = acquired {
+                        future::ok(Ok(result))
+                    } else {
+                        info!("acquired empty value from cache");
 
-                            future::ok(Err(CacheReadError::Empty))
-                        }
+                        future::ok(Err(CacheReadError::Empty))
                     })
                     .or_else(|err| {
                         error!("could not acquire value from cache because: {:?}", err);
 
                         future::ok(Err(CacheReadError::StoreFailure))
-                    })
+                    }),
             )
         } else {
             debug!("key: {} not cacheable, ignoring (will pass through)", &key);
@@ -60,6 +59,10 @@ mod tests {
     #[test]
     #[should_panic]
     fn it_fails_acquiring_cache() {
-        assert!(CacheRead::acquire("bloom:0:c:90d52bc6:f773d6f1", &Method::Get).poll().is_err());
+        assert!(
+            CacheRead::acquire("bloom:0:c:90d52bc6:f773d6f1", &Method::Get)
+                .poll()
+                .is_err()
+        );
     }
 }

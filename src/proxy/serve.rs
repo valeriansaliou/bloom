@@ -77,9 +77,7 @@ impl ProxyServe {
                 .or_else(|_| Err(Error::Incomplete))
                 .and_then(move |result| {
                     match result {
-                        Ok(value) => {
-                            Self::dispatch_cached(&method, &headers, &value)
-                        },
+                        Ok(value) => Self::dispatch_cached(&method, &headers, &value),
                         Err(_) => {
                             // Clone method value for closures. Sadly, it looks like Rust borrow \
                             //   checker doesnt discriminate properly on this check.
@@ -115,8 +113,8 @@ impl ProxyServe {
                                         Err(body_string_values) => {
                                             match body_string_values {
                                                 Some(body_string) => {
-                                                    // Enforce clean headers, has usually they get cleaned \
-                                                    //   from cache writer
+                                                    // Enforce clean headers, has usually they get \
+                                                    //   cleaned from cache writer
                                                     HeaderJanitor::clean(&mut result.headers);
 
                                                     Self::dispatch_fetched(
@@ -132,11 +130,11 @@ impl ProxyServe {
                                             }
                                         }
                                     })
-                                    .or_else(move |_| Self::dispatch_failure(&method_failure))
+                                    .or_else(move |_| Self::dispatch_failure(&method_failure)),
                             )
                         }
                     }
-                })
+                }),
         )
     }
 

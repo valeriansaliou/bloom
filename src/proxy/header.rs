@@ -42,11 +42,9 @@ impl ProxyHeader {
             CacheDirective::Private,
         ]));
 
-        headers.set::<Vary>(
-            Vary::Items(vec![
-                Ascii::new(ETag::header_name().to_string())
-            ])
-        );
+        headers.set::<Vary>(Vary::Items(
+            vec![Ascii::new(ETag::header_name().to_string())],
+        ));
 
         headers.set::<ETag>(etag);
     }

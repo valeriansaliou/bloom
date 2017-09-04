@@ -69,10 +69,7 @@ impl CacheWrite {
                                     }
                                 };
 
-                            key_tags.push(CacheRoute::gen_key_auth_from_hash(
-                                shard,
-                                &auth_hash,
-                            ));
+                            key_tags.push(CacheRoute::gen_key_auth_from_hash(shard, &auth_hash));
 
                             // Acquire TTL from response, or fallback to default TTL
                             let ttl = match headers.get::<HeaderResponseBloomResponseTTL>() {
@@ -93,7 +90,8 @@ impl CacheWrite {
 
                             // Write to cache
                             Box::new(
-                                APP_CACHE_STORE.set(key, key_mask, value, ttl, key_tags)
+                                APP_CACHE_STORE
+                                    .set(key, key_mask, value, ttl, key_tags)
                                     .or_else(|_| Err(Error::Incomplete))
                                     .and_then(move |result| {
                                         future::ok(match result {
@@ -106,7 +104,7 @@ impl CacheWrite {
                                                     status: status,
                                                     headers: headers,
                                                 }
-                                            },
+                                            }
                                             Err(forward) => {
                                                 warn!(
                                                     "could not write cache because: {:?}",
@@ -121,7 +119,7 @@ impl CacheWrite {
                                                 }
                                             }
                                         })
-                                    })
+                                    }),
                             )
                         } else {
                             debug!("key: {} not cacheable, ignoring", &key);
@@ -134,7 +132,7 @@ impl CacheWrite {
 
                         Self::result_cache_write_error(None, status, headers)
                     }
-                })
+                }),
         )
     }
 
@@ -157,16 +155,14 @@ impl CacheWrite {
     fn result_cache_write_error(
         body: Option<String>,
         status: StatusCode,
-        headers: Headers
+        headers: Headers,
     ) -> CacheWriteResultFuture {
-        Box::new(future::ok(
-            CacheWriteResult {
-                body: Err(body),
-                value: None,
-                status: status,
-                headers: headers,
-            }
-        ))
+        Box::new(future::ok(CacheWriteResult {
+            body: Err(body),
+            value: None,
+            status: status,
+            headers: headers,
+        }))
     }
 }
 

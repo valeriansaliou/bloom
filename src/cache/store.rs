@@ -96,9 +96,8 @@ impl CacheStore {
     pub fn get(&self, key: String) -> CacheReadResultFuture {
         let pool = self.pool.to_owned();
 
-        Box::new(
-            EXECUTOR_POOL.spawn_fn(move || {
-                get_cache_store_client!(pool, CacheStoreError::Disconnected, client {
+        Box::new(EXECUTOR_POOL.spawn_fn(move || {
+            get_cache_store_client!(pool, CacheStoreError::Disconnected, client {
                     match (*client).get::<_, Value>(key) {
                         Ok(value) => {
                             match value {
@@ -117,8 +116,7 @@ impl CacheStore {
                         _ => Err(CacheStoreError::Failed),
                     }
                 })
-            })
-        )
+        }))
     }
 
     pub fn set(
@@ -131,9 +129,8 @@ impl CacheStore {
     ) -> CacheWriteResultFuture {
         let pool = self.pool.to_owned();
 
-        Box::new(
-            EXECUTOR_POOL.spawn_fn(move || {
-                Ok(get_cache_store_client!(
+        Box::new(EXECUTOR_POOL.spawn_fn(move || {
+            Ok(get_cache_store_client!(
                     pool,
                     (CacheStoreError::Disconnected, value),
 
@@ -166,15 +163,14 @@ impl CacheStore {
                         }
                     }
                 ))
-            })
-        )
+        }))
     }
 
     pub fn purge_tag(
         &self,
         variant: &CachePurgeVariant,
         shard: u8,
-        key_tag: &str
+        key_tag: &str,
     ) -> CachePurgeResult {
         get_cache_store_client!(self.pool, CacheStoreError::Disconnected, client {
             // Invoke keyspace cleanup script for key tag
