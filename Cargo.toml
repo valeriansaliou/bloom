@@ -15,7 +15,7 @@ travis-ci = { repository = "valeriansaliou/bloom", branch = "master" }
 coveralls = { repository = "valeriansaliou/bloom", branch = "master", service = "github" }
 
 [[bin]]
-name = "bloom"
+name = "bloom-server"
 doc = false
 
 [dependencies]

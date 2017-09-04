@@ -83,10 +83,10 @@ You can find the built binaries in the `./target/release` directory.
 You can install Bloom directly with `cargo install`:
 
 ```bash
-cargo install bloom
+cargo install bloom-server
 ```
 
-Ensure that your `$PATH` is properly configured to source the Crates binaries, and then run Bloom using the `bloom` command.
+Ensure that your `$PATH` is properly configured to source the Crates binaries, and then run Bloom using the `bloom-server` command.
 
 **Install from packages:**
 
