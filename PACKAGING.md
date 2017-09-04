@@ -30,6 +30,9 @@ We consider here the packaging flow of Bloom version `0.1` for Debian, for targe
     3. `git push origin 0.1:0.1`
     4. Quickly upload the archive files as GitHub releases before the build triggers, named as eg. `v0.1-i386.tar.gz`
 
+6. **How to update other repositories:**
+    1. Publish package on Crates: `cargo publish`
+
 Notice: upon packaging `x86_64` becomes `amd64` and `i686` becomes `i386`.
 
 Cargo configuration for custom Linux linkers (`~/.cargo/config`):
