@@ -6,7 +6,7 @@ readme = "README.md"
 license = "MPL2"
 homepage = "https://github.com/valeriansaliou/bloom"
 repository = "https://github.com/valeriansaliou/bloom.git"
-keywords = ["rest", "cache", "infrastructure", "performance", "http", "speed"]
+keywords = ["rest", "cache", "performance", "http", "speed"]
 categories = ["proxy", "http", "api"]
 authors = ["Valerian Saliou <valerian@valeriansaliou.name>"]
 
