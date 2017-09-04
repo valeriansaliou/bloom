@@ -115,7 +115,7 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 **[[proxy.shard]]**
 
 * `shard` (type: _integer_, allowed: `0` to `15`, default: `0`) — Shard index (routed using `Bloom-Request-Shard` in requests to Bloom)
-* `inet` (type: _string_, allowed: IPv4 / IPv6 + port, default: `127.0.0.1:3040`) — Target host and TCP port to proxy to for this shard (ie. where the API listens)
+* `inet` (type: _string_, allowed: IPv4 / IPv6 + port, default: `127.0.0.1:3000`) — Target host and TCP port to proxy to for this shard (ie. where the API listens)
 
 **[cache]**
 
