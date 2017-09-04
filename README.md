@@ -86,7 +86,7 @@ You can install Bloom directly with `cargo install`:
 cargo install bloom-server
 ```
 
-Ensure that your `$PATH` is properly configured to source the Crates binaries, and then run Bloom using the `bloom-server` command.
+Ensure that your `$PATH` is properly configured to source the Crates binaries, and then run Bloom using the `bloom` command.
 
 **Install from packages:**
 

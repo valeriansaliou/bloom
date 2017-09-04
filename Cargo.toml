@@ -1,5 +1,5 @@
 [package]
-name = "bloom"
+name = "bloom-server"
 version = "1.5.0"
 description = "HTTP REST API caching middleware, to be used between load balancers and REST API workers."
 readme = "README.md"
@@ -15,7 +15,7 @@ travis-ci = { repository = "valeriansaliou/bloom", branch = "master" }
 coveralls = { repository = "valeriansaliou/bloom", branch = "master", service = "github" }
 
 [[bin]]
-name = "bloom-server"
+name = "bloom"
 doc = false
 
 [dependencies]
