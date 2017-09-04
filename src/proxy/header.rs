@@ -37,6 +37,7 @@ impl ProxyHeader {
 
     pub fn set_common(headers: &mut Headers, etag: ETag) {
         headers.set(CacheControl(vec![
+            CacheDirective::NoStore,
             CacheDirective::NoCache,
             CacheDirective::MustRevalidate,
             CacheDirective::Private,
