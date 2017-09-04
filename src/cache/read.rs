@@ -5,6 +5,7 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use hyper::Method;
+use futures::future::{self, Future};
 
 use super::check::CacheCheck;
 
@@ -19,32 +20,35 @@ pub enum CacheReadError {
     StoreFailure,
 }
 
+type CacheReadResult = Result<String, CacheReadError>;
+type CacheReadFuture = Box<Future<Item = CacheReadResult, Error = ()>>;
+
 impl CacheRead {
-    pub fn acquire(key: &str, method: &Method) -> Result<String, CacheReadError> {
-        if APP_CONF.cache.disable_read == false && CacheCheck::from_request(method) == true {
-            debug!("key: {} cacheable, reading cache", key);
+    pub fn acquire(key: &str, method: &Method) -> CacheReadFuture {
+        if APP_CONF.cache.disable_read == false && CacheCheck::from_request(&method) == true {
+            debug!("key: {} cacheable, reading cache", &key);
 
-            match APP_CACHE_STORE.get(key) {
-                Ok(Some(result)) => Ok(result),
-                Ok(None) => {
-                    info!("acquired empty value from cache for key: {}", key);
+            Box::new(
+                APP_CACHE_STORE.get(key.to_string())
+                    .and_then(|acquired| {
+                        if let Some(result) = acquired {
+                            future::ok(Ok(result))
+                        } else {
+                            info!("acquired empty value from cache");
 
-                    Err(CacheReadError::Empty)
-                }
-                Err(err) => {
-                    error!(
-                        "could not acquire value from cache for key: {} because: {:?}",
-                        key,
-                        err
-                    );
+                            future::ok(Err(CacheReadError::Empty))
+                        }
+                    })
+                    .or_else(|err| {
+                        error!("could not acquire value from cache because: {:?}", err);
 
-                    Err(CacheReadError::StoreFailure)
-                }
-            }
+                        future::ok(Err(CacheReadError::StoreFailure))
+                    })
+            )
         } else {
-            debug!("key: {} not cacheable, ignoring (will pass through)", key);
+            debug!("key: {} not cacheable, ignoring (will pass through)", &key);
 
-            Err(CacheReadError::PassThrough)
+            Box::new(future::ok(Err(CacheReadError::PassThrough)))
         }
     }
 }
@@ -56,6 +60,6 @@ mod tests {
     #[test]
     #[should_panic]
     fn it_fails_acquiring_cache() {
-        assert!(CacheRead::acquire("bloom:0:c:90d52bc6:f773d6f1", &Method::Get).is_err());
+        assert!(CacheRead::acquire("bloom:0:c:90d52bc6:f773d6f1", &Method::Get).poll().is_err());
     }
 }

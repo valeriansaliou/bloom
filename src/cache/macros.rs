@@ -5,23 +5,10 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 macro_rules! get_cache_store_client {
-    ($self:ident, $client:ident $code:block) => (
-        match $self.pool.get() {
+    ($pool:expr, $error:expr, $client:ident $code:block) => (
+        match $pool.get() {
             Ok($client) => $code,
-            _ => Err(CacheStoreError::Disconnected),
-        }
-    )
-}
-
-macro_rules! gen_cache_store_empty_result {
-    ($pattern:expr) => (
-        match $pattern {
-            Ok(_) => Ok(None),
-            Err(err) => {
-                error!("got store error: {}", err);
-
-                Err(CacheStoreError::Failed)
-            },
+            _ => Err($error),
         }
     )
 }

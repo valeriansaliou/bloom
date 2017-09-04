@@ -56,9 +56,9 @@ impl ProxyServe {
 
     fn tunnel(req: Request) -> ProxyServeFuture {
         let (method, uri, version, headers, body) = req.deconstruct();
-        let (auth, shard) = ProxyHeader::parse_from_request(&headers);
+        let (headers, auth, shard) = ProxyHeader::parse_from_request(headers);
 
-        let auth_hash = CacheRoute::hash(auth);
+        let auth_hash = CacheRoute::hash(&auth);
 
         let (ns, ns_mask) = CacheRoute::gen_key_cache(
             shard,
@@ -72,64 +72,72 @@ impl ProxyServe {
 
         info!("tunneling for ns = {}", ns);
 
-        match CacheRead::acquire(ns.as_ref(), &method) {
-            Ok(cached_value) => Self::dispatch_cached(&method, &headers, &cached_value),
-            Err(_) => {
-                // Clone method value for closures. Sadly, it looks like Rust borrow checker \
-                //   doesnt discriminate properly on this check.
-                let method_success = method.to_owned();
-                let method_failure = method.to_owned();
+        Box::new(
+            CacheRead::acquire(&ns, &method)
+                .or_else(|_| Err(Error::Incomplete))
+                .and_then(move |result| {
+                    match result {
+                        Ok(value) => {
+                            Self::dispatch_cached(&method, &headers, &value)
+                        },
+                        Err(_) => {
+                            // Clone method value for closures. Sadly, it looks like Rust borrow \
+                            //   checker doesnt discriminate properly on this check.
+                            let method_success = method.to_owned();
+                            let method_failure = method.to_owned();
 
-                Box::new(
-                    ProxyTunnel::run(&method, &uri, &headers, body, shard)
-                        .and_then(move |tunnel_res| {
-                            CacheWrite::save(
-                                ns,
-                                ns_mask,
-                                auth_hash,
-                                shard,
-                                method,
-                                version,
-                                tunnel_res.status(),
-                                tunnel_res.headers().to_owned(),
-                                tunnel_res.body(),
-                            )
-                        })
-                        .and_then(move |mut result| match result.body {
-                            Ok(body_string) => {
-                                Self::dispatch_fetched(
-                                    &method_success,
-                                    &result.status,
-                                    result.headers,
-                                    HeaderBloomStatusValue::Miss,
-                                    body_string,
-                                    result.value,
-                                )
-                            }
-                            Err(body_string_values) => {
-                                match body_string_values {
-                                    Some(body_string) => {
-                                        // Enforce clean headers, has usually they get cleaned \
-                                        //   from cache writer
-                                        HeaderJanitor::clean(&mut result.headers);
-
-                                        Self::dispatch_fetched(
-                                            &method_success,
-                                            &result.status,
-                                            result.headers,
-                                            HeaderBloomStatusValue::Direct,
-                                            body_string,
-                                            result.value,
+                            Box::new(
+                                ProxyTunnel::run(&method, &uri, &headers, body, shard)
+                                    .and_then(move |tunnel_res| {
+                                        CacheWrite::save(
+                                            ns,
+                                            ns_mask,
+                                            auth_hash,
+                                            shard,
+                                            method,
+                                            version,
+                                            tunnel_res.status(),
+                                            tunnel_res.headers().to_owned(),
+                                            tunnel_res.body(),
                                         )
-                                    }
-                                    _ => Self::dispatch_failure(&method_success),
-                                }
-                            }
-                        })
-                        .or_else(move |_| Self::dispatch_failure(&method_failure)),
-                )
-            }
-        }
+                                    })
+                                    .and_then(move |mut result| match result.body {
+                                        Ok(body_string) => {
+                                            Self::dispatch_fetched(
+                                                &method_success,
+                                                &result.status,
+                                                result.headers,
+                                                HeaderBloomStatusValue::Miss,
+                                                body_string,
+                                                result.value,
+                                            )
+                                        }
+                                        Err(body_string_values) => {
+                                            match body_string_values {
+                                                Some(body_string) => {
+                                                    // Enforce clean headers, has usually they get cleaned \
+                                                    //   from cache writer
+                                                    HeaderJanitor::clean(&mut result.headers);
+
+                                                    Self::dispatch_fetched(
+                                                        &method_success,
+                                                        &result.status,
+                                                        result.headers,
+                                                        HeaderBloomStatusValue::Direct,
+                                                        body_string,
+                                                        result.value,
+                                                    )
+                                                }
+                                                _ => Self::dispatch_failure(&method_success),
+                                            }
+                                        }
+                                    })
+                                    .or_else(move |_| Self::dispatch_failure(&method_failure))
+                            )
+                        }
+                    }
+                })
+        )
     }
 
     fn dispatch_cached(method: &Method, headers: &Headers, res_string: &str) -> ProxyServeFuture {

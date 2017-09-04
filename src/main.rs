@@ -18,6 +18,7 @@ extern crate hyper;
 extern crate tokio_core;
 extern crate farmhash;
 extern crate futures;
+extern crate futures_cpupool;
 extern crate rand;
 extern crate r2d2;
 extern crate r2d2_redis;

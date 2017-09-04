@@ -54,6 +54,9 @@ pub struct ConfigCache {
     #[serde(default = "defaults::cache_ttl_default")]
     pub ttl_default: usize,
 
+    #[serde(default = "defaults::cache_executor_pool")]
+    pub executor_pool: u16,
+
     #[serde(default = "defaults::cache_disable_read")]
     pub disable_read: bool,
 

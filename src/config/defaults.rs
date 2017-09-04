@@ -34,6 +34,10 @@ pub fn cache_ttl_default() -> usize {
     600
 }
 
+pub fn cache_executor_pool() -> u16 {
+    64
+}
+
 pub fn cache_disable_read() -> bool {
     false
 }
@@ -51,7 +55,7 @@ pub fn redis_database() -> u8 {
 }
 
 pub fn redis_pool_size() -> u32 {
-    16
+    80
 }
 
 pub fn redis_idle_timeout_seconds() -> u64 {

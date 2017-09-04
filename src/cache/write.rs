@@ -43,106 +43,98 @@ impl CacheWrite {
             body.concat2()
                 .map(|raw_data| String::from_utf8(raw_data.to_vec()))
                 .and_then(move |body_result| {
-                    future::ok(match body_result {
-                        Ok(body_value) => {
-                            debug!("checking whether to write cache for key: {}", &key);
+                    if let Ok(body_value) = body_result {
+                        debug!("checking whether to write cache for key: {}", &key);
 
-                            if APP_CONF.cache.disable_write == false &&
-                                CacheCheck::from_response(&method, &status, &headers) == true
-                            {
-                                debug!("key: {} cacheable, writing cache", &key);
+                        if APP_CONF.cache.disable_write == false &&
+                            CacheCheck::from_response(&method, &status, &headers) == true
+                        {
+                            debug!("key: {} cacheable, writing cache", &key);
 
-                                // Acquire bucket from response, or fallback to no bucket
-                                let mut key_tags =
-                                    match headers.get::<HeaderResponseBloomResponseBuckets>() {
-                                        None => Vec::new(),
-                                        Some(value) => {
-                                            value
-                                                .0
-                                                .iter()
-                                                .map(|value| {
-                                                    CacheRoute::gen_key_bucket_from_hash(
-                                                        shard,
-                                                        &CacheRoute::hash(value),
-                                                    )
-                                                })
-                                                .collect::<Vec<String>>()
-                                        }
-                                    };
-
-                                key_tags.push(CacheRoute::gen_key_auth_from_hash(
-                                    shard,
-                                    &auth_hash,
-                                ));
-
-                                // Acquire TTL from response, or fallback to default TTL
-                                let ttl = match headers.get::<HeaderResponseBloomResponseTTL>() {
-                                    None => APP_CONF.cache.ttl_default,
-                                    Some(value) => value.0,
+                            // Acquire bucket from response, or fallback to no bucket
+                            let mut key_tags =
+                                match headers.get::<HeaderResponseBloomResponseBuckets>() {
+                                    None => Vec::new(),
+                                    Some(value) => {
+                                        value
+                                            .0
+                                            .iter()
+                                            .map(|value| {
+                                                CacheRoute::gen_key_bucket_from_hash(
+                                                    shard,
+                                                    &CacheRoute::hash(value),
+                                                )
+                                            })
+                                            .collect::<Vec<String>>()
+                                    }
                                 };
 
-                                // Clean headers before they get stored
-                                HeaderJanitor::clean(&mut headers);
+                            key_tags.push(CacheRoute::gen_key_auth_from_hash(
+                                shard,
+                                &auth_hash,
+                            ));
 
-                                // Generate storable value
-                                let value = format!(
-                                    "{}\n{}\n{}",
-                                    CacheWrite::generate_chain_banner(&version, &status),
-                                    CacheWrite::generate_chain_headers(&headers),
-                                    body_value
-                                );
+                            // Acquire TTL from response, or fallback to default TTL
+                            let ttl = match headers.get::<HeaderResponseBloomResponseTTL>() {
+                                None => APP_CONF.cache.ttl_default,
+                                Some(value) => value.0,
+                            };
 
-                                // Write to cache
-                                match APP_CACHE_STORE.set(&key, &key_mask, &value, ttl, key_tags) {
-                                    Ok(_) => {
-                                        debug!("wrote cache for key: {}", &key);
+                            // Clean headers before they get stored
+                            HeaderJanitor::clean(&mut headers);
 
-                                        CacheWriteResult {
-                                            body: Ok(body_value),
-                                            value: Some(value),
-                                            status: status,
-                                            headers: headers,
-                                        }
-                                    }
-                                    Err(err) => {
-                                        warn!(
-                                            "could not write cache for key: {} because: {:?}",
-                                            &key,
-                                            err
-                                        );
+                            // Generate storable value
+                            let value = format!(
+                                "{}\n{}\n{}",
+                                CacheWrite::generate_chain_banner(&version, &status),
+                                CacheWrite::generate_chain_headers(&headers),
+                                body_value
+                            );
 
-                                        CacheWriteResult {
-                                            body: Err(Some(body_value)),
-                                            value: Some(value),
-                                            status: status,
-                                            headers: headers,
-                                        }
-                                    }
-                                }
-                            } else {
-                                debug!("key: {} not cacheable, ignoring", &key);
+                            // Write to cache
+                            Box::new(
+                                APP_CACHE_STORE.set(key, key_mask, value, ttl, key_tags)
+                                    .or_else(|_| Err(Error::Incomplete))
+                                    .and_then(move |result| {
+                                        future::ok(match result {
+                                            Ok(value) => {
+                                                debug!("wrote cache");
 
-                                // Not cacheable, ignore
-                                CacheWriteResult {
-                                    body: Err(Some(body_value)),
-                                    value: None,
-                                    status: status,
-                                    headers: headers,
-                                }
-                            }
+                                                CacheWriteResult {
+                                                    body: Ok(body_value),
+                                                    value: Some(value),
+                                                    status: status,
+                                                    headers: headers,
+                                                }
+                                            },
+                                            Err(forward) => {
+                                                warn!(
+                                                    "could not write cache because: {:?}",
+                                                    forward.0
+                                                );
+
+                                                CacheWriteResult {
+                                                    body: Err(Some(body_value)),
+                                                    value: Some(forward.1),
+                                                    status: status,
+                                                    headers: headers,
+                                                }
+                                            }
+                                        })
+                                    })
+                            )
+                        } else {
+                            debug!("key: {} not cacheable, ignoring", &key);
+
+                            // Not cacheable, ignore
+                            Self::result_cache_write_error(Some(body_value), status, headers)
                         }
-                        _ => {
-                            error!("failed unwrapping body value for key: {}, ignoring", &key);
+                    } else {
+                        error!("failed unwrapping body value for key: {}, ignoring", &key);
 
-                            CacheWriteResult {
-                                body: Err(None),
-                                value: None,
-                                status: status,
-                                headers: headers,
-                            }
-                        }
-                    })
-                }),
+                        Self::result_cache_write_error(None, status, headers)
+                    }
+                })
         )
     }
 
@@ -160,6 +152,21 @@ impl CacheWrite {
                 format!("{}: {}\n", header_view.name(), header_view.value_string())
             })
             .collect()
+    }
+
+    fn result_cache_write_error(
+        body: Option<String>,
+        status: StatusCode,
+        headers: Headers
+    ) -> CacheWriteResultFuture {
+        Box::new(future::ok(
+            CacheWriteResult {
+                body: Err(body),
+                value: None,
+                status: status,
+                headers: headers,
+            }
+        ))
     }
 }
 
