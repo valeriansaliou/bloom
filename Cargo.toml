@@ -35,6 +35,7 @@ r2d2_redis = "0.6"
 redis = "0.8"
 farmhash = "1.1"
 rand = "0.3"
+unicase = "2"
 
 [profile.dev]
 opt-level = 0

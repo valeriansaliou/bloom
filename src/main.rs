@@ -22,6 +22,7 @@ extern crate rand;
 extern crate r2d2;
 extern crate r2d2_redis;
 extern crate redis;
+extern crate unicase;
 
 mod config;
 mod header;

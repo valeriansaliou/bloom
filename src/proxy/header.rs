@@ -6,7 +6,8 @@
 
 use std::str::from_utf8;
 use hyper::Headers;
-use hyper::header::{ETag, CacheControl, CacheDirective};
+use hyper::header::{Header, ETag, Vary, CacheControl, CacheDirective};
+use unicase::Ascii;
 
 use super::defaults;
 use header::request_shard::HeaderRequestBloomRequestShard;
@@ -39,6 +40,12 @@ impl ProxyHeader {
             CacheDirective::MustRevalidate,
             CacheDirective::Private,
         ]));
+
+        headers.set::<Vary>(
+            Vary::Items(vec![
+                Ascii::new(ETag::header_name().to_string())
+            ])
+        );
 
         headers.set::<ETag>(etag);
     }
