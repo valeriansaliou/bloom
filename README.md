@@ -68,6 +68,8 @@ Bloom has minimal static configuration, and relies on HTTP response headers serv
 
 Bloom is built in Rust. To install it, either download a version from the [Bloom releases](https://github.com/valeriansaliou/bloom/releases) page, use `cargo install` or pull the source code from `master`.
 
+**Install from sources:**
+
 If you pulled the source code from Git, you can build it using `cargo`:
 
 ```bash
@@ -76,7 +78,9 @@ cargo build --release
 
 You can find the built binaries in the `./target/release` directory.
 
-Otherwise, you can install Bloom directly with `cargo install`:
+**Install from Cargo:**
+
+You can install Bloom directly with `cargo install`:
 
 ```bash
 cargo install bloom
@@ -84,7 +88,9 @@ cargo install bloom
 
 Ensure that your `$PATH` is properly configured to source the Crates binaries, and then run Bloom using the `bloom` command.
 
-**Notice: [Debian & Ubuntu packages](#how-to-install-it-on-debian--ubuntu) are also available. You may use those instead of building Bloom yourself.**
+**Install from packages:**
+
+Debian & Ubuntu packages are also available. Refer to the _[How to install it on Debian & Ubuntu?](#how-to-install-it-on-debian--ubuntu)_ section.
 
 ### Configuration
 
