@@ -16,6 +16,7 @@ coveralls = { repository = "valeriansaliou/bloom", branch = "master", service = 
 
 [[bin]]
 name = "bloom"
+path = "src/main.rs"
 doc = false
 
 [dependencies]
