@@ -4,7 +4,6 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use std::str;
 use hyper::{Error, Method, HttpVersion, StatusCode, Headers, Body};
 use futures::{future, Future, Stream};
 
