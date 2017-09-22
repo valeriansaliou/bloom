@@ -6,7 +6,7 @@
 
 use std::str::from_utf8;
 use hyper::Headers;
-use hyper::header::{Header, ETag, Vary, CacheControl, CacheDirective};
+use hyper::header::{Header, ETag, Vary};
 use unicase::Ascii;
 
 use super::defaults;
@@ -36,13 +36,6 @@ impl ProxyHeader {
     }
 
     pub fn set_common(headers: &mut Headers, etag: ETag) {
-        headers.set(CacheControl(vec![
-            CacheDirective::NoStore,
-            CacheDirective::NoCache,
-            CacheDirective::MustRevalidate,
-            CacheDirective::Private,
-        ]));
-
         headers.set::<Vary>(Vary::Items(
             vec![Ascii::new(ETag::header_name().to_string())],
         ));
