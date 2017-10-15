@@ -144,7 +144,16 @@ impl ProxyServe {
 
         let isnt_modified = match headers.get::<IfNoneMatch>() {
             Some(req_if_none_match) => {
-                (*req_if_none_match == IfNoneMatch::Items(vec![EntityTag::new(false, res_hash)]))
+                match *req_if_none_match {
+                    IfNoneMatch::Any => true,
+                    IfNoneMatch::Items(ref req_etags) => {
+                        if let Some(req_etag) = req_etags.first() {
+                            req_etag.weak_eq(&EntityTag::new(false, res_hash))
+                        } else {
+                            false
+                        }
+                    }
+                }
             }
             _ => false,
         };
