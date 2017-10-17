@@ -165,7 +165,7 @@ proxy_set_header Bloom-Request-Shard 0;
 
 Now that Bloom is running in front of your API and serving requests on behalf of it; your API can instruct Bloom how to behave on a per-response basis.
 
-Your API can send private HTTP headers in responses to Bloom, that are used by Bloom and removed from the response that is served to the request client.
+Your API can send private HTTP headers in responses to Bloom, that are used by Bloom and removed from the response that is served to the request client (the `Bloom-Response-*` HTTP headers).
 
 **➡️ Do not cache response:**
 
