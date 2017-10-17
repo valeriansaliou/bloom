@@ -184,11 +184,11 @@ By default, Bloom retains all responses that are safe to cache, as long as they 
 **2. Cacheable status:**
 
 * `OK`
-* `Non Authoritative Information`
+* `Non-Authoritative Information`
 * `No Content`
 * `Reset Content`
 * `Partial Content`
-* `Multi Status`
+* `Multi-Status`
 * `Already Reported`
 * `Multiple Choices`
 * `Moved Permanently`
@@ -202,7 +202,7 @@ By default, Bloom retains all responses that are safe to cache, as long as they 
 * `Method Not Allowed`
 * `Gone`
 * `URI Too Long`
-* `Unsupported MediaType`
+* `Unsupported Media Type`
 * `Range Not Satisfiable`
 * `Expectation Failed`
 * `I'm A Teapot`
