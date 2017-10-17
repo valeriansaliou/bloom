@@ -217,7 +217,7 @@ _Refer to [the list of status codes on Wikipedia](https://en.wikipedia.org/wiki/
 
 **➡️ Set an expiration time on response cache:**
 
-To tell Bloom to use a certain expiration time on response cache (time after which the cache is invalidated and thus a new response is fetched upon client request), send the following HTTP header as part of the API response (here for 60 seconds TTL):
+To tell Bloom to use a certain expiration time on response cache (time after which the cache is invalidated and thus a new response is fetched upon client request), send the following HTTP header as part of the API response (here for a TTL of 60 seconds):
 
 `Bloom-Response-TTL: 60`
 
