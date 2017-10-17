@@ -225,7 +225,7 @@ By default, Bloom sets a TTL of 600 seconds (10 minutes), though this can be con
 
 **➡️ Tag a cached response (for Bloom Control cache purge):**
 
-If you'd like to use _[Bloom Control](#can-cache-be-programatically-expired)_ to programatically purge cached responses, you will need to tag those responses when they get cached. You can tell Bloom to tag a cached response in 1 or more buckets, as such:
+If you'd like to use Bloom Control to programatically purge cached responses (see _[Can cache be programatically expired?](#can-cache-be-programatically-expired)_), you will need to tag those responses when they get cached. You can tell Bloom to tag a cached response in 1 or more buckets, as such:
 
 `Bloom-Response-Buckets: user_id:10012, heavy_route:1203`
 
