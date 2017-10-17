@@ -225,13 +225,13 @@ By default, Bloom sets a TTL of 600 seconds (10 minutes), though this can be con
 
 **➡️ Tag a cached response (for Bloom Control cache purge):**
 
-If you'd like to use Bloom Control to programatically purge cached responses (see _[Can cache be programatically expired?](#can-cache-be-programatically-expired)_), you will need to tag those responses when they get cached. You can tell Bloom to tag a cached response in 1 or more buckets, as such:
+If you'd like to use Bloom Control to programatically purge cached responses (see _[Can cache be programatically expired?](#can-cache-be-programatically-expired)_), you will need to tag those responses when they get cached. You can tell Bloom to tag a cached response in 1 or more bucket, as such:
 
 `Bloom-Response-Buckets: user_id:10012, heavy_route:1203`
 
 Then, when you need to purge the tagged responses for user with identifier `10012`, you can call a Bloom Control cache purge on bucket `user_id:10012`. The flow is similar for bucket `heavy_route:1203`.
 
-By default, a cached response has no tag, thus it cannot be purged via Bloom Control as-is.
+By default, a cached response has no tag, thus it cannot be purged via Bloom Control _as-is_.
 
 ## How to install it on Debian & Ubuntu?
 
