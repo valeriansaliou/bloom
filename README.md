@@ -161,6 +161,78 @@ proxy_set_header Bloom-Request-Shard 0;
 
 **Notice: a shard number is an integer from 0 to 15 (8-bit unsigned number, capped to 16 shards).**
 
+### Configure Your API
+
+Now that Bloom is running in front of your API and serving requests on behalf of it; your API can instruct Bloom how to behave on a per-response basis.
+
+Your API can send private HTTP headers in responses to Bloom, that are used by Bloom and removed from the response that is served to the request client.
+
+**➡️ Do not cache response:**
+
+To tell Bloom not to cache a response, send the following HTTP header as part of the API response:
+
+`Bloom-Response-Ignore: 1`
+
+By default, Bloom retains all responses that are safe to cache, as long as they match both:
+
+**1. Cacheable methods:**
+
+* `GET`
+* `HEAD`
+* `OPTIONS`
+
+**2. Cacheable status:**
+
+Refer to [the list of status codes on Wikipedia](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes) if you want to find the matching status codes.
+
+* `OK`
+* `Non Authoritative Information`
+* `No Content`
+* `Reset Content`
+* `Partial Content`
+* `Multi Status`
+* `Already Reported`
+* `Multiple Choices`
+* `Moved Permanently`
+* `Found`
+* `See Other`
+* `Permanent Redirect`
+* `Unauthorized`
+* `Payment Required`
+* `Forbidden`
+* `Not Found`
+* `Method Not Allowed`
+* `Gone`
+* `URI Too Long`
+* `Unsupported MediaType`
+* `Range Not Satisfiable`
+* `Expectation Failed`
+* `I'm A Teapot`
+* `Locked`
+* `Failed Dependency`
+* `Precondition Required`
+* `Request Header Fields Too Large`
+* `Not Implemented`
+* `Not Extended`
+
+**➡️ Set an expiration time on response cache:**
+
+To tell Bloom to use a certain expiration time on response cache (time after which the cache is invalidated and thus a new response is fetched upon client request), send the following HTTP header as part of the API response (here for 60 seconds TTL):
+
+`Bloom-Response-TTL: 60`
+
+By default, Bloom sets a TTL of 600 seconds (10 minutes), though this can be configured from `config.cfg`.
+
+**➡️ Tag a cached response (for Bloom Control cache purge):**
+
+If you'd like to use _[Bloom Control](#can-cache-be-programatically-expired)_ to programatically purge cached responses, you will need to tag those responses when they get cached. You can tell Bloom to tag a cached response in 1 or more buckets, as such:
+
+`Bloom-Response-Buckets: user_id:10012, heavy_route:1203`
+
+Then, when you need to purge the tagged responses for user with identifier `10012`, you can call a Bloom Control cache purge on bucket `user_id:10012`. The flow is similar for bucket `heavy_route:1203`.
+
+By default, a cached response has no tag, thus it cannot be purged via Bloom Control as-is.
+
 ## How to install it on Debian & Ubuntu?
 
 Bloom provides [pre-built packages](https://packagecloud.io/valeriansaliou/bloom) for Debian-based systems (Debian, Ubuntu, etc.).
