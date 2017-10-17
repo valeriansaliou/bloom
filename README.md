@@ -183,8 +183,6 @@ By default, Bloom retains all responses that are safe to cache, as long as they 
 
 **2. Cacheable status:**
 
-Refer to [the list of status codes on Wikipedia](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes) if you want to find the matching status codes.
-
 * `OK`
 * `Non Authoritative Information`
 * `No Content`
@@ -214,6 +212,8 @@ Refer to [the list of status codes on Wikipedia](https://en.wikipedia.org/wiki/L
 * `Request Header Fields Too Large`
 * `Not Implemented`
 * `Not Extended`
+
+_Refer to [the list of status codes on Wikipedia](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes) if you want to find the matching status codes._
 
 **➡️ Set an expiration time on response cache:**
 
