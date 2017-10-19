@@ -48,7 +48,7 @@ type CachePurgeResult = Result<(), CacheStoreError>;
 
 impl CacheStoreBuilder {
     pub fn new() -> CacheStore {
-        info!("binding to store backend at {}", APP_CONF.redis.inet);
+        info!("binding to store backend at {}:{}", APP_CONF.redis.host, APP_CONF.redis.port);
 
         let addr_auth = match APP_CONF.redis.password {
             Some(ref password) => format!(":{}@", password),
@@ -59,8 +59,8 @@ impl CacheStoreBuilder {
             format!(
             "redis://{}{}:{}/{}",
             &addr_auth,
-            APP_CONF.redis.inet.ip(),
-            APP_CONF.redis.inet.port(),
+            APP_CONF.redis.host,
+            APP_CONF.redis.port,
             APP_CONF.redis.database,
         );
 

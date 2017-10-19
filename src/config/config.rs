@@ -45,8 +45,11 @@ pub struct ConfigProxyShard {
     #[serde(default = "defaults::proxy_shard_shard")]
     pub shard: u8,
 
-    #[serde(default = "defaults::proxy_shard_inet")]
-    pub inet: SocketAddr,
+    #[serde(default = "defaults::proxy_shard_host")]
+    pub host: String,
+
+    #[serde(default = "defaults::proxy_shard_port")]
+    pub port: u16,
 }
 
 #[derive(Deserialize)]
@@ -66,8 +69,11 @@ pub struct ConfigCache {
 
 #[derive(Deserialize)]
 pub struct ConfigRedis {
-    #[serde(default = "defaults::redis_inet")]
-    pub inet: SocketAddr,
+    #[serde(default = "defaults::redis_host")]
+    pub host: String,
+
+    #[serde(default = "defaults::redis_port")]
+    pub port: u16,
 
     pub password: Option<String>,
 

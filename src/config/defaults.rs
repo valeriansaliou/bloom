@@ -26,9 +26,9 @@ pub fn proxy_shard_shard() -> u8 {
     0
 }
 
-pub fn proxy_shard_inet() -> SocketAddr {
-    "[::1]:3000".parse().unwrap()
-}
+pub fn proxy_shard_host() -> String { String::from("localhost") }
+
+pub fn proxy_shard_port() -> u16 { 3000 }
 
 pub fn cache_ttl_default() -> usize {
     600
@@ -46,9 +46,9 @@ pub fn cache_disable_write() -> bool {
     false
 }
 
-pub fn redis_inet() -> SocketAddr {
-    "127.0.0.1:6379".parse().unwrap()
-}
+pub fn redis_host() -> String { String::from("localhost") }
+
+pub fn redis_port() -> u16 { 6379 }
 
 pub fn redis_database() -> u8 {
     0
