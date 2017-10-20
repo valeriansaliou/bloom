@@ -115,7 +115,8 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 **[[proxy.shard]]**
 
 * `shard` (type: _integer_, allowed: `0` to `15`, default: `0`) — Shard index (routed using `Bloom-Request-Shard` in requests to Bloom)
-* `inet` (type: _string_, allowed: IPv4 / IPv6 + port, default: `127.0.0.1:3000`) — Target host and TCP port to proxy to for this shard (ie. where the API listens)
+* `host` (type: _string_, allowed: hostname, IPv4, IPv6, default: `localhost`) — Target host to proxy to for this shard (ie. where the API listens)
+* `port` (type: _integer_, allowed: TCP port, default: `3000`) — Target TCP port to proxy to for this shard (ie. where the API listens)
 
 **[cache]**
 
@@ -126,7 +127,8 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 
 **[redis]**
 
-* `inet` (type: _string_, allowed: IPv4 / IPv6 + port, default: `127.0.0.1:6379`) — Target Redis host and TCP port
+* `host` (type: _string_, allowed: hostname, IPv4, IPv6, default: `localhost`) — Target Redis host
+* `port` (type: _integer_, allowed: TCP port, default: `6379`) — Target Redis TCP port
 * `password` (type: _string_, allowed: password values, default: none) — Redis password (if no password, dont set this key)
 * `database` (type: _integer_, allowed: `0` to `255`, default: `0`) — Target Redis database
 * `pool_size` (type: _integer_, allowed: `0` to `(2^32)-1`, default: `80`) — Redis connection pool size (should be a bit higher than `cache.executor_pool`, as it is used by both Bloom proxy and Bloom Control)
