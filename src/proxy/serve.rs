@@ -266,7 +266,7 @@ impl ProxyServe {
         body_string: String,
     ) -> ProxyServeFuture {
         Box::new(future::ok(match method {
-            &Method::Get | &Method::Post | &Method::Patch | &Method::Put => {
+            &Method::Get | &Method::Post | &Method::Patch | &Method::Put | &Method::Delete => {
                 Response::new()
                     .with_status(status)
                     .with_headers(headers)
