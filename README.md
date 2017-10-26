@@ -267,11 +267,21 @@ nano /etc/bloom.cfg
 service bloom restart
 ```
 
-## How fast is it?
+## How fast & lightweight is it?
 
 Bloom is built in Rust, which can be compiled to native code for your architecture. Rust, unlike eg. Golang, doesn't carry a GC (Garbage Collector), which is usually a bad thing for high-throughput / high-load production systems (as a GC halts all program instruction execution for an amount of time that depends on how many references are kept in memory).
 
 Note that some compromises have been made relative to how Bloom manages memory. Heap-allocated objects are heavily used for the sake of simplicify. ie. responses from your API workers are fully buffered in memory before they are served to the client; which has the benefit of draining data from your API workers as fast as your loopback / LAN goes, even if the requester client has a very slow bandwidth.
+
+In production at Crisp, we're running multiple Bloom instances (for each of our API worker). Each one handles ~250 HTTP RPS (Requests Per Second), as well as ~500 Bloom Control RPS (eg. cache purges). Each Bloom instance runs on a single 2016 Xeon vCPU paired with 512MB RAM. The kind of HTTP requests Bloom handles is balanced between reads (`GET`, `HEAD`, `OPTIONS`) and writes (`POST`, `PATCH`, `PUT` and others).
+
+We get the following `htop` feedback on a server running Bloom at such load:
+
+![htop](https://valeriansaliou.github.io/bloom/images/htop.jpg)
+
+**As you can see, Bloom consumes only a fraction of the CPU time (less than 5%) for a small RAM footprint (~5% which is ~25MB)**. On such a small server, we can predict Bloom could scale to even higher rates (eg. 10k RPS) without putting too much pressure on the system (the underlying API worker would be overheating first as it's much heavier than Bloom).
+
+If you want Bloom to handle very high RPS, make sure to adjust the `cache.executor_pool` and the `redis.pool_size` options to higher values (which may limit your RPS if you have a few milliseconds of latency on your Redis link — as Redis connections are blocking).
 
 ## How does it deal with authenticated routes?
 
