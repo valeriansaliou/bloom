@@ -277,7 +277,7 @@ In production at Crisp, we're running multiple Bloom instances (for each of our 
 
 We get the following `htop` feedback on a server running Bloom at such load:
 
-![htop](https://valeriansaliou.github.io/bloom/images/htop.jpg)
+![htop](https://valeriansaliou.github.io/bloom/images/htop.png)
 
 **As you can see, Bloom consumes only a fraction of the CPU time (less than 5%) for a small RAM footprint (~5% which is ~25MB)**. On such a small server, we can predict Bloom could scale to even higher rates (eg. 10k RPS) without putting too much pressure on the system (the underlying API worker would be overheating first as it's much heavier than Bloom).
 
