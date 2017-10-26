@@ -273,7 +273,7 @@ Bloom is built in Rust, which can be compiled to native code for your architectu
 
 Note that some compromises have been made relative to how Bloom manages memory. Heap-allocated objects are heavily used for the sake of simplicify. ie. responses from your API workers are fully buffered in memory before they are served to the client; which has the benefit of draining data from your API workers as fast as your loopback / LAN goes, even if the requester client has a very slow bandwidth.
 
-In production at Crisp, we're running multiple Bloom instances (for each of our API worker). Each one handles ~250 HTTP RPS (Requests Per Second), as well as ~500 Bloom Control RPS (eg. cache purges). Each Bloom instance runs on a single 2016 Xeon vCPU paired with 512MB RAM. The kind of HTTP requests Bloom handles is balanced between reads (`GET`, `HEAD`, `OPTIONS`) and writes (`POST`, `PATCH`, `PUT` and others).
+In production at [Crisp](https://crisp.chat/en/), we're running multiple Bloom instances (for each of our API worker). Each one handles ~250 HTTP RPS (Requests Per Second), as well as ~500 Bloom Control RPS (eg. cache purges). Each Bloom instance runs on a single 2016 Xeon vCPU paired with 512MB RAM. The kind of HTTP requests Bloom handles is balanced between reads (`GET`, `HEAD`, `OPTIONS`) and writes (`POST`, `PATCH`, `PUT` and others).
 
 We get the following `htop` feedback on a server running Bloom at such load:
 
