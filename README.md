@@ -151,7 +151,9 @@ Once Bloom is running and points to your API, you can configure your Load Balanc
 
 Bloom requires the `Bloom-Request-Shard` HTTP header to be set by your Load Balancer upon proxying a client request to Bloom. This header tells Bloom which cache shard to use for storing data (this way, you can have a single Bloom instance for different API sub-systems listening on the same server).
 
-**On NGINX, you may add the following rule to your existing proxy ruleset:**
+#### NGINX instructions
+
+**➡️ You may add the following rule to your existing proxy ruleset:**
 
 ```
 # Your existing ruleset goes here
@@ -163,7 +165,7 @@ proxy_set_header Bloom-Request-Shard 0;
 
 If your API runs on a dedicated hostname (eg. `https://api.crisp.chat` for [Crisp](https://crisp.chat/en/)), do not forget to adjust your [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) rules accordingly, so that API Web clients (ie. browsers) can leverage the [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) that get added by Bloom. This will help speed up API read requests on slower networks. **_If you don't have existing CORS rules, you may not need them so ignore this._**
 
-**On NGINX, ensure your CORS rules allow ETag and ETag-related response & request headers:**
+**➡️ Ensure your CORS rules allow ETag and ETag-related response & request headers:**
 
 ```
 # Merge those headers with your existing CORS rules
@@ -171,12 +173,12 @@ add_header 'Access-Control-Allow-Headers' 'If-Match, If-None-Match' always;
 add_header 'Access-Control-Expose-Headers' 'Vary, ETag' always;
 ```
 
-The response headers that get added by Bloom are:
+**The response headers that get added by Bloom are:**
 
 * **ETag**: unique identifier for the response data being returned, leverages browser cache; [see MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).
 * **Vary**: tells other cache layers (eg. proxies) that the ETag field may vary on each request, so they need to revalidate it; [see MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Vary).
 
-The request headers that get added by the browser, as a consequence of Bloom adding the request headers above are:
+**The request headers that get added by the browser, as a consequence of Bloom adding the request headers above are:**
 
 * **If-Match**: used by the client to match a given server ETag field (on write requests); [see MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Match).
 * **If-None-Match**: used by the client to match a given server ETag field (on read requests); [see MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match).
