@@ -153,7 +153,9 @@ Bloom requires the `Bloom-Request-Shard` HTTP header to be set by your Load Bala
 
 #### NGINX instructions
 
-**➡️ You may add the following rule to your existing proxy ruleset:**
+**➡️ Configure your existing proxy ruleset**
+
+The `Bloom-Request-Shard` proxy header needs to be set by NGINX when proxying to Bloom. This is used to tell bloom which cache shard to use, as different API services may share the same Bloom instance for caching purposes (using a different shard each).
 
 ```
 # Your existing ruleset goes here
@@ -163,9 +165,9 @@ proxy_pass http://(...)
 proxy_set_header Bloom-Request-Shard 0;
 ```
 
-If your API runs on a dedicated hostname (eg. `https://api.crisp.chat` for [Crisp](https://crisp.chat/en/)), do not forget to adjust your [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) rules accordingly, so that API Web clients (ie. browsers) can leverage the [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) that get added by Bloom. This will help speed up API read requests on slower networks. **_If you don't have existing CORS rules, you may not need them so ignore this._**
+**➡️ Ensure your CORS rules allow ETag and ETag-related response & request headers**
 
-**➡️ Ensure your CORS rules allow ETag and ETag-related response & request headers:**
+If your API runs on a dedicated hostname (eg. `https://api.crisp.chat` for [Crisp](https://crisp.chat/en/)), do not forget to adjust your [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) rules accordingly, so that API Web clients (ie. browsers) can leverage the [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) that get added by Bloom. This will help speed up API read requests on slower networks. **_If you don't have existing CORS rules, you may not need them so ignore this._**
 
 ```
 # Merge those headers with your existing CORS rules
