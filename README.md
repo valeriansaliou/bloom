@@ -149,13 +149,11 @@ Bloom can be run as such:
 
 Once Bloom is running and points to your API, you can configure your Load Balancers to point to Bloom IP and port (instead of your API IP and port as previously).
 
-Bloom requires the `Bloom-Request-Shard` HTTP header to be set by your Load Balancer upon proxying a client request to Bloom. This header tells Bloom which cache shard to use for storing data (this way, you can have a single Bloom instance for different API sub-systems listening on the same server).
-
 #### NGINX instructions
 
 **➡️ Configure your existing proxy ruleset**
 
-The `Bloom-Request-Shard` proxy header needs to be set by NGINX when proxying to Bloom. This is used to tell bloom which cache shard to use, as different API services may share the same Bloom instance for caching purposes (using a different shard each).
+Bloom requires the `Bloom-Request-Shard` HTTP header to be set by your Load Balancer upon proxying a client request to Bloom. This header tells Bloom which cache shard to use for storing data (this way, you can have a single Bloom instance for different API sub-systems listening on the same server).
 
 ```
 # Your existing ruleset goes here
