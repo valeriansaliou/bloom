@@ -165,7 +165,7 @@ proxy_set_header Bloom-Request-Shard 0;
 
 **➡️ Adjust your existing CORS rules (if used)**
 
-If your API runs on a dedicated hostname (eg. `https://api.crisp.chat` for [Crisp](https://crisp.chat/en/)), do not forget to adjust your [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) rules accordingly, so that API Web clients (ie. browsers) can leverage the [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) that get added by Bloom. This will help speed up API read requests on slower networks. **_If you don't have existing CORS rules, you may not need them so ignore this._**
+If your API runs on a dedicated hostname (eg. `https://api.crisp.chat` for [Crisp](https://crisp.chat/en/)), do not forget to adjust your [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) rules accordingly, so that API Web clients (ie. browsers) can leverage the [ETag](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) header that gets added by Bloom. This will help speed up API read requests on slower networks. **_If you don't have existing CORS rules, you may not need them, so ignore this._**
 
 ```
 # Merge those headers with your existing CORS rules
@@ -173,9 +173,11 @@ add_header 'Access-Control-Allow-Headers' 'If-Match, If-None-Match' always;
 add_header 'Access-Control-Expose-Headers' 'Vary, ETag' always;
 ```
 
+_Note that a shard number is an integer from 0 to 15 (8-bit unsigned number, capped to 16 shards)._
+
 **The response headers that get added by Bloom are:**
 
-* **ETag**: unique identifier for the response data being returned, leverages browser cache; [see MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).
+* **ETag**: unique identifier for the response data being returned (enables browser caching); [see MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).
 * **Vary**: tells other cache layers (eg. proxies) that the ETag field may vary on each request, so they need to revalidate it; [see MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Vary).
 
 **The request headers that get added by the browser, as a consequence of Bloom adding the request headers above are:**
@@ -184,8 +186,6 @@ add_header 'Access-Control-Expose-Headers' 'Vary, ETag' always;
 * **If-None-Match**: used by the client to match a given server ETag field (on read requests); [see MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match).
 
 _Note that you need to add both new request and response headers to your CORS rules. If you forget either one, requests to your API may start to fail on certain browsers (eg. Chrome with `PATCH` requests)._
-
-**Notice: a shard number is an integer from 0 to 15 (8-bit unsigned number, capped to 16 shards).**
 
 ### Configure Your API
 
