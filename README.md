@@ -163,7 +163,7 @@ proxy_pass http://(...)
 proxy_set_header Bloom-Request-Shard 0;
 ```
 
-**➡️ Ensure your CORS rules allow ETag and ETag-related response & request headers**
+**➡️ Adjust your existing CORS rules (if used)**
 
 If your API runs on a dedicated hostname (eg. `https://api.crisp.chat` for [Crisp](https://crisp.chat/en/)), do not forget to adjust your [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) rules accordingly, so that API Web clients (ie. browsers) can leverage the [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) that get added by Bloom. This will help speed up API read requests on slower networks. **_If you don't have existing CORS rules, you may not need them so ignore this._**
 
