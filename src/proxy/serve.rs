@@ -9,7 +9,6 @@ use httparse;
 use hyper::{Error, Method, StatusCode, Headers};
 use hyper::header::{Origin, IfNoneMatch, ETag, EntityTag};
 use hyper::server::{Request, Response};
-use farmhash;
 
 use super::header::ProxyHeader;
 use super::tunnel::ProxyTunnel;
@@ -77,7 +76,7 @@ impl ProxyServe {
                 .or_else(|_| Err(Error::Incomplete))
                 .and_then(move |result| {
                     match result {
-                        Ok(value) => Self::dispatch_cached(&method, &headers, &value),
+                        Ok(value) => Self::dispatch_cached(&method, &headers, &value.0, value.1),
                         Err(_) => {
                             // Clone method value for closures. Sadly, it looks like Rust borrow \
                             //   checker doesnt discriminate properly on this check.
@@ -107,7 +106,7 @@ impl ProxyServe {
                                                 result.headers,
                                                 HeaderBloomStatusValue::Miss,
                                                 body_string,
-                                                result.value,
+                                                result.fingerprint,
                                             )
                                         }
                                         Err(body_string_values) => {
@@ -123,7 +122,7 @@ impl ProxyServe {
                                                         result.headers,
                                                         HeaderBloomStatusValue::Direct,
                                                         body_string,
-                                                        result.value,
+                                                        result.fingerprint,
                                                     )
                                                 }
                                                 _ => Self::dispatch_failure(&method_success),
@@ -138,17 +137,20 @@ impl ProxyServe {
         )
     }
 
-    fn dispatch_cached(method: &Method, headers: &Headers, res_string: &str) -> ProxyServeFuture {
-        // Process ETag for cached content
-        let (res_hash, res_etag) = Self::body_fingerprint(res_string);
-
+    fn dispatch_cached(
+        method: &Method,
+        headers: &Headers,
+        res_string: &str,
+        res_fingerprint: String,
+    ) -> ProxyServeFuture {
+        // Check if not modified?
         let isnt_modified = match headers.get::<IfNoneMatch>() {
             Some(req_if_none_match) => {
                 match *req_if_none_match {
                     IfNoneMatch::Any => true,
                     IfNoneMatch::Items(ref req_etags) => {
                         if let Some(req_etag) = req_etags.first() {
-                            req_etag.weak_eq(&EntityTag::new(false, res_hash))
+                            req_etag.weak_eq(&EntityTag::new(false, res_fingerprint.to_owned()))
                         } else {
                             false
                         }
@@ -163,7 +165,7 @@ impl ProxyServe {
             // Process non-modified + cached headers
             let mut headers = Headers::new();
 
-            ProxyHeader::set_common(&mut headers, res_etag);
+            ProxyHeader::set_etag(&mut headers, Self::fingerprint_etag(res_fingerprint));
             headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
             // Serve non-modified response
@@ -208,7 +210,7 @@ impl ProxyServe {
                     }
                 }
 
-                ProxyHeader::set_common(&mut headers, res_etag);
+                ProxyHeader::set_etag(&mut headers, Self::fingerprint_etag(res_fingerprint));
                 headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
                 // Serve cached response
@@ -228,13 +230,11 @@ impl ProxyServe {
         mut headers: Headers,
         bloom_status: HeaderBloomStatusValue,
         body_string: String,
-        result_string: Option<String>,
+        fingerprint: Option<String>,
     ) -> ProxyServeFuture {
         // Process ETag for content?
-        if let Some(result_string_value) = result_string {
-            let (_, res_etag) = Self::body_fingerprint(&result_string_value);
-
-            ProxyHeader::set_common(&mut headers, res_etag);
+        if let Some(fingerprint_value) = fingerprint {
+            ProxyHeader::set_etag(&mut headers, Self::fingerprint_etag(fingerprint_value));
         }
 
         headers.set(HeaderBloomStatus(bloom_status));
@@ -252,11 +252,8 @@ impl ProxyServe {
         Self::respond(method, status, headers, format!("{}", status))
     }
 
-    fn body_fingerprint(body_string: &str) -> (String, ETag) {
-        let body_hash = format!("{:x}", farmhash::fingerprint64(body_string.as_bytes()));
-        let body_etag = ETag(EntityTag::new(false, body_hash.to_owned()));
-
-        (body_hash, body_etag)
+    fn fingerprint_etag(fingerprint: String) -> ETag {
+        ETag(EntityTag::new(false, fingerprint))
     }
 
     fn respond(

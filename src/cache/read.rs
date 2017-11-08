@@ -20,7 +20,7 @@ pub enum CacheReadError {
     StoreFailure,
 }
 
-type CacheReadResult = Result<String, CacheReadError>;
+type CacheReadResult = Result<(String, String), CacheReadError>;
 type CacheReadFuture = Box<Future<Item = CacheReadResult, Error = ()>>;
 
 impl CacheRead {

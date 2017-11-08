@@ -16,6 +16,9 @@ use futures_cpupool::CpuPool;
 use super::route::ROUTE_PREFIX;
 use APP_CONF;
 
+pub static KEY_BODY: &'static str = "b";
+pub static KEY_FINGERPRINT: &'static str = "f";
+
 lazy_static! {
     pub static ref EXECUTOR_POOL: CpuPool = CpuPool::new(APP_CONF.cache.executor_pool as usize);
 }
@@ -41,14 +44,18 @@ pub enum CachePurgeVariant {
     Auth,
 }
 
-type CacheReadResultFuture = Box<Future<Item = Option<String>, Error = CacheStoreError>>;
+type CacheReadResultFuture = Box<Future<Item = Option<(String, String)>, Error = CacheStoreError>>;
 type CacheWriteResult = Result<(String), (CacheStoreError, String)>;
 type CacheWriteResultFuture = Box<Future<Item = CacheWriteResult, Error = ()>>;
 type CachePurgeResult = Result<(), CacheStoreError>;
 
 impl CacheStoreBuilder {
     pub fn new() -> CacheStore {
-        info!("binding to store backend at {}:{}", APP_CONF.redis.host, APP_CONF.redis.port);
+        info!(
+            "binding to store backend at {}:{}",
+            APP_CONF.redis.host,
+            APP_CONF.redis.port
+        );
 
         let addr_auth = match APP_CONF.redis.password {
             Some(ref password) => format!(":{}@", password),
@@ -98,18 +105,20 @@ impl CacheStore {
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             get_cache_store_client!(pool, CacheStoreError::Disconnected, client {
-                    match (*client).get::<_, Value>(key) {
+                    match (*client).hget::<_, _, (Value, Value)>(key, (KEY_BODY, KEY_FINGERPRINT)) {
                         Ok(value) => {
                             match value {
-                                Value::Data(bytes) => {
+                                (Value::Data(body_bytes), Value::Data(fingerprint_bytes)) => {
                                     // Decode raw bytes to string
-                                    if let Ok(string) = String::from_utf8(bytes) {
-                                        Ok(Some(string))
+                                    if let (Ok(body), Ok(fingerprint)) = (
+                                        String::from_utf8(body_bytes),
+                                        String::from_utf8(fingerprint_bytes)) {
+                                        Ok(Some((body, fingerprint)))
                                     } else {
                                         Err(CacheStoreError::Corrupted)
                                     }
                                 },
-                                Value::Nil => Ok(None),
+                                (Value::Nil, _) | (_, Value::Nil) => Ok(None),
                                 _ => Err(CacheStoreError::Invalid),
                             }
                         },
@@ -124,6 +133,7 @@ impl CacheStore {
         key: String,
         key_mask: String,
         value: String,
+        fingerprint: String,
         ttl: usize,
         key_tags: Vec<String>,
     ) -> CacheWriteResultFuture {
@@ -132,7 +142,7 @@ impl CacheStore {
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             Ok(get_cache_store_client!(
                     pool,
-                    (CacheStoreError::Disconnected, value),
+                    (CacheStoreError::Disconnected, fingerprint),
 
                     client {
                         // Cap TTL to 'max_key_expiration'
@@ -140,11 +150,14 @@ impl CacheStore {
 
                         // Ensure value is not larger than 'max_key_size'
                         if value.len() > APP_CONF.redis.max_key_size {
-                            Err((CacheStoreError::TooLarge, value))
+                            Err((CacheStoreError::TooLarge, fingerprint))
                         } else {
                             let mut pipeline = redis::pipe();
 
-                            pipeline.set_ex(&key, &value, ttl_cap).ignore();
+                            pipeline.hset_multiple(
+                                &key, &[(KEY_BODY, &value), (KEY_FINGERPRINT, &fingerprint)]
+                            ).ignore();
+                            pipeline.expire(&key, ttl_cap).ignore();
 
                             for key_tag in key_tags {
                                 pipeline.sadd(&key_tag, &key_mask).ignore();
@@ -153,11 +166,11 @@ impl CacheStore {
 
                             // Bucket (MULTI operation for main data + bucket marker)
                             match pipeline.query::<()>(&*client) {
-                                Ok(_) => Ok(value),
+                                Ok(_) => Ok(fingerprint),
                                 Err(err) => {
                                     error!("got store error: {}", err);
 
-                                    Err((CacheStoreError::Failed, value))
+                                    Err((CacheStoreError::Failed, fingerprint))
                                 }
                             }
                         }

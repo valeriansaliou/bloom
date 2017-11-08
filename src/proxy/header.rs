@@ -35,7 +35,7 @@ impl ProxyHeader {
         (headers, auth, shard)
     }
 
-    pub fn set_common(headers: &mut Headers, etag: ETag) {
+    pub fn set_etag(headers: &mut Headers, etag: ETag) {
         headers.set::<Vary>(Vary::Items(
             vec![Ascii::new(ETag::header_name().to_string())],
         ));

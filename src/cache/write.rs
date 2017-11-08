@@ -6,6 +6,7 @@
 
 use hyper::{Error, Method, HttpVersion, StatusCode, Headers, Body};
 use futures::{future, Future, Stream};
+use farmhash;
 
 use super::route::CacheRoute;
 use super::check::CacheCheck;
@@ -19,7 +20,7 @@ pub struct CacheWrite;
 
 pub struct CacheWriteResult {
     pub body: Result<String, Option<String>>,
-    pub value: Option<String>,
+    pub fingerprint: Option<String>,
     pub status: StatusCode,
     pub headers: Headers,
 }
@@ -43,6 +44,17 @@ impl CacheWrite {
                 .map(|raw_data| String::from_utf8(raw_data.to_vec()))
                 .and_then(move |body_result| {
                     if let Ok(body_value) = body_result {
+                        // Clean headers before they get stored
+                        HeaderJanitor::clean(&mut headers);
+
+                        // Generate storable value
+                        let value = format!(
+                            "{}\n{}\n{}",
+                            CacheWrite::generate_chain_banner(&version, &status),
+                            CacheWrite::generate_chain_headers(&headers),
+                            body_value
+                        );
+
                         debug!("checking whether to write cache for key: {}", &key);
 
                         if APP_CONF.cache.disable_write == false &&
@@ -76,30 +88,22 @@ impl CacheWrite {
                                 Some(value) => value.0,
                             };
 
-                            // Clean headers before they get stored
-                            HeaderJanitor::clean(&mut headers);
-
-                            // Generate storable value
-                            let value = format!(
-                                "{}\n{}\n{}",
-                                CacheWrite::generate_chain_banner(&version, &status),
-                                CacheWrite::generate_chain_headers(&headers),
-                                body_value
-                            );
+                            // Process value fingerprint
+                            let fingerprint = Self::process_body_fingerprint(&value);
 
                             // Write to cache
                             Box::new(
                                 APP_CACHE_STORE
-                                    .set(key, key_mask, value, ttl, key_tags)
+                                    .set(key, key_mask, value, fingerprint, ttl, key_tags)
                                     .or_else(|_| Err(Error::Incomplete))
                                     .and_then(move |result| {
                                         future::ok(match result {
-                                            Ok(value) => {
+                                            Ok(fingerprint) => {
                                                 debug!("wrote cache");
 
                                                 CacheWriteResult {
                                                     body: Ok(body_value),
-                                                    value: Some(value),
+                                                    fingerprint: Some(fingerprint),
                                                     status: status,
                                                     headers: headers,
                                                 }
@@ -112,7 +116,7 @@ impl CacheWrite {
 
                                                 CacheWriteResult {
                                                     body: Err(Some(body_value)),
-                                                    value: Some(forward.1),
+                                                    fingerprint: Some(forward.1),
                                                     status: status,
                                                     headers: headers,
                                                 }
@@ -124,12 +128,17 @@ impl CacheWrite {
                             debug!("key: {} not cacheable, ignoring", &key);
 
                             // Not cacheable, ignore
-                            Self::result_cache_write_error(Some(body_value), status, headers)
+                            Self::result_cache_write_error(
+                                Some(body_value),
+                                Some(value),
+                                status,
+                                headers,
+                            )
                         }
                     } else {
                         error!("failed unwrapping body value for key: {}, ignoring", &key);
 
-                        Self::result_cache_write_error(None, status, headers)
+                        Self::result_cache_write_error(None, None, status, headers)
                     }
                 }),
         )
@@ -151,14 +160,19 @@ impl CacheWrite {
             .collect()
     }
 
+    fn process_body_fingerprint(body_string: &str) -> String {
+        format!("{:x}", farmhash::fingerprint64(body_string.as_bytes()))
+    }
+
     fn result_cache_write_error(
         body: Option<String>,
+        value: Option<String>,
         status: StatusCode,
         headers: Headers,
     ) -> CacheWriteResultFuture {
         Box::new(future::ok(CacheWriteResult {
             body: Err(body),
-            value: None,
+            fingerprint: value,
             status: status,
             headers: headers,
         }))
