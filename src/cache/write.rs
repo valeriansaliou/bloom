@@ -44,17 +44,6 @@ impl CacheWrite {
                 .map(|raw_data| String::from_utf8(raw_data.to_vec()))
                 .and_then(move |body_result| {
                     if let Ok(body_value) = body_result {
-                        // Clean headers before they get stored
-                        HeaderJanitor::clean(&mut headers);
-
-                        // Generate storable value
-                        let value = format!(
-                            "{}\n{}\n{}",
-                            CacheWrite::generate_chain_banner(&version, &status),
-                            CacheWrite::generate_chain_headers(&headers),
-                            body_value
-                        );
-
                         debug!("checking whether to write cache for key: {}", &key);
 
                         if APP_CONF.cache.disable_write == false &&
@@ -88,13 +77,24 @@ impl CacheWrite {
                                 Some(value) => value.0,
                             };
 
+                            // Clean headers before they get stored
+                            HeaderJanitor::clean(&mut headers);
+
+                            // Generate storable value
+                            let body_string = format!(
+                                "{}\n{}\n{}",
+                                CacheWrite::generate_chain_banner(&version, &status),
+                                CacheWrite::generate_chain_headers(&headers),
+                                body_value
+                            );
+
                             // Process value fingerprint
-                            let fingerprint = Self::process_body_fingerprint(&value);
+                            let fingerprint = Self::process_body_fingerprint(&body_string);
 
                             // Write to cache
                             Box::new(
                                 APP_CACHE_STORE
-                                    .set(key, key_mask, value, fingerprint, ttl, key_tags)
+                                    .set(key, key_mask, body_string, fingerprint, ttl, key_tags)
                                     .or_else(|_| Err(Error::Incomplete))
                                     .and_then(move |result| {
                                         future::ok(match result {

@@ -12,7 +12,6 @@ use hyper::server::{Request, Response};
 
 use super::header::ProxyHeader;
 use super::tunnel::ProxyTunnel;
-use header::janitor::HeaderJanitor;
 use header::request_shard::HeaderRequestBloomRequestShard;
 use header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
 use cache::read::CacheRead;
@@ -98,7 +97,7 @@ impl ProxyServe {
                                             tunnel_res.body(),
                                         )
                                     })
-                                    .and_then(move |mut result| match result.body {
+                                    .and_then(move |result| match result.body {
                                         Ok(body_string) => {
                                             Self::dispatch_fetched(
                                                 &method_success,
@@ -112,10 +111,6 @@ impl ProxyServe {
                                         Err(body_string_values) => {
                                             match body_string_values {
                                                 Some(body_string) => {
-                                                    // Enforce clean headers, has usually they get \
-                                                    //   cleaned from cache writer
-                                                    HeaderJanitor::clean(&mut result.headers);
-
                                                     Self::dispatch_fetched(
                                                         &method_success,
                                                         &result.status,
