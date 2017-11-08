@@ -130,7 +130,6 @@ impl CacheWrite {
                             // Not cacheable, ignore
                             Self::result_cache_write_error(
                                 Some(body_value),
-                                Some(value),
                                 status,
                                 headers,
                             )
@@ -138,7 +137,7 @@ impl CacheWrite {
                     } else {
                         error!("failed unwrapping body value for key: {}, ignoring", &key);
 
-                        Self::result_cache_write_error(None, None, status, headers)
+                        Self::result_cache_write_error(None, status, headers)
                     }
                 }),
         )
@@ -166,13 +165,12 @@ impl CacheWrite {
 
     fn result_cache_write_error(
         body: Option<String>,
-        value: Option<String>,
         status: StatusCode,
         headers: Headers,
     ) -> CacheWriteResultFuture {
         Box::new(future::ok(CacheWriteResult {
             body: Err(body),
-            fingerprint: value,
+            fingerprint: None,
             status: status,
             headers: headers,
         }))
