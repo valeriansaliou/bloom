@@ -111,6 +111,10 @@ impl ProxyServe {
                                         Err(body_string_values) => {
                                             match body_string_values {
                                                 Some(body_string) => {
+                                                    // Enforce clean headers, has usually they get \
+                                                    //   cleaned from cache writer
+                                                    HeaderJanitor::clean(&mut result.headers);
+
                                                     Self::dispatch_fetched(
                                                         &method_success,
                                                         &result.status,
