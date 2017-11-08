@@ -140,7 +140,7 @@ impl ProxyServe {
     fn dispatch_cached(
         method: &Method,
         headers: &Headers,
-        res_string: &str,
+        res_body: &str,
         res_fingerprint: String,
     ) -> ProxyServeFuture {
         // Check if not modified?
@@ -180,7 +180,7 @@ impl ProxyServe {
         let mut res_body_string = String::new();
         let mut is_last_line_empty = false;
 
-        for res_line in res_string.lines() {
+        for res_line in res_body.lines() {
             if res_body_string.is_empty() == false || is_last_line_empty == true {
                 // Write to body
                 res_body_string.push_str(res_line.as_ref());
@@ -190,7 +190,7 @@ impl ProxyServe {
             is_last_line_empty = res_line.is_empty();
         }
 
-        match res.parse(res_string.as_bytes()) {
+        match res.parse(res_body.as_bytes()) {
             Ok(_) => {
                 // Process cached status
                 let code = res.code.unwrap_or(500u16);
