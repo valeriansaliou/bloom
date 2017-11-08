@@ -128,11 +128,7 @@ impl CacheWrite {
                             debug!("key: {} not cacheable, ignoring", &key);
 
                             // Not cacheable, ignore
-                            Self::result_cache_write_error(
-                                Some(body_value),
-                                status,
-                                headers,
-                            )
+                            Self::result_cache_write_error(Some(body_value), status, headers)
                         }
                     } else {
                         error!("failed unwrapping body value for key: {}, ignoring", &key);
