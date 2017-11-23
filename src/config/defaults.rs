@@ -66,10 +66,6 @@ pub fn redis_pool_size() -> u32 {
     80
 }
 
-pub fn redis_max_lifetime_seconds() -> u64 {
-    60
-}
-
 pub fn redis_idle_timeout_seconds() -> u64 {
     600
 }
