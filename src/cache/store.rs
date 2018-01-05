@@ -46,7 +46,7 @@ pub enum CachePurgeVariant {
     Auth,
 }
 
-type CacheReadResultFuture = Box<Future<Item = Option<(String, String)>, Error = CacheStoreError>>;
+type CacheReadResultFuture = Box<Future<Item = Option<String>, Error = CacheStoreError>>;
 type CacheWriteResult = Result<(String), (CacheStoreError, String)>;
 type CacheWriteResultFuture = Box<Future<Item = CacheWriteResult, Error = ()>>;
 type CachePurgeResult = Result<(), CacheStoreError>;
@@ -107,17 +107,15 @@ impl CacheStoreBuilder {
 }
 
 impl CacheStore {
-    pub fn get(&self, shard: u8, key: String) -> CacheReadResultFuture {
+    pub fn get_meta(&self, shard: u8, key: String) -> CacheReadResultFuture {
         let pool = self.pool.to_owned();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             get_cache_store_client!(pool, CacheStoreError::Disconnected, client {
-                    match (*client).hget::<_, _, (Value, Value, Value)>(key, (KEY_BODY,
-                        KEY_FINGERPRINT, KEY_TAGS)) {
+                    match (*client).hget::<_, _, (Value, Value)>(key, (KEY_FINGERPRINT, KEY_TAGS)) {
                         Ok(value) => {
                             match value {
-                                (Value::Data(body_bytes), Value::Data(fingerprint_bytes),
-                                    tags_bytes) => {
+                                (Value::Data(fingerprint_bytes), tags_bytes) => {
                                     // Parse tags and bump their last access time
                                     if let Value::Data(tags_bytes_data) = tags_bytes {
                                         if let Ok(tags_data) = String::from_utf8(
@@ -150,15 +148,39 @@ impl CacheStore {
                                     }
 
                                     // Decode raw bytes to string
-                                    if let (Ok(body), Ok(fingerprint)) = (
-                                        String::from_utf8(body_bytes),
-                                        String::from_utf8(fingerprint_bytes)) {
-                                        Ok(Some((body, fingerprint)))
+                                    if let Ok(fingerprint) = String::from_utf8(fingerprint_bytes) {
+                                        Ok(Some(fingerprint))
                                     } else {
                                         Err(CacheStoreError::Corrupted)
                                     }
                                 },
-                                (Value::Nil, _, _) | (_, Value::Nil, _) => Ok(None),
+                                (Value::Nil, _) | (_, Value::Nil) => Ok(None),
+                                _ => Err(CacheStoreError::Invalid),
+                            }
+                        },
+                        _ => Err(CacheStoreError::Failed),
+                    }
+                })
+        }))
+    }
+
+    pub fn get_body(&self, key: String) -> CacheReadResultFuture {
+        let pool = self.pool.to_owned();
+
+        Box::new(EXECUTOR_POOL.spawn_fn(move || {
+            get_cache_store_client!(pool, CacheStoreError::Disconnected, client {
+                    match (*client).hget::<_, _, Value>(key, KEY_BODY) {
+                        Ok(value) => {
+                            match value {
+                                Value::Data(body_bytes) => {
+                                    // Decode raw bytes to string
+                                    if let Ok(body) = String::from_utf8(body_bytes) {
+                                        Ok(Some(body))
+                                    } else {
+                                        Err(CacheStoreError::Corrupted)
+                                    }
+                                },
+                                Value::Nil => Ok(None),
                                 _ => Err(CacheStoreError::Invalid),
                             }
                         },

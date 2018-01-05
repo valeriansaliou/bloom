@@ -20,26 +20,29 @@ pub enum CacheReadError {
     StoreFailure,
 }
 
-type CacheReadResult = Result<(String, String), CacheReadError>;
-type CacheReadFuture = Box<Future<Item = CacheReadResult, Error = ()>>;
+type CacheReadResult = Result<String, CacheReadError>;
+type CacheReadResultFuture = Box<Future<Item = CacheReadResult, Error = ()>>;
+
+type CacheReadOptionalResult = Result<Option<String>, CacheReadError>;
+type CacheReadOptionalResultFuture = Box<Future<Item = CacheReadOptionalResult, Error = ()>>;
 
 impl CacheRead {
-    pub fn acquire(shard: u8, key: &str, method: &Method) -> CacheReadFuture {
+    pub fn acquire_meta(shard: u8, key: &str, method: &Method) -> CacheReadResultFuture {
         if APP_CONF.cache.disable_read == false && CacheCheck::from_request(&method) == true {
             debug!("key: {} cacheable, reading cache", &key);
 
             Box::new(
                 APP_CACHE_STORE
-                    .get(shard, key.to_string())
+                    .get_meta(shard, key.to_string())
                     .and_then(|acquired| if let Some(result) = acquired {
                         future::ok(Ok(result))
                     } else {
-                        info!("acquired empty value from cache");
+                        info!("acquired empty meta value from cache");
 
                         future::ok(Err(CacheReadError::Empty))
                     })
                     .or_else(|err| {
-                        error!("could not acquire value from cache because: {:?}", err);
+                        error!("could not acquire meta value from cache because: {:?}", err);
 
                         future::ok(Err(CacheReadError::StoreFailure))
                     }),
@@ -50,6 +53,25 @@ impl CacheRead {
             Box::new(future::ok(Err(CacheReadError::PassThrough)))
         }
     }
+
+    pub fn acquire_body(key: &str) -> CacheReadOptionalResultFuture {
+        Box::new(
+            APP_CACHE_STORE
+                .get_body(key.to_string())
+                .and_then(|acquired| if let Some(result) = acquired {
+                    future::ok(Ok(Some(result)))
+                } else {
+                    info!("acquired empty body value from cache");
+
+                    future::ok(Err(CacheReadError::Empty))
+                })
+                .or_else(|err| {
+                    error!("could not acquire body value from cache because: {:?}", err);
+
+                    future::ok(Err(CacheReadError::StoreFailure))
+                }),
+        )
+    }
 }
 
 #[cfg(test)]
@@ -58,9 +80,19 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn it_fails_acquiring_cache() {
+    fn it_fails_acquiring_cache_meta() {
         assert!(
-            CacheRead::acquire(0, "bloom:0:c:90d52bc6:f773d6f1", &Method::Get)
+            CacheRead::acquire_meta(0, "bloom:0:c:90d52bc6:f773d6f1", &Method::Get)
+                .poll()
+                .is_err()
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn it_fails_acquiring_cache_body() {
+        assert!(
+            CacheRead::acquire_body("bloom:0:c:90d52bc6:f773d6f1")
                 .poll()
                 .is_err()
         );
