@@ -60,7 +60,7 @@ mod tests {
     #[should_panic]
     fn it_fails_acquiring_cache() {
         assert!(
-            CacheRead::acquire("bloom:0:c:90d52bc6:f773d6f1", &Method::Get)
+            CacheRead::acquire(0, "bloom:0:c:90d52bc6:f773d6f1", &Method::Get)
                 .poll()
                 .is_err()
         );
