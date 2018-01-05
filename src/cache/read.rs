@@ -24,13 +24,13 @@ type CacheReadResult = Result<(String, String), CacheReadError>;
 type CacheReadFuture = Box<Future<Item = CacheReadResult, Error = ()>>;
 
 impl CacheRead {
-    pub fn acquire(key: &str, method: &Method) -> CacheReadFuture {
+    pub fn acquire(shard: u8, key: &str, method: &Method) -> CacheReadFuture {
         if APP_CONF.cache.disable_read == false && CacheCheck::from_request(&method) == true {
             debug!("key: {} cacheable, reading cache", &key);
 
             Box::new(
                 APP_CACHE_STORE
-                    .get(key.to_string())
+                    .get(shard, key.to_string())
                     .and_then(|acquired| if let Some(result) = acquired {
                         future::ok(Ok(result))
                     } else {

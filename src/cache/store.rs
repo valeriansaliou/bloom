@@ -16,9 +16,10 @@ use futures_cpupool::CpuPool;
 use super::route::ROUTE_PREFIX;
 use APP_CONF;
 
-pub static KEY_BODY: &'static str = "b";
-pub static KEY_FINGERPRINT: &'static str = "f";
-pub static KEY_TAGS: &'static str = "t";
+static KEY_BODY: &'static str = "b";
+static KEY_FINGERPRINT: &'static str = "f";
+static KEY_TAGS: &'static str = "t";
+static KEY_TAGS_SEPARATOR: &'static str = ",";
 
 lazy_static! {
     pub static ref EXECUTOR_POOL: CpuPool = CpuPool::new(APP_CONF.cache.executor_pool as usize);
@@ -106,15 +107,48 @@ impl CacheStoreBuilder {
 }
 
 impl CacheStore {
-    pub fn get(&self, key: String) -> CacheReadResultFuture {
+    pub fn get(&self, shard: u8, key: String) -> CacheReadResultFuture {
         let pool = self.pool.to_owned();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             get_cache_store_client!(pool, CacheStoreError::Disconnected, client {
-                    match (*client).hget::<_, _, (Value, Value)>(key, (KEY_BODY, KEY_FINGERPRINT)) {
+                    match (*client).hget::<_, _, (Value, Value, Value)>(key, (KEY_BODY,
+                        KEY_FINGERPRINT, KEY_TAGS)) {
                         Ok(value) => {
                             match value {
-                                (Value::Data(body_bytes), Value::Data(fingerprint_bytes)) => {
+                                (Value::Data(body_bytes), Value::Data(fingerprint_bytes),
+                                    tags_bytes) => {
+                                    // Parse tags and bump their last access time
+                                    if let Value::Data(tags_bytes_data) = tags_bytes {
+                                        if let Ok(tags_data) = String::from_utf8(
+                                            tags_bytes_data) {
+                                            let tags = tags_data.split(KEY_TAGS_SEPARATOR)
+                                                .map(|tag| {
+                                                    format!("{}:{}:{}", ROUTE_PREFIX, shard, tag)
+                                                })
+                                                .collect::<Vec<String>>();
+
+                                            // Proceed a soft bump of last access time of \
+                                            //   associated tag keys. This prevents a frequently \
+                                            //   accessed cache namespace to become 'orphan' (ie. \
+                                            //   one or more tag keys are LRU-expired), and thus \
+                                            //   cache namespace not to be properly removed on \
+                                            //   purge of an associated tag.
+                                            // The condition explained above only happens on \
+                                            //   Redis instances with used memory going over \
+                                            //   the threshold of the max memory policy.
+                                            if tags.is_empty() == false {
+                                                if let Err(err) = redis::cmd("TOUCH").arg(tags)
+                                                    .query::<()>(&*client) {
+                                                    error!(
+                                                        "failed bumping access time of tags: {}",
+                                                        err
+                                                    );
+                                                }
+                                            }
+                                        }
+                                    }
+
                                     // Decode raw bytes to string
                                     if let (Ok(body), Ok(fingerprint)) = (
                                         String::from_utf8(body_bytes),
@@ -124,7 +158,7 @@ impl CacheStore {
                                         Err(CacheStoreError::Corrupted)
                                     }
                                 },
-                                (Value::Nil, _) | (_, Value::Nil) => Ok(None),
+                                (Value::Nil, _, _) | (_, Value::Nil, _) => Ok(None),
                                 _ => Err(CacheStoreError::Invalid),
                             }
                         },
@@ -170,7 +204,7 @@ impl CacheStore {
                                     &key, &[
                                         (KEY_BODY, &value),
                                         (KEY_FINGERPRINT, &fingerprint),
-                                        (KEY_TAGS, &key_tag_masks.join(","))
+                                        (KEY_TAGS, &key_tag_masks.join(KEY_TAGS_SEPARATOR))
                                     ]
                                 ).ignore();
                             } else {

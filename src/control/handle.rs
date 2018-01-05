@@ -44,7 +44,7 @@ const HASH_RESULT_SIZE: usize = 7 + ROUTE_HASH_SIZE + LINE_END_GAP + 1;
 const SHARD_DEFAULT: ControlShard = 0;
 const TCP_TIMEOUT_NON_ESTABLISHED: u64 = 20;
 
-pub static BUFFER_LINE_SEPARATOR: u8 = '\n' as u8;
+static BUFFER_LINE_SEPARATOR: u8 = '\n' as u8;
 
 pub type ControlShard = u8;
 

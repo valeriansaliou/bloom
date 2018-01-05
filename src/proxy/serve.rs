@@ -72,7 +72,7 @@ impl ProxyServe {
         info!("tunneling for ns = {}", ns);
 
         Box::new(
-            CacheRead::acquire(&ns, &method)
+            CacheRead::acquire(shard, &ns, &method)
                 .or_else(|_| Err(Error::Incomplete))
                 .and_then(move |result| {
                     match result {
