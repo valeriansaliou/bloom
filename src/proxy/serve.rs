@@ -150,53 +150,53 @@ impl ProxyServe {
         let header_if_none_match = headers.get::<IfNoneMatch>().map(|value| value.to_owned());
         let ns_string = ns.to_string();
 
-        Box::new(
-            CacheRead::acquire_meta(shard, ns, method)
-                .and_then(move |result| {
-                    match result {
-                        Ok(fingerprint) => {
-                            debug!(
-                                "got fingerprint for cached data = {} on ns = {}", &fingerprint,
-                                    &ns_string
-                            );
+        Box::new(CacheRead::acquire_meta(shard, ns, method).and_then(
+            move |result| {
+                match result {
+                    Ok(fingerprint) => {
+                        debug!(
+                            "got fingerprint for cached data = {} on ns = {}",
+                            &fingerprint,
+                            &ns_string
+                        );
 
-                            // Check if not modified?
-                            let isnt_modified = match header_if_none_match {
-                                Some(ref req_if_none_match) => {
-                                    match req_if_none_match {
-                                        &IfNoneMatch::Any => true,
-                                        &IfNoneMatch::Items(ref req_etags) => {
-                                            if let Some(req_etag) = req_etags.first() {
-                                                req_etag.weak_eq(&EntityTag::new(
-                                                    false,
-                                                    fingerprint.to_owned()
-                                                ))
-                                            } else {
-                                                false
-                                            }
+                        // Check if not modified?
+                        let isnt_modified = match header_if_none_match {
+                            Some(ref req_if_none_match) => {
+                                match req_if_none_match {
+                                    &IfNoneMatch::Any => true,
+                                    &IfNoneMatch::Items(ref req_etags) => {
+                                        if let Some(req_etag) = req_etags.first() {
+                                            req_etag.weak_eq(
+                                                &EntityTag::new(false, fingerprint.to_owned()),
+                                            )
+                                        } else {
+                                            false
                                         }
                                     }
-                                },
-                                _ => false,
-                            };
+                                }
+                            }
+                            _ => false,
+                        };
 
-                            debug!(
-                                "got not modified status for cached data = {} on ns = {}",
-                                    &isnt_modified, &ns_string
-                            );
+                        debug!(
+                            "got not modified status for cached data = {} on ns = {}",
+                            &isnt_modified,
+                            &ns_string
+                        );
 
-                            Self::fetch_cached_data_body(ns_string, fingerprint, !isnt_modified)
-                        },
-                        _ => Box::new(future::ok(Err(())))
+                        Self::fetch_cached_data_body(ns_string, fingerprint, !isnt_modified)
                     }
-                })
-        )
+                    _ => Box::new(future::ok(Err(()))),
+                }
+            },
+        ))
     }
 
     fn fetch_cached_data_body(
         ns: String,
         fingerprint: String,
-        do_acquire_body: bool
+        do_acquire_body: bool,
     ) -> ProxyServeResultFuture {
         // Do not acquire body? (not modified)
         let body_fetcher = if do_acquire_body == false {
@@ -206,16 +206,11 @@ impl ProxyServe {
             CacheRead::acquire_body(&ns)
         };
 
-        Box::new(
-            body_fetcher
-                .and_then(|body_result| {
-                    body_result
-                        .or_else(|_| Err(()))
-                        .map(|body| {
-                            Ok((fingerprint, body))
-                        })
-                })
-        )
+        Box::new(body_fetcher.and_then(|body_result| {
+            body_result.or_else(|_| Err(())).map(|body| {
+                Ok((fingerprint, body))
+            })
+        }))
     }
 
     fn dispatch_cached(
@@ -246,8 +241,8 @@ impl ProxyServe {
                 Ok(_) => {
                     // Process cached status
                     let code = res.code.unwrap_or(500u16);
-                    let status = StatusCode::try_from(code).unwrap_or(
-                        StatusCode::Unregistered(code));
+                    let status =
+                        StatusCode::try_from(code).unwrap_or(StatusCode::Unregistered(code));
 
                     // Process cached headers
                     let mut headers = Headers::new();
@@ -266,7 +261,7 @@ impl ProxyServe {
                     ProxyHeader::set_etag(&mut headers, Self::fingerprint_etag(res_fingerprint));
 
                     headers.set::<HeaderBloomStatus>(
-                        HeaderBloomStatus(HeaderBloomStatusValue::Hit)
+                        HeaderBloomStatus(HeaderBloomStatusValue::Hit),
                     );
 
                     // Serve cached response

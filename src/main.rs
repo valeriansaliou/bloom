@@ -92,9 +92,7 @@ fn ensure_states() {
 fn spawn_worker() {
     let worker = thread::Builder::new()
         .name(THREAD_NAME_WORKER.to_string())
-        .spawn(|| {
-            ServerListenBuilder::new().run();
-        });
+        .spawn(|| ServerListenBuilder::new().run());
 
     // Block on worker thread (join it)
     let has_error = if let Ok(worker_thread) = worker {
