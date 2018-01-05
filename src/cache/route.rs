@@ -25,12 +25,16 @@ impl CacheRoute {
         (format!("{}:{}:c:{}", ROUTE_PREFIX, shard, &mask), mask)
     }
 
-    pub fn gen_key_auth_from_hash(shard: u8, auth_hash: &str) -> String {
-        format!("{}:{}:a:{}", ROUTE_PREFIX, shard, auth_hash)
+    pub fn gen_key_auth_from_hash(shard: u8, auth_hash: &str) -> (String, String) {
+        let mask = format!("a:{}", auth_hash);
+
+        (format!("{}:{}:{}", ROUTE_PREFIX, shard, mask), mask)
     }
 
-    pub fn gen_key_bucket_from_hash(shard: u8, bucket_hash: &str) -> String {
-        format!("{}:{}:b:{}", ROUTE_PREFIX, shard, bucket_hash)
+    pub fn gen_key_bucket_from_hash(shard: u8, bucket_hash: &str) -> (String, String) {
+        let mask = format!("b:{}", bucket_hash);
+
+        (format!("{}:{}:{}", ROUTE_PREFIX, shard, mask), mask)
     }
 
     pub fn gen_key_cache(

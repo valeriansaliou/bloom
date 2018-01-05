@@ -65,7 +65,7 @@ impl CacheWrite {
                                                     &CacheRoute::hash(value),
                                                 )
                                             })
-                                            .collect::<Vec<String>>()
+                                            .collect::<Vec<(String, String)>>()
                                     }
                                 };
 

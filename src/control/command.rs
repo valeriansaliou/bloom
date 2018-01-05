@@ -48,7 +48,7 @@ impl ControlCommand {
         let bucket = parts.next().unwrap_or("");
 
         if bucket.is_empty() == false {
-            let bucket_key = CacheRoute::gen_key_bucket_from_hash(*shard, bucket);
+            let (bucket_key, _) = CacheRoute::gen_key_bucket_from_hash(*shard, bucket);
 
             return Self::proceed_flush(CachePurgeVariant::Bucket, shard, &bucket_key);
         }
@@ -60,7 +60,7 @@ impl ControlCommand {
         let auth = parts.next().unwrap_or("");
 
         if auth.is_empty() == false {
-            let auth_key = CacheRoute::gen_key_auth_from_hash(*shard, auth);
+            let (auth_key, _) = CacheRoute::gen_key_auth_from_hash(*shard, auth);
 
             return Self::proceed_flush(CachePurgeVariant::Auth, shard, &auth_key);
         }

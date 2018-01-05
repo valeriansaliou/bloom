@@ -18,6 +18,7 @@ use APP_CONF;
 
 pub static KEY_BODY: &'static str = "b";
 pub static KEY_FINGERPRINT: &'static str = "f";
+pub static KEY_TAGS: &'static str = "t";
 
 lazy_static! {
     pub static ref EXECUTOR_POOL: CpuPool = CpuPool::new(APP_CONF.cache.executor_pool as usize);
@@ -140,7 +141,7 @@ impl CacheStore {
         value: String,
         fingerprint: String,
         ttl: usize,
-        key_tags: Vec<String>,
+        key_tags: Vec<(String, String)>,
     ) -> CacheWriteResultFuture {
         let pool = self.pool.to_owned();
 
@@ -159,14 +160,33 @@ impl CacheStore {
                         } else {
                             let mut pipeline = redis::pipe();
 
-                            pipeline.hset_multiple(
-                                &key, &[(KEY_BODY, &value), (KEY_FINGERPRINT, &fingerprint)]
-                            ).ignore();
+                            // Append storage command
+                            if key_tags.is_empty() == false {
+                                let key_tag_masks = key_tags.iter()
+                                    .map(|key_tag| key_tag.1.as_ref())
+                                    .collect::<Vec<&str>>();
+
+                                pipeline.hset_multiple(
+                                    &key, &[
+                                        (KEY_BODY, &value),
+                                        (KEY_FINGERPRINT, &fingerprint),
+                                        (KEY_TAGS, &key_tag_masks.join(","))
+                                    ]
+                                ).ignore();
+                            } else {
+                                pipeline.hset_multiple(
+                                    &key, &[
+                                        (KEY_BODY, &value),
+                                        (KEY_FINGERPRINT, &fingerprint)
+                                    ]
+                                ).ignore();
+                            }
+
                             pipeline.expire(&key, ttl_cap).ignore();
 
                             for key_tag in key_tags {
-                                pipeline.sadd(&key_tag, &key_mask).ignore();
-                                pipeline.expire(&key_tag, APP_CONF.redis.max_key_expiration);
+                                pipeline.sadd(&key_tag.0, &key_mask).ignore();
+                                pipeline.expire(&key_tag.0, APP_CONF.redis.max_key_expiration);
                             }
 
                             // Bucket (MULTI operation for main data + bucket marker)
