@@ -53,6 +53,10 @@ struct AppArgs {
 
 pub static LINE_FEED: &'static str = "\r\n";
 
+pub static THREAD_NAME_WORKER: &'static str = "bloom-worker";
+pub static THREAD_NAME_CONTROL_MASTER: &'static str = "bloom-control-master";
+pub static THREAD_NAME_CONTROL_CLIENT: &'static str = "bloom-control-client";
+
 lazy_static! {
     static ref APP_ARGS: AppArgs = make_app_args();
     static ref APP_CONF: Config = ConfigReader::make();
@@ -86,9 +90,21 @@ fn ensure_states() {
 }
 
 fn spawn_worker() {
-    let worker = thread::spawn(|| { ServerListenBuilder::new().run(); });
+    let worker = thread::Builder::new()
+        .name(THREAD_NAME_WORKER.to_string())
+        .spawn(|| {
+            ServerListenBuilder::new().run();
+        });
 
-    if worker.join().is_err() == true {
+    // Block on worker thread (join it)
+    let has_error = if let Ok(worker_thread) = worker {
+        worker_thread.join().is_err()
+    } else {
+        true
+    };
+
+    // Worker thread crashed?
+    if has_error == true {
         error!("worker thread crashed, setting it up again");
 
         // Prevents thread start loop floods
