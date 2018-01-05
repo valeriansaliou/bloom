@@ -224,16 +224,16 @@ impl CacheStore {
 
                                 pipeline.hset_multiple(
                                     &key, &[
-                                        (KEY_BODY, &value),
                                         (KEY_FINGERPRINT, &fingerprint),
-                                        (KEY_TAGS, &key_tag_masks.join(KEY_TAGS_SEPARATOR))
+                                        (KEY_TAGS, &key_tag_masks.join(KEY_TAGS_SEPARATOR)),
+                                        (KEY_BODY, &value)
                                     ]
                                 ).ignore();
                             } else {
                                 pipeline.hset_multiple(
                                     &key, &[
-                                        (KEY_BODY, &value),
-                                        (KEY_FINGERPRINT, &fingerprint)
+                                        (KEY_FINGERPRINT, &fingerprint),
+                                        (KEY_BODY, &value)
                                     ]
                                 ).ignore();
                             }
