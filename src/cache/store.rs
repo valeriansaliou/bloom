@@ -120,22 +120,25 @@ impl CacheStore {
                                     if let Value::Data(tags_bytes_data) = tags_bytes {
                                         if let Ok(tags_data) = String::from_utf8(
                                             tags_bytes_data) {
-                                            let tags = tags_data.split(KEY_TAGS_SEPARATOR)
-                                                .map(|tag| {
-                                                    format!("{}:{}:{}", ROUTE_PREFIX, shard, tag)
-                                                })
-                                                .collect::<Vec<String>>();
+                                            if tags_data.is_empty() == false {
+                                                let tags = tags_data.split(KEY_TAGS_SEPARATOR)
+                                                    .map(|tag| {
+                                                        format!(
+                                                            "{}:{}:{}", ROUTE_PREFIX, shard, tag
+                                                        )
+                                                    })
+                                                    .collect::<Vec<String>>();
 
-                                            // Proceed a soft bump of last access time of \
-                                            //   associated tag keys. This prevents a frequently \
-                                            //   accessed cache namespace to become 'orphan' (ie. \
-                                            //   one or more tag keys are LRU-expired), and thus \
-                                            //   cache namespace not to be properly removed on \
-                                            //   purge of an associated tag.
-                                            // The condition explained above only happens on \
-                                            //   Redis instances with used memory going over \
-                                            //   the threshold of the max memory policy.
-                                            if tags.is_empty() == false {
+                                                // Proceed a soft bump of last access time of \
+                                                //   associated tag keys. This prevents a \
+                                                //   frequently accessed cache namespace to \
+                                                //   become 'orphan' (ie. one or more tag keys \
+                                                //   are LRU-expired), and thus cache namespace \
+                                                //   not to be properly removed on purge of an \
+                                                //   associated tag.
+                                                // The condition explained above only happens on \
+                                                //   Redis instances with used memory going over \
+                                                //   the threshold of the max memory policy.
                                                 if let Err(err) = redis::cmd("TOUCH").arg(tags)
                                                     .query::<()>(&*client) {
                                                     error!(
@@ -217,7 +220,7 @@ impl CacheStore {
                             let mut pipeline = redis::pipe();
 
                             // Append storage command
-                            if key_tags.is_empty() == false {
+                            {
                                 let key_tag_masks = key_tags.iter()
                                     .map(|key_tag| key_tag.1.as_ref())
                                     .collect::<Vec<&str>>();
@@ -226,13 +229,6 @@ impl CacheStore {
                                     &key, &[
                                         (KEY_FINGERPRINT, &fingerprint),
                                         (KEY_TAGS, &key_tag_masks.join(KEY_TAGS_SEPARATOR)),
-                                        (KEY_BODY, &value)
-                                    ]
-                                ).ignore();
-                            } else {
-                                pipeline.hset_multiple(
-                                    &key, &[
-                                        (KEY_FINGERPRINT, &fingerprint),
                                         (KEY_BODY, &value)
                                     ]
                                 ).ignore();
