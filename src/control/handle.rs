@@ -253,6 +253,8 @@ impl ControlHandle {
 
         if response.is_empty() == false {
             write!(stream, "{}{}", response, LINE_FEED).expect("write failed");
+
+            debug!("wrote response: {}", response);
         }
 
         return result;
