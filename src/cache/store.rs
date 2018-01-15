@@ -37,7 +37,6 @@ pub enum CacheStoreError {
     Failed,
     Invalid,
     Corrupted,
-    Partial,
     TooLarge,
 }
 
@@ -149,9 +148,10 @@ impl CacheStore {
                                                 match redis::cmd("TOUCH").arg(tags)
                                                     .query::<usize>(&*client) {
                                                     Ok(bump_count) => {
-                                                        // Partial bump count? Do not serve cache.
+                                                        // Partial bump count? Consider cache as \
+                                                        //   non-existing
                                                         if bump_count < tags_count {
-                                                            return Err(CacheStoreError::Partial)
+                                                            return Ok(None);
                                                         }
                                                     },
                                                     Err(err) => {
