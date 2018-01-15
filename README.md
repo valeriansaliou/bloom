@@ -103,7 +103,7 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 **[server]**
 
 * `log_level` (type: _string_, allowed: `debug`, `info`, `warn`, `error`, default: `warn`) — Verbosity of logging, set it to `error` in production
-* `inet` (type: _string_, allowed: IPv4 / IPv6 + port, default: `[::1]:8080`) — Host and TCP port the Bloom proxy should listen on
+* `inet` (type: _string_, allowed: IPv4 / IPv6 + port, default: `[::1]:8080`) — Host and TCP port the Bloom server should listen on
 
 **[control]**
 
