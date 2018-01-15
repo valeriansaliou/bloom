@@ -37,6 +37,7 @@ pub enum CacheStoreError {
     Failed,
     Invalid,
     Corrupted,
+    Partial,
     TooLarge,
 }
 
@@ -136,15 +137,29 @@ impl CacheStore {
                                                 //   are LRU-expired), and thus cache namespace \
                                                 //   not to be properly removed on purge of an \
                                                 //   associated tag.
-                                                // The condition explained above only happens on \
+                                                // Also, count bumped keys. It may happen that \
+                                                //   some tag keys are incorrectly removed by \
+                                                //   Redis LRU system, as it is probabilistic \
+                                                //   and thus might sample some keys incorrectly.
+                                                // The conditions explained above only happens on \
                                                 //   Redis instances with used memory going over \
                                                 //   the threshold of the max memory policy.
-                                                if let Err(err) = redis::cmd("TOUCH").arg(tags)
-                                                    .query::<()>(&*client) {
-                                                    error!(
-                                                        "failed bumping access time of tags: {}",
-                                                        err
-                                                    );
+                                                let tags_count = tags.len();
+
+                                                match redis::cmd("TOUCH").arg(tags)
+                                                    .query::<usize>(&*client) {
+                                                    Ok(bump_count) => {
+                                                        // Partial bump count? Do not serve cache.
+                                                        if bump_count < tags_count {
+                                                            return Err(CacheStoreError::Partial)
+                                                        }
+                                                    },
+                                                    Err(err) => {
+                                                        error!(
+                                                            "error bumping access time of tags: {}",
+                                                            err
+                                                        );
+                                                    }
                                                 }
                                             }
                                         }
