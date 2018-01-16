@@ -112,7 +112,7 @@ impl ControlHandle {
                                         buffer.split(|value| value == &BUFFER_LINE_SEPARATOR);
 
                                     for line in buffer_split {
-                                        if line.len() > 0 {
+                                        if line.is_empty() == false {
                                             if Self::on_message(&mut shard, &stream, line) ==
                                                 ControlHandleMessageResult::Close
                                             {
