@@ -151,6 +151,11 @@ impl CacheStore {
                                                         // Partial bump count? Consider cache as \
                                                         //   non-existing
                                                         if bump_count < tags_count {
+                                                            info!(
+                                                                "got only partial tag count: {}/{}",
+                                                                bump_count, tags_count
+                                                            );
+
                                                             return Ok(None);
                                                         }
                                                     },
