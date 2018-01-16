@@ -172,7 +172,7 @@ impl CacheStore {
                                         Err(CacheStoreError::Corrupted)
                                     }
                                 },
-                                (Value::Nil, _) | (_, Value::Nil) => Ok(None),
+                                (Value::Nil, _) => Ok(None),
                                 _ => Err(CacheStoreError::Invalid),
                             }
                         },
