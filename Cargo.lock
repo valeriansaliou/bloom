@@ -1,26 +1,3 @@
-[root]
-name = "bloom-server"
-version = "1.18.0"
-dependencies = [
- "clap 2.27.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "farmhash 1.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
- "futures-cpupool 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "httparse 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "hyper 0.11.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "lazy_static 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "r2d2 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "r2d2_redis 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rand 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
- "redis 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.19 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.19 (registry+https://github.com/rust-lang/crates.io-index)",
- "tokio-core 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "toml 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "unicase 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
 [[package]]
 name = "antidote"
 version = "1.0.0"
@@ -44,6 +21,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "bitflags"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "bloom-server"
+version = "1.19.0"
+dependencies = [
+ "clap 2.27.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "farmhash 1.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures-cpupool 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "httparse 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyper 0.11.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "r2d2 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "r2d2_redis 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redis 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.19 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.19 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tokio-core 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "toml 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicase 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "byteorder"
