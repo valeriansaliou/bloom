@@ -68,7 +68,7 @@ Bloom has minimal static configuration, and relies on HTTP response headers serv
 
 Bloom is built in Rust. To install it, either download a version from the [Bloom releases](https://github.com/valeriansaliou/bloom/releases) page, use `cargo install` or pull the source code from `master`.
 
-**Install from sources:**
+**Install from source:**
 
 If you pulled the source code from Git, you can build it using `cargo`:
 
