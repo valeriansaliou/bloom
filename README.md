@@ -92,6 +92,29 @@ Ensure that your `$PATH` is properly configured to source the Crates binaries, a
 
 Debian & Ubuntu packages are also available. Refer to the _[How to install it on Debian & Ubuntu?](#how-to-install-it-on-debian--ubuntu)_ section.
 
+**Install from Docker Hub:**
+
+You might find it convenient to run Bloom via Docker. You can find the pre-built Bloom image on Docker Hub as [valeriansaliou/bloom](https://hub.docker.com/r/valeriansaliou/bloom/).
+
+First, pull the `valeriansaliou/bloom` image:
+
+```bash
+docker pull valeriansaliou/bloom:v1.19.0
+```
+
+Then, seed it a configuration file and run it (replace `/path/to/your/bloom/config.cfg` with the path to your configuration file):
+
+```bash
+docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.19.0
+```
+
+In the configuration file, ensure that:
+
+* `server.inet` is set to `0.0.0.0:8080` (this lets Bloom be reached from outside the container)
+* `control.inet` is set to `0.0.0.0:8811` (this lets Bloom Control be reached from outside the container)
+
+Bloom will be reachable from `http://localhost:8080`, and Bloom Control will be reachable from `tcp://localhost:8811`.
+
 ### Configuration
 
 Use the sample [config.cfg](https://github.com/valeriansaliou/bloom/blob/master/config.cfg) configuration file and adjust it to your own environment.
