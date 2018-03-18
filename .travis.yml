@@ -12,7 +12,7 @@ cache:
 
 env:
   matrix:
-    - OS=debian DIST=jessie ARCH=i386
+    - OS=debian DIST=jessie ARCH=x86_64
 
 script:
   - git clone https://github.com/packpack/packpack.git packpack

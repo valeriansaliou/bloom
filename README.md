@@ -99,13 +99,13 @@ You might find it convenient to run Bloom via Docker. You can find the pre-built
 First, pull the `valeriansaliou/bloom` image:
 
 ```bash
-docker pull valeriansaliou/bloom:v1.19.0
+docker pull valeriansaliou/bloom:v1.20.0
 ```
 
 Then, seed it a configuration file and run it (replace `/path/to/your/bloom/config.cfg` with the path to your configuration file):
 
 ```bash
-docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.19.0
+docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.20.0
 ```
 
 In the configuration file, ensure that:
@@ -287,9 +287,9 @@ By default, a cached response has no tag, thus it cannot be purged via Bloom Con
 
 Bloom provides [pre-built packages](https://packagecloud.io/valeriansaliou/bloom) for Debian-based systems (Debian, Ubuntu, etc.).
 
-**Important: Bloom only provides Debian 8 32 bits packages for now (Debian Jessie). You should still be able to use them on other Debian versions, as well as Ubuntu.**
+**Important: Bloom only provides Debian 64 bits packages for now. You should still be able to use them on Ubuntu as well.**
 
-**1️⃣ Add the Bloom APT repository:**
+**1️⃣ Add the Bloom APT repository (eg. for Debian Jessie):**
 
 ```bash
 echo "deb https://packagecloud.io/valeriansaliou/bloom/debian/ jessie main" > /etc/apt/sources.list.d/valeriansaliou_bloom.list

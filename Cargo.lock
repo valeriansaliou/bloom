@@ -24,7 +24,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "bloom-server"
-version = "1.19.0"
+version = "1.20.0"
 dependencies = [
  "clap 2.27.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "farmhash 1.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
