@@ -20,7 +20,7 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-log = "0.3"
+log = "0.4"
 toml = "0.4"
 clap = { version = "2.26", default-features = false }
 lazy_static = "1.0"
