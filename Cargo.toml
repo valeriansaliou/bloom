@@ -20,10 +20,10 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-log = "0.3"
+log = "0.4"
 toml = "0.4"
 clap = { version = "2.26", default-features = false }
-lazy_static = "0.2"
+lazy_static = "1.0"
 serde = "1.0"
 serde_derive = "1.0"
 futures = "0.1"
@@ -31,11 +31,11 @@ futures-cpupool = "0.1"
 httparse = "1.2"
 hyper = "0.11"
 tokio-core = "0.1"
-r2d2 = "0.7"
-r2d2_redis = "0.6"
+r2d2 = "0.8"
+r2d2_redis = "0.7"
 redis = "0.8"
 farmhash = "1.1"
-rand = "0.3"
+rand = "0.4"
 unicase = "2"
 
 [profile.dev]

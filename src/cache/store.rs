@@ -7,7 +7,6 @@
 use std::cmp;
 use std::time::Duration;
 use r2d2::Pool;
-use r2d2::config::Config;
 use r2d2_redis::{RedisConnectionManager, Error};
 use redis::{self, Value, Connection, Commands, PipelineCommands};
 use futures::future::Future;
@@ -77,10 +76,9 @@ impl CacheStoreBuilder {
 
         match RedisConnectionManager::new(tcp_addr_raw.as_ref()) {
             Ok(manager) => {
-                let config = Config::<Connection, Error>::builder()
-                    .initialization_fail_fast(false)
+                let builder = Pool::builder()
                     .test_on_check_out(false)
-                    .pool_size(APP_CONF.redis.pool_size)
+                    .max_size(APP_CONF.redis.pool_size)
                     .max_lifetime(Some(
                         Duration::from_secs(APP_CONF.redis.max_lifetime_seconds),
                     ))
@@ -89,10 +87,9 @@ impl CacheStoreBuilder {
                     ))
                     .connection_timeout(Duration::from_secs(
                         APP_CONF.redis.connection_timeout_seconds,
-                    ))
-                    .build();
+                    ));
 
-                match Pool::new(config, manager) {
+                match builder.build(manager) {
                     Ok(pool) => {
                         info!("bound to store backend");
 
