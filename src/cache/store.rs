@@ -7,8 +7,8 @@
 use std::cmp;
 use std::time::Duration;
 use r2d2::Pool;
-use r2d2_redis::{RedisConnectionManager, Error};
-use redis::{self, Value, Connection, Commands, PipelineCommands};
+use r2d2_redis::RedisConnectionManager;
+use redis::{self, Value, Commands, PipelineCommands};
 use futures::future::Future;
 use futures_cpupool::CpuPool;
 
