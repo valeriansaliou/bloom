@@ -5,6 +5,7 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 pub mod status;
+pub mod ray;
 pub mod janitor;
 pub mod request_shard;
 pub mod response_ttl;
