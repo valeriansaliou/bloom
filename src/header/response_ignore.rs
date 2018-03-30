@@ -13,8 +13,7 @@ pub struct HeaderResponseBloomResponseIgnore();
 
 impl Header for HeaderResponseBloomResponseIgnore {
     fn header_name() -> &'static str {
-        static NAME: &'static str = "Bloom-Response-Ignore";
-        NAME
+        "Bloom-Response-Ignore"
     }
 
     fn parse_header(raw: &Raw) -> Result<HeaderResponseBloomResponseIgnore> {

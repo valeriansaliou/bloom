@@ -13,8 +13,7 @@ pub struct HeaderResponseBloomResponseBuckets(pub Vec<String>);
 
 impl Header for HeaderResponseBloomResponseBuckets {
     fn header_name() -> &'static str {
-        static NAME: &'static str = "Bloom-Response-Buckets";
-        NAME
+        "Bloom-Response-Buckets"
     }
 
     fn parse_header(raw: &Raw) -> Result<HeaderResponseBloomResponseBuckets> {

@@ -13,8 +13,7 @@ pub struct HeaderRequestBloomRequestShard(pub u8);
 
 impl Header for HeaderRequestBloomRequestShard {
     fn header_name() -> &'static str {
-        static NAME: &'static str = "Bloom-Request-Shard";
-        NAME
+        "Bloom-Request-Shard"
     }
 
     fn parse_header(raw: &Raw) -> Result<HeaderRequestBloomRequestShard> {

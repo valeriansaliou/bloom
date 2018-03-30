@@ -13,8 +13,7 @@ pub struct HeaderResponseBloomResponseTTL(pub usize);
 
 impl Header for HeaderResponseBloomResponseTTL {
     fn header_name() -> &'static str {
-        static NAME: &'static str = "Bloom-Response-TTL";
-        NAME
+        "Bloom-Response-TTL"
     }
 
     fn parse_header(raw: &Raw) -> Result<HeaderResponseBloomResponseTTL> {

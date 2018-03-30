@@ -35,8 +35,7 @@ impl HeaderBloomStatusValue {
 
 impl Header for HeaderBloomStatus {
     fn header_name() -> &'static str {
-        static NAME: &'static str = "Bloom-Status";
-        NAME
+        "Bloom-Status"
     }
 
     fn parse_header(raw: &Raw) -> Result<HeaderBloomStatus> {
