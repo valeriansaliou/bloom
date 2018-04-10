@@ -1,7 +1,7 @@
 Bloom
 =====
 
-[![Build Status](https://travis-ci.org/valeriansaliou/bloom.svg?branch=master)](https://travis-ci.org/valeriansaliou/bloom)
+[![Build Status](https://travis-ci.org/valeriansaliou/bloom.svg?branch=master)](https://travis-ci.org/valeriansaliou/bloom) [![Dependency Status](https://deps.rs/repo/github/valeriansaliou/bloom/status.svg)](https://deps.rs/repo/github/valeriansaliou/bloom)
 
 **Bloom is a REST API caching middleware, acting as a reverse proxy between your load balancers and your REST API workers.**
 
