@@ -30,7 +30,7 @@ _👋 You use Bloom and you want to be listed there? [Contact me](https://valeri
 
 ## Features
 
-* **The same Bloom server can be used for different API workers at once**, using HTTP header `Bloom-Request-Shard` (eg. Main API uses shard `0`, Search API uses shard `1`)
+* **The same Bloom server can be used for different API workers at once**, using HTTP header `Bloom-Request-Shard` (eg. Main API uses shard `0`, Search API uses shard `1`).
 * **Cache stored on buckets**, specified in your REST API responses using HTTP header `Bloom-Response-Buckets`.
 * **Cache clustered by authentication token**, no cache leak across users is possible, using the standard `Authorization` HTTP header.
 * **Cache can be expired directly from your REST API workers**, via a control channel.
