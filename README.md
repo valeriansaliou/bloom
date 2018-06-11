@@ -99,13 +99,13 @@ You might find it convenient to run Bloom via Docker. You can find the pre-built
 First, pull the `valeriansaliou/bloom` image:
 
 ```bash
-docker pull valeriansaliou/bloom:v1.20.0
+docker pull valeriansaliou/bloom:v1.21.0
 ```
 
 Then, seed it a configuration file and run it (replace `/path/to/your/bloom/config.cfg` with the path to your configuration file):
 
 ```bash
-docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.20.0
+docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.21.0
 ```
 
 In the configuration file, ensure that:
@@ -147,6 +147,7 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 * `executor_pool` (type: _integer_, allowed: `0` to `(2^16)-1`, default: `16`) — Cache executor pool size (how many cache requests can execute at the same time)
 * `disable_read` (type: _boolean_, allowed: `true`, `false`, default: `false`) — Whether to disable cache reads (useful for testing)
 * `disable_write` (type: _boolean_, allowed: `true`, `false`, default: `false`) — Whether to disable cache writes (useful for testing)
+* `compress_body` (type: _boolean_, allowed: `true`, `false`, default: `true`) — Whether to compress body upon store (using Brotli; usually reduces body size by 40%)
 
 **[redis]**
 

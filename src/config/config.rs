@@ -65,6 +65,9 @@ pub struct ConfigCache {
 
     #[serde(default = "defaults::cache_disable_write")]
     pub disable_write: bool,
+
+    #[serde(default = "defaults::cache_compress_body")]
+    pub compress_body: bool,
 }
 
 #[derive(Deserialize)]

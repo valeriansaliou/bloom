@@ -17,7 +17,7 @@ use futures_cpupool::CpuPool;
 use super::route::ROUTE_PREFIX;
 use APP_CONF;
 
-pub const BODY_COMPRESS_RATIO: u32 = 4;
+pub const BODY_COMPRESS_RATIO: u32 = 5;
 
 static KEY_BODY: &'static str = "b";
 static KEY_FINGERPRINT: &'static str = "f";
@@ -196,12 +196,37 @@ impl CacheStore {
                     match (*client).hget::<_, _, Value>(key, KEY_BODY) {
                         Ok(value) => {
                             match value {
-                                Value::Data(body_bytes) => {
-                                    // Decode raw bytes to string
-                                    if let Ok(body) = String::from_utf8(body_bytes) {
-                                        Ok(Some(body))
+                                Value::Data(body_bytes_raw) => {
+                                    let body_bytes_result =
+                                    if APP_CONF.cache.compress_body == true {
+                                        // Decompress raw bytes
+                                        let mut decompressor = BrotliDecoder::new(
+                                            &body_bytes_raw[..]
+                                        );
+
+                                        let mut decompress_bytes = Vec::new();
+
+                                        match decompressor.read_to_end(&mut decompress_bytes) {
+                                            Ok(_) => Ok(decompress_bytes),
+                                            Err(err) => {
+                                                error!("error decompressing store value: {}", err);
+
+                                                Err(())
+                                            }
+                                        }
                                     } else {
-                                        Err(CacheStoreError::Corrupted)
+                                        Ok(body_bytes_raw)
+                                    };
+
+                                    // Decode raw bytes to string
+                                    if let Ok(body_bytes) = body_bytes_result {
+                                        if let Ok(body) = String::from_utf8(body_bytes) {
+                                            Ok(Some(body))
+                                        } else {
+                                            Err(CacheStoreError::Corrupted)
+                                        }
+                                    } else {
+                                        Err(CacheStoreError::Failed)
                                     }
                                 },
                                 Value::Nil => Ok(None),
@@ -239,24 +264,26 @@ impl CacheStore {
                             Err((CacheStoreError::TooLarge, fingerprint))
                         } else {
                             // Compress value?
-                            // TODO: from config
-                            let store_value_result = if true {
+                            let store_value_bytes_result = if APP_CONF.cache.compress_body == true {
                                 let mut compressor = BrotliEncoder::new(
                                     value.as_bytes(), BODY_COMPRESS_RATIO
                                 );
 
-                                let mut compress_value = String::new();
+                                let mut compress_bytes = Vec::new();
 
-                                if compressor.read_to_string(&mut compress_value).is_ok() == true {
-                                    Ok(compress_value)
-                                } else {
-                                    Err(())
+                                match compressor.read_to_end(&mut compress_bytes) {
+                                    Ok(_) => Ok(compress_bytes),
+                                    Err(err) => {
+                                        error!("error compressing store value: {}", err);
+
+                                        Err(())
+                                    }
                                 }
                             } else {
-                                Ok(value)
+                                Ok(value.into_bytes())
                             };
 
-                            if let Ok(store_value) = store_value_result {
+                            if let Ok(store_value_bytes) = store_value_bytes_result {
                                 let mut pipeline = redis::pipe();
 
                                 // Append storage command
@@ -267,9 +294,20 @@ impl CacheStore {
 
                                     pipeline.hset_multiple(
                                         &key, &[
-                                            (KEY_FINGERPRINT, &fingerprint),
-                                            (KEY_TAGS, &key_tag_masks.join(KEY_TAGS_SEPARATOR)),
-                                            (KEY_BODY, &store_value)
+                                            (
+                                                KEY_FINGERPRINT,
+                                                fingerprint.as_bytes()
+                                            ),
+
+                                            (
+                                                KEY_TAGS,
+                                                key_tag_masks.join(KEY_TAGS_SEPARATOR).as_bytes()
+                                            ),
+
+                                            (
+                                                KEY_BODY,
+                                                &store_value_bytes
+                                            )
                                         ]
                                     ).ignore();
                                 }
@@ -291,6 +329,8 @@ impl CacheStore {
                                     }
                                 }
                             } else {
+                                error!("error generating store value");
+
                                 Err((CacheStoreError::Failed, fingerprint))
                             }
                         }

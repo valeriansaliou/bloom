@@ -50,6 +50,10 @@ pub fn cache_disable_write() -> bool {
     false
 }
 
+pub fn cache_compress_body() -> bool {
+    true
+}
+
 pub fn redis_host() -> String {
     "localhost".to_string()
 }
