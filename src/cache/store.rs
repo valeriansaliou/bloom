@@ -5,15 +5,19 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::cmp;
+use std::io::Read;
 use std::time::Duration;
 use r2d2::Pool;
 use r2d2_redis::RedisConnectionManager;
 use redis::{self, Value, Commands, PipelineCommands};
+use brotli2::read::{BrotliEncoder, BrotliDecoder};
 use futures::future::Future;
 use futures_cpupool::CpuPool;
 
 use super::route::ROUTE_PREFIX;
 use APP_CONF;
+
+pub const BODY_COMPRESS_RATIO: u32 = 4;
 
 static KEY_BODY: &'static str = "b";
 static KEY_FINGERPRINT: &'static str = "f";
@@ -234,38 +238,60 @@ impl CacheStore {
                         if value.len() > APP_CONF.redis.max_key_size {
                             Err((CacheStoreError::TooLarge, fingerprint))
                         } else {
-                            let mut pipeline = redis::pipe();
+                            // Compress value?
+                            // TODO: from config
+                            let store_value_result = if true {
+                                let mut compressor = BrotliEncoder::new(
+                                    value.as_bytes(), BODY_COMPRESS_RATIO
+                                );
 
-                            // Append storage command
-                            {
-                                let key_tag_masks = key_tags.iter()
-                                    .map(|key_tag| key_tag.1.as_ref())
-                                    .collect::<Vec<&str>>();
+                                let mut compress_value = String::new();
 
-                                pipeline.hset_multiple(
-                                    &key, &[
-                                        (KEY_FINGERPRINT, &fingerprint),
-                                        (KEY_TAGS, &key_tag_masks.join(KEY_TAGS_SEPARATOR)),
-                                        (KEY_BODY, &value)
-                                    ]
-                                ).ignore();
-                            }
-
-                            pipeline.expire(&key, ttl_cap).ignore();
-
-                            for key_tag in key_tags {
-                                pipeline.sadd(&key_tag.0, &key_mask).ignore();
-                                pipeline.expire(&key_tag.0, APP_CONF.redis.max_key_expiration);
-                            }
-
-                            // Bucket (MULTI operation for main data + bucket marker)
-                            match pipeline.query::<()>(&*client) {
-                                Ok(_) => Ok(fingerprint),
-                                Err(err) => {
-                                    error!("got store error: {}", err);
-
-                                    Err((CacheStoreError::Failed, fingerprint))
+                                if compressor.read_to_string(&mut compress_value).is_ok() == true {
+                                    Ok(compress_value)
+                                } else {
+                                    Err(())
                                 }
+                            } else {
+                                Ok(value)
+                            };
+
+                            if let Ok(store_value) = store_value_result {
+                                let mut pipeline = redis::pipe();
+
+                                // Append storage command
+                                {
+                                    let key_tag_masks = key_tags.iter()
+                                        .map(|key_tag| key_tag.1.as_ref())
+                                        .collect::<Vec<&str>>();
+
+                                    pipeline.hset_multiple(
+                                        &key, &[
+                                            (KEY_FINGERPRINT, &fingerprint),
+                                            (KEY_TAGS, &key_tag_masks.join(KEY_TAGS_SEPARATOR)),
+                                            (KEY_BODY, &store_value)
+                                        ]
+                                    ).ignore();
+                                }
+
+                                pipeline.expire(&key, ttl_cap).ignore();
+
+                                for key_tag in key_tags {
+                                    pipeline.sadd(&key_tag.0, &key_mask).ignore();
+                                    pipeline.expire(&key_tag.0, APP_CONF.redis.max_key_expiration);
+                                }
+
+                                // Bucket (MULTI operation for main data + bucket marker)
+                                match pipeline.query::<()>(&*client) {
+                                    Ok(_) => Ok(fingerprint),
+                                    Err(err) => {
+                                        error!("got store error: {}", err);
+
+                                        Err((CacheStoreError::Failed, fingerprint))
+                                    }
+                                }
+                            } else {
+                                Err((CacheStoreError::Failed, fingerprint))
                             }
                         }
                     }
