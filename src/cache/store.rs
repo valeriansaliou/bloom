@@ -10,7 +10,7 @@ use std::time::Duration;
 use r2d2::Pool;
 use r2d2_redis::RedisConnectionManager;
 use redis::{self, Value, Commands, PipelineCommands};
-use brotli2::read::{BrotliEncoder, BrotliDecoder};
+use brotli::{CompressorReader as BrotliCompressor, Decompressor as BrotliDecompressor};
 use futures::future::Future;
 use futures_cpupool::CpuPool;
 
@@ -200,8 +200,8 @@ impl CacheStore {
                                     let body_bytes_result =
                                     if APP_CONF.cache.compress_body == true {
                                         // Decompress raw bytes
-                                        let mut decompressor = BrotliDecoder::new(
-                                            &body_bytes_raw[..]
+                                        let mut decompressor = BrotliDecompressor::new(
+                                            &body_bytes_raw[..], 4096
                                         );
 
                                         let mut decompress_bytes = Vec::new();
@@ -265,8 +265,8 @@ impl CacheStore {
                         } else {
                             // Compress value?
                             let store_value_bytes_result = if APP_CONF.cache.compress_body == true {
-                                let mut compressor = BrotliEncoder::new(
-                                    value.as_bytes(), BODY_COMPRESS_RATIO
+                                let mut compressor = BrotliCompressor::new(
+                                    value.as_bytes(), 4096, BODY_COMPRESS_RATIO, 22
                                 );
 
                                 let mut compress_bytes = Vec::new();

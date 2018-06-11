@@ -17,7 +17,7 @@ extern crate httparse;
 extern crate hyper;
 extern crate tokio_core;
 extern crate farmhash;
-extern crate brotli2;
+extern crate brotli;
 extern crate futures;
 extern crate futures_cpupool;
 extern crate rand;
