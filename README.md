@@ -101,13 +101,13 @@ You might find it convenient to run Bloom via Docker. You can find the pre-built
 First, pull the `valeriansaliou/bloom` image:
 
 ```bash
-docker pull valeriansaliou/bloom:v1.20.0
+docker pull valeriansaliou/bloom:v1.22.0
 ```
 
 Then, seed it a configuration file and run it (replace `/path/to/your/bloom/config.cfg` with the path to your configuration file):
 
 ```bash
-docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.20.0
+docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.22.0
 ```
 
 In the configuration file, ensure that:

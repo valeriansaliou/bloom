@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly
+FROM rustlang/rust:nightly-slim
 
 WORKDIR /usr/src/bloom
 
