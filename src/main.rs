@@ -84,9 +84,7 @@ fn make_app_args() -> AppArgs {
 
 fn ensure_states() {
     // Ensure all statics are valid (a `deref` is enough to lazily initialize them)
-    APP_ARGS.deref();
-    APP_CONF.deref();
-    APP_CACHE_STORE.deref();
+    let (_, _, _) = (APP_ARGS.deref(), APP_CONF.deref(), APP_CACHE_STORE.deref());
 }
 
 fn spawn_worker() {
