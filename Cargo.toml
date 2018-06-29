@@ -36,7 +36,7 @@ r2d2_redis = "0.7"
 redis = "0.8"
 farmhash = "1.1"
 brotli = "2.3"
-rand = "0.4"
+rand = "0.5"
 unicase = "2.1"
 
 [profile.dev]

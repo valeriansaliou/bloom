@@ -10,6 +10,7 @@ use std::result::Result;
 use std::net::TcpStream;
 use std::time::Duration;
 use rand::{thread_rng, Rng};
+use rand::distributions::Alphanumeric;
 
 use super::command::ControlCommandResponse;
 use super::command::ControlCommand;
@@ -164,7 +165,7 @@ impl ControlHandle {
 
     fn ensure_hasher(mut stream: &TcpStream) -> Result<Option<()>, ControlHandleError> {
         let test_value: String = thread_rng()
-            .gen_ascii_chars()
+            .sample_iter(&Alphanumeric)
             .take(HASH_VALUE_SIZE)
             .collect();
         let test_hash = CacheRoute::hash(test_value.as_str());
