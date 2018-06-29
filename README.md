@@ -78,8 +78,6 @@ cargo build --release
 
 You can find the built binaries in the `./target/release` directory.
 
-_Install `libbrotli-dev` (ie. Brotli headers) before you compile Bloom. The Brotli dependency is required for the storage compression system._
-
 **Install from Cargo:**
 
 You can install Bloom directly with `cargo install`:
