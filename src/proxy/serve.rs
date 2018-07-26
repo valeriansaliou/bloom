@@ -6,7 +6,7 @@
 
 use futures::future::{self, Future};
 use httparse;
-use hyper::{Error, Method, StatusCode, Headers};
+use hyper::{Error, Method, StatusCode, Uri, HttpVersion, Headers, Body};
 use hyper::header::{Origin, IfNoneMatch, ETag, EntityTag};
 use hyper::server::{Request, Response};
 
@@ -81,60 +81,18 @@ impl ProxyServe {
                     match result {
                         Ok(value) => Self::dispatch_cached(&method, value.0, value.1),
                         Err(_) => {
-                            // Clone method value for closures. Sadly, it looks like Rust borrow \
-                            //   checker doesnt discriminate properly on this check.
-                            let method_success = method.to_owned();
-                            let method_failure = method.to_owned();
-
-                            Box::new(
-                                ProxyTunnel::run(&method, &uri, &headers, body, shard)
-                                    .and_then(move |tunnel_res| {
-                                        CacheWrite::save(
-                                            ns,
-                                            ns_mask,
-                                            auth_hash,
-                                            shard,
-                                            method,
-                                            version,
-                                            tunnel_res.status(),
-                                            tunnel_res.headers().to_owned(),
-                                            tunnel_res.body(),
-                                        )
-                                    })
-                                    .and_then(move |mut result| match result.body {
-                                        Ok(body_string) => {
-                                            Self::dispatch_fetched(
-                                                &method_success,
-                                                &result.status,
-                                                result.headers,
-                                                HeaderBloomStatusValue::Miss,
-                                                body_string,
-                                                result.fingerprint,
-                                            )
-                                        }
-                                        Err(body_string_values) => {
-                                            match body_string_values {
-                                                Some(body_string) => {
-                                                    // Enforce clean headers, has usually they get \
-                                                    //   cleaned from cache writer
-                                                    HeaderJanitor::clean(&mut result.headers);
-
-                                                    Self::dispatch_fetched(
-                                                        &method_success,
-                                                        &result.status,
-                                                        result.headers,
-                                                        HeaderBloomStatusValue::Direct,
-                                                        body_string,
-                                                        result.fingerprint,
-                                                    )
-                                                }
-                                                _ => Self::dispatch_failure(&method_success),
-                                            }
-                                        }
-                                    })
-                                    .or_else(move |_| Self::dispatch_failure(&method_failure)),
+                            Self::tunnel_over_proxy(
+                                shard,
+                                ns,
+                                ns_mask,
+                                auth_hash,
+                                method,
+                                uri,
+                                version,
+                                headers,
+                                body
                             )
-                        }
+                        },
                     }
                 }),
         )
@@ -150,47 +108,57 @@ impl ProxyServe {
         let header_if_none_match = headers.get::<IfNoneMatch>().map(|value| value.to_owned());
         let ns_string = ns.to_string();
 
-        Box::new(CacheRead::acquire_meta(shard, ns, method).and_then(
-            move |result| {
-                match result {
-                    Ok(fingerprint) => {
-                        debug!(
-                            "got fingerprint for cached data = {} on ns = {}",
-                            &fingerprint,
-                            &ns_string
-                        );
+        Box::new(
+            CacheRead::acquire_meta(shard, ns, method)
+                .and_then(
+                    move |result| {
+                        match result {
+                            Ok(fingerprint) => {
+                                debug!(
+                                    "got fingerprint for cached data = {} on ns = {}",
+                                    &fingerprint,
+                                    &ns_string
+                                );
 
-                        // Check if not modified?
-                        let isnt_modified = match header_if_none_match {
-                            Some(ref req_if_none_match) => {
-                                match req_if_none_match {
-                                    &IfNoneMatch::Any => true,
-                                    &IfNoneMatch::Items(ref req_etags) => {
-                                        if let Some(req_etag) = req_etags.first() {
-                                            req_etag.weak_eq(
-                                                &EntityTag::new(false, fingerprint.to_owned()),
-                                            )
-                                        } else {
-                                            false
+                                // Check if not modified?
+                                let isnt_modified = match header_if_none_match {
+                                    Some(ref req_if_none_match) => {
+                                        match req_if_none_match {
+                                            &IfNoneMatch::Any => true,
+                                            &IfNoneMatch::Items(ref req_etags) => {
+                                                if let Some(req_etag) = req_etags.first() {
+                                                    req_etag.weak_eq(
+                                                        &EntityTag::new(
+                                                            false, fingerprint.to_owned()
+                                                        ),
+                                                    )
+                                                } else {
+                                                    false
+                                                }
+                                            }
                                         }
                                     }
-                                }
+                                    _ => false,
+                                };
+
+                                debug!(
+                                    "got not modified status for cached data = {} on ns = {}",
+                                    &isnt_modified,
+                                    &ns_string
+                                );
+
+                                Self::fetch_cached_data_body(ns_string, fingerprint, !isnt_modified)
                             }
-                            _ => false,
-                        };
+                            _ => Box::new(future::ok(Err(()))),
+                        }
+                    },
+                )
+                .or_else(|_| {
+                    error!("failed fetching cached data meta");
 
-                        debug!(
-                            "got not modified status for cached data = {} on ns = {}",
-                            &isnt_modified,
-                            &ns_string
-                        );
-
-                        Self::fetch_cached_data_body(ns_string, fingerprint, !isnt_modified)
-                    }
-                    _ => Box::new(future::ok(Err(()))),
-                }
-            },
-        ))
+                    future::ok(Err(()))
+                })
+        )
     }
 
     fn fetch_cached_data_body(
@@ -206,11 +174,85 @@ impl ProxyServe {
             CacheRead::acquire_body(&ns)
         };
 
-        Box::new(body_fetcher.and_then(|body_result| {
-            body_result.or_else(|_| Err(())).map(|body| {
-                Ok((fingerprint, body))
-            })
-        }))
+        Box::new(
+            body_fetcher
+                .and_then(|body_result| {
+                    body_result.or_else(|_| Err(())).map(|body| {
+                        Ok((fingerprint, body))
+                    })
+                })
+                .or_else(|_| {
+                    error!("failed fetching cached data body");
+
+                    future::ok(Err(()))
+                })
+        )
+    }
+
+    fn tunnel_over_proxy(
+        shard: u8,
+        ns: String,
+        ns_mask: String,
+        auth_hash: String,
+        method: Method,
+        uri: Uri,
+        version: HttpVersion,
+        headers: Headers,
+        body: Body,
+    ) -> ProxyServeResponseFuture {
+        // Clone method value for closures. Sadly, it looks like Rust borrow \
+        //   checker doesnt discriminate properly on this check.
+        let method_success = method.to_owned();
+        let method_failure = method.to_owned();
+
+        Box::new(
+            ProxyTunnel::run(&method, &uri, &headers, body, shard)
+                .and_then(move |tunnel_res| {
+                    CacheWrite::save(
+                        ns,
+                        ns_mask,
+                        auth_hash,
+                        shard,
+                        method,
+                        version,
+                        tunnel_res.status(),
+                        tunnel_res.headers().to_owned(),
+                        tunnel_res.body(),
+                    )
+                })
+                .and_then(move |mut result| match result.body {
+                    Ok(body_string) => {
+                        Self::dispatch_fetched(
+                            &method_success,
+                            &result.status,
+                            result.headers,
+                            HeaderBloomStatusValue::Miss,
+                            body_string,
+                            result.fingerprint,
+                        )
+                    }
+                    Err(body_string_values) => {
+                        match body_string_values {
+                            Some(body_string) => {
+                                // Enforce clean headers, has usually they get \
+                                //   cleaned from cache writer
+                                HeaderJanitor::clean(&mut result.headers);
+
+                                Self::dispatch_fetched(
+                                    &method_success,
+                                    &result.status,
+                                    result.headers,
+                                    HeaderBloomStatusValue::Direct,
+                                    body_string,
+                                    result.fingerprint,
+                                )
+                            }
+                            _ => Self::dispatch_failure(&method_success),
+                        }
+                    }
+                })
+                .or_else(move |_| Self::dispatch_failure(&method_failure)),
+        )
     }
 
     fn dispatch_cached(

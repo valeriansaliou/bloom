@@ -207,7 +207,15 @@ impl CacheStore {
                                         let mut decompress_bytes = Vec::new();
 
                                         match decompressor.read_to_end(&mut decompress_bytes) {
-                                            Ok(_) => Ok(decompress_bytes),
+                                            Ok(_) => {
+                                                if body_bytes_raw.len() > 0 && decompress_bytes.len() == 0 {
+                                                    error!("decompressed store value and got empty body");
+
+                                                    Err(())
+                                                } else {
+                                                    Ok(decompress_bytes)
+                                                }
+                                            },
                                             Err(err) => {
                                                 error!("error decompressing store value: {}", err);
 
