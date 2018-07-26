@@ -362,14 +362,19 @@ impl CacheStore {
 
 impl CachePurgeVariant {
     fn get_script(&self) -> &'static str {
+        // Notice: there is a limit of 1000 purgeable tags per bucket. Purging a lot of tags at \
+        //   once is dangerous for Bloom, as the underlying Redis server is at risk of blocking.
         match *self {
             CachePurgeVariant::Bucket |
             CachePurgeVariant::Auth => {
                 r#"
+                    local count = redis.call('SCARD', ARGV[3])
                     local targets = {}
 
-                    for _, tag in pairs(redis.call('SMEMBERS', ARGV[3])) do
-                        table.insert(targets, ARGV[1] .. ":" .. ARGV[2] .. ":c:" .. tag)
+                    if count <= 1000 then
+                        for _, tag in pairs(redis.call('SMEMBERS', ARGV[3])) do
+                            table.insert(targets, ARGV[1] .. ":" .. ARGV[2] .. ":c:" .. tag)
+                        end
                     end
 
                     table.insert(targets, ARGV[3])
