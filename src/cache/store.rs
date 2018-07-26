@@ -208,8 +208,11 @@ impl CacheStore {
 
                                         match decompressor.read_to_end(&mut decompress_bytes) {
                                             Ok(_) => {
-                                                if body_bytes_raw.len() > 0 && decompress_bytes.len() == 0 {
-                                                    error!("decompressed store value and got empty body");
+                                                if body_bytes_raw.len() > 0 &&
+                                                        decompress_bytes.len() == 0 {
+                                                    error!(
+                                                        "decompressed store value has empty body"
+                                                    );
 
                                                     Err(())
                                                 } else {

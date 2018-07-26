@@ -77,22 +77,34 @@ impl ProxyServe {
         Box::new(
             Self::fetch_cached_data(shard, &ns, &method, &headers)
                 .or_else(|_| Err(Error::Incomplete))
-                .and_then(move |result| {
-                    match result {
-                        Ok(value) => Self::dispatch_cached(&method, value.0, value.1),
-                        Err(_) => {
-                            Self::tunnel_over_proxy(
-                                shard,
-                                ns,
-                                ns_mask,
-                                auth_hash,
-                                method,
-                                uri,
-                                version,
-                                headers,
-                                body
-                            )
-                        },
+                .and_then(move |result| match result {
+                    Ok(value) => {
+                        Self::dispatch_cached(
+                            shard,
+                            ns,
+                            ns_mask,
+                            auth_hash,
+                            method,
+                            uri,
+                            version,
+                            headers,
+                            body,
+                            value.0,
+                            value.1,
+                        )
+                    }
+                    Err(_) => {
+                        Self::tunnel_over_proxy(
+                            shard,
+                            ns,
+                            ns_mask,
+                            auth_hash,
+                            method,
+                            uri,
+                            version,
+                            headers,
+                            body,
+                        )
                     }
                 }),
         )
@@ -110,54 +122,51 @@ impl ProxyServe {
 
         Box::new(
             CacheRead::acquire_meta(shard, ns, method)
-                .and_then(
-                    move |result| {
-                        match result {
-                            Ok(fingerprint) => {
-                                debug!(
-                                    "got fingerprint for cached data = {} on ns = {}",
-                                    &fingerprint,
-                                    &ns_string
-                                );
+                .and_then(move |result| {
+                    match result {
+                        Ok(fingerprint) => {
+                            debug!(
+                                "got fingerprint for cached data = {} on ns = {}",
+                                &fingerprint,
+                                &ns_string
+                            );
 
-                                // Check if not modified?
-                                let isnt_modified = match header_if_none_match {
-                                    Some(ref req_if_none_match) => {
-                                        match req_if_none_match {
-                                            &IfNoneMatch::Any => true,
-                                            &IfNoneMatch::Items(ref req_etags) => {
-                                                if let Some(req_etag) = req_etags.first() {
-                                                    req_etag.weak_eq(
-                                                        &EntityTag::new(
-                                                            false, fingerprint.to_owned()
-                                                        ),
-                                                    )
-                                                } else {
-                                                    false
-                                                }
+                            // Check if not modified?
+                            let isnt_modified = match header_if_none_match {
+                                Some(ref req_if_none_match) => {
+                                    match req_if_none_match {
+                                        &IfNoneMatch::Any => true,
+                                        &IfNoneMatch::Items(ref req_etags) => {
+                                            if let Some(req_etag) = req_etags.first() {
+                                                req_etag.weak_eq(&EntityTag::new(
+                                                    false,
+                                                    fingerprint.to_owned(),
+                                                ))
+                                            } else {
+                                                false
                                             }
                                         }
                                     }
-                                    _ => false,
-                                };
+                                }
+                                _ => false,
+                            };
 
-                                debug!(
-                                    "got not modified status for cached data = {} on ns = {}",
-                                    &isnt_modified,
-                                    &ns_string
-                                );
+                            debug!(
+                                "got not modified status for cached data = {} on ns = {}",
+                                &isnt_modified,
+                                &ns_string
+                            );
 
-                                Self::fetch_cached_data_body(ns_string, fingerprint, !isnt_modified)
-                            }
-                            _ => Box::new(future::ok(Err(()))),
+                            Self::fetch_cached_data_body(ns_string, fingerprint, !isnt_modified)
                         }
-                    },
-                )
+                        _ => Box::new(future::ok(Err(()))),
+                    }
+                })
                 .or_else(|_| {
                     error!("failed fetching cached data meta");
 
                     future::ok(Err(()))
-                })
+                }),
         )
     }
 
@@ -185,7 +194,7 @@ impl ProxyServe {
                     error!("failed fetching cached data body");
 
                     future::ok(Err(()))
-                })
+                }),
         )
     }
 
@@ -256,7 +265,15 @@ impl ProxyServe {
     }
 
     fn dispatch_cached(
-        method: &Method,
+        shard: u8,
+        ns: String,
+        ns_mask: String,
+        auth_hash: String,
+        method: Method,
+        req_uri: Uri,
+        req_version: HttpVersion,
+        req_headers: Headers,
+        req_body: Body,
         res_fingerprint: String,
         res_string: Option<String>,
     ) -> ProxyServeResponseFuture {
@@ -307,12 +324,22 @@ impl ProxyServe {
                     );
 
                     // Serve cached response
-                    Self::respond(method, status, headers, res_body_string)
+                    Self::respond(&method, status, headers, res_body_string)
                 }
                 Err(err) => {
                     error!("failed parsing cached response: {}", err);
 
-                    Self::dispatch_failure(method)
+                    Self::tunnel_over_proxy(
+                        shard,
+                        ns,
+                        ns_mask,
+                        auth_hash,
+                        method,
+                        req_uri,
+                        req_version,
+                        req_headers,
+                        req_body,
+                    )
                 }
             }
         } else {
@@ -323,7 +350,7 @@ impl ProxyServe {
             headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
             // Serve non-modified response
-            Self::respond(method, StatusCode::NotModified, headers, String::from(""))
+            Self::respond(&method, StatusCode::NotModified, headers, String::from(""))
         }
     }
 
