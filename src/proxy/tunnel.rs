@@ -114,8 +114,10 @@ impl ProxyTunnel {
                             }
 
                             // Forward body?
+                            // Notice: HTTP DELETE is not forbidden per-spec to hold a request \
+                            //   body, even if it is not commonly used. Hence why we forward it.
                             match method {
-                                &Method::Post | &Method::Patch | &Method::Put => {
+                                &Method::Post | &Method::Patch | &Method::Put | &Method::Delete => {
                                     tunnel_req.set_body(body);
                                 }
                                 _ => {}
