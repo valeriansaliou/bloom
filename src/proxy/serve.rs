@@ -12,13 +12,13 @@ use hyper::server::{Request, Response};
 
 use super::header::ProxyHeader;
 use super::tunnel::ProxyTunnel;
-use header::janitor::HeaderJanitor;
-use header::request_shard::HeaderRequestBloomRequestShard;
-use header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
-use cache::read::CacheRead;
-use cache::write::CacheWrite;
-use cache::route::CacheRoute;
-use LINE_FEED;
+use crate::header::janitor::HeaderJanitor;
+use crate::header::request_shard::HeaderRequestBloomRequestShard;
+use crate::header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
+use crate::cache::read::CacheRead;
+use crate::cache::write::CacheWrite;
+use crate::cache::route::CacheRoute;
+use crate::LINE_FEED;
 
 pub struct ProxyServe;
 

@@ -9,8 +9,8 @@ use futures::future::{self, Future};
 
 use super::check::CacheCheck;
 
-use APP_CONF;
-use APP_CACHE_STORE;
+use crate::APP_CONF;
+use crate::APP_CACHE_STORE;
 
 pub struct CacheRead;
 

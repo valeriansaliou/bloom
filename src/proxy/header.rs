@@ -10,7 +10,7 @@ use hyper::header::{Header, ETag, Vary};
 use unicase::Ascii;
 
 use super::defaults;
-use header::request_shard::HeaderRequestBloomRequestShard;
+use crate::header::request_shard::HeaderRequestBloomRequestShard;
 
 pub struct ProxyHeader;
 

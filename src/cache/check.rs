@@ -6,7 +6,7 @@
 
 use hyper::{Method, StatusCode, Headers};
 
-use header::response_ignore::HeaderResponseBloomResponseIgnore;
+use crate::header::response_ignore::HeaderResponseBloomResponseIgnore;
 
 pub struct CacheCheck;
 

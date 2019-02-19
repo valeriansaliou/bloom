@@ -7,7 +7,7 @@
 use hyper;
 use hyper::server::{Service, Request, Response};
 
-use proxy::serve::{ProxyServe, ProxyServeResponseFuture};
+use crate::proxy::serve::{ProxyServe, ProxyServeResponseFuture};
 
 pub struct ServerRequestHandle;
 

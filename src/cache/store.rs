@@ -15,7 +15,7 @@ use futures::future::Future;
 use futures_cpupool::CpuPool;
 
 use super::route::ROUTE_PREFIX;
-use APP_CONF;
+use crate::APP_CONF;
 
 pub const BODY_COMPRESS_RATIO: u32 = 5;
 

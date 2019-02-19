@@ -7,9 +7,9 @@
 use std::str::SplitWhitespace;
 
 use super::handle::ControlShard;
-use APP_CACHE_STORE;
-use cache::route::CacheRoute;
-use cache::store::CachePurgeVariant;
+use crate::cache::route::CacheRoute;
+use crate::cache::store::CachePurgeVariant;
+use crate::APP_CACHE_STORE;
 
 #[derive(PartialEq)]
 pub enum ControlCommandResponse {

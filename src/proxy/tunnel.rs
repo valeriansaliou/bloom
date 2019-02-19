@@ -9,8 +9,8 @@ use futures::{future, Future};
 use hyper::{Error, Client, Method, Uri, Headers, Body, Request};
 use hyper::client::{HttpConnector, Response};
 
-use server::listen::LISTEN_REMOTE;
-use APP_CONF;
+use crate::server::listen::LISTEN_REMOTE;
+use crate::APP_CONF;
 
 const MAX_SHARDS: u8 = 16;
 const CLIENT_KEEP_ALIVE_TIMEOUT_SECONDS: u64 = 30;

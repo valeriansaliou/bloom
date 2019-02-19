@@ -10,11 +10,11 @@ use farmhash;
 
 use super::route::CacheRoute;
 use super::check::CacheCheck;
-use APP_CONF;
-use APP_CACHE_STORE;
-use header::janitor::HeaderJanitor;
-use header::response_buckets::HeaderResponseBloomResponseBuckets;
-use header::response_ttl::HeaderResponseBloomResponseTTL;
+use crate::header::janitor::HeaderJanitor;
+use crate::header::response_buckets::HeaderResponseBloomResponseBuckets;
+use crate::header::response_ttl::HeaderResponseBloomResponseTTL;
+use crate::APP_CONF;
+use crate::APP_CACHE_STORE;
 
 pub struct CacheWrite;
 

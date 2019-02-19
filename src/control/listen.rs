@@ -9,7 +9,7 @@ use std::process;
 use std::net::TcpListener;
 
 use super::handle::ControlHandle;
-use {APP_CONF, THREAD_NAME_CONTROL_MASTER, THREAD_NAME_CONTROL_CLIENT};
+use crate::{APP_CONF, THREAD_NAME_CONTROL_MASTER, THREAD_NAME_CONTROL_CLIENT};
 
 pub struct ControlListenBuilder;
 pub struct ControlListen;
