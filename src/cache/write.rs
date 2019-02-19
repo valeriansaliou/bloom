@@ -4,17 +4,17 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::{Error, Method, HttpVersion, StatusCode, Headers, Body};
-use futures::{future, Future, Stream};
 use farmhash;
+use futures::{future, Future, Stream};
+use hyper::{Body, Error, Headers, HttpVersion, Method, StatusCode};
 
-use super::route::CacheRoute;
 use super::check::CacheCheck;
+use super::route::CacheRoute;
 use crate::header::janitor::HeaderJanitor;
 use crate::header::response_buckets::HeaderResponseBloomResponseBuckets;
 use crate::header::response_ttl::HeaderResponseBloomResponseTTL;
-use crate::APP_CONF;
 use crate::APP_CACHE_STORE;
+use crate::APP_CONF;
 
 pub struct CacheWrite;
 
@@ -46,8 +46,8 @@ impl CacheWrite {
                     if let Ok(body_value) = body_result {
                         debug!("checking whether to write cache for key: {}", &key);
 
-                        if APP_CONF.cache.disable_write == false &&
-                            CacheCheck::from_response(&method, &status, &headers) == true
+                        if APP_CONF.cache.disable_write == false
+                            && CacheCheck::from_response(&method, &status, &headers) == true
                         {
                             debug!("key: {} cacheable, writing cache", &key);
 
@@ -55,18 +55,16 @@ impl CacheWrite {
                             let mut key_tags =
                                 match headers.get::<HeaderResponseBloomResponseBuckets>() {
                                     None => Vec::new(),
-                                    Some(value) => {
-                                        value
-                                            .0
-                                            .iter()
-                                            .map(|value| {
-                                                CacheRoute::gen_key_bucket_from_hash(
-                                                    shard,
-                                                    &CacheRoute::hash(value),
-                                                )
-                                            })
-                                            .collect::<Vec<(String, String)>>()
-                                    }
+                                    Some(value) => value
+                                        .0
+                                        .iter()
+                                        .map(|value| {
+                                            CacheRoute::gen_key_bucket_from_hash(
+                                                shard,
+                                                &CacheRoute::hash(value),
+                                            )
+                                        })
+                                        .collect::<Vec<(String, String)>>(),
                                 };
 
                             key_tags.push(CacheRoute::gen_key_auth_from_hash(shard, &auth_hash));
@@ -146,12 +144,8 @@ impl CacheWrite {
     fn generate_chain_headers(headers: &Headers) -> String {
         headers
             .iter()
-            .filter(|header_view| {
-                HeaderJanitor::is_contextual(&header_view) == false
-            })
-            .map(|header_view| {
-                format!("{}: {}\n", header_view.name(), header_view.value_string())
-            })
+            .filter(|header_view| HeaderJanitor::is_contextual(&header_view) == false)
+            .map(|header_view| format!("{}: {}\n", header_view.name(), header_view.value_string()))
             .collect()
     }
 
@@ -180,19 +174,18 @@ mod tests {
     #[test]
     #[should_panic]
     fn it_fails_saving_cache() {
-        assert!(
-            CacheWrite::save(
-                "bloom:0:c:90d52bc6:f773d6f1".to_string(),
-                "90d52bc6:f773d6f1".to_string(),
-                "90d52bc6".to_string(),
-                0,
-                Method::Get,
-                HttpVersion::Http11,
-                StatusCode::Ok,
-                Headers::new(),
-                Body::empty(),
-            ).poll()
-                .is_err()
-        );
+        assert!(CacheWrite::save(
+            "bloom:0:c:90d52bc6:f773d6f1".to_string(),
+            "90d52bc6:f773d6f1".to_string(),
+            "90d52bc6".to_string(),
+            0,
+            Method::Get,
+            HttpVersion::Http11,
+            StatusCode::Ok,
+            Headers::new(),
+            Body::empty(),
+        )
+        .poll()
+        .is_err());
     }
 }

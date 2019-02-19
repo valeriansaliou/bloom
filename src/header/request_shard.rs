@@ -4,9 +4,9 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use std::fmt;
+use hyper::header::{parsing, Formatter, Header, Raw};
 use hyper::Result;
-use hyper::header::{Header, Raw, Formatter, parsing};
+use std::fmt;
 
 #[derive(Clone)]
 pub struct HeaderRequestBloomRequestShard(pub u8);

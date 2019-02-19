@@ -4,13 +4,13 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::Method;
 use futures::future::{self, Future};
+use hyper::Method;
 
 use super::check::CacheCheck;
 
-use crate::APP_CONF;
 use crate::APP_CACHE_STORE;
+use crate::APP_CONF;
 
 pub struct CacheRead;
 
@@ -34,12 +34,14 @@ impl CacheRead {
             Box::new(
                 APP_CACHE_STORE
                     .get_meta(shard, key.to_string())
-                    .and_then(|acquired| if let Some(result) = acquired {
-                        future::ok(Ok(result))
-                    } else {
-                        info!("acquired empty meta value from cache");
+                    .and_then(|acquired| {
+                        if let Some(result) = acquired {
+                            future::ok(Ok(result))
+                        } else {
+                            info!("acquired empty meta value from cache");
 
-                        future::ok(Err(CacheReadError::Empty))
+                            future::ok(Err(CacheReadError::Empty))
+                        }
                     })
                     .or_else(|err| {
                         error!("could not acquire meta value from cache because: {:?}", err);
@@ -58,12 +60,14 @@ impl CacheRead {
         Box::new(
             APP_CACHE_STORE
                 .get_body(key.to_string())
-                .and_then(|acquired| if let Some(result) = acquired {
-                    future::ok(Ok(Some(result)))
-                } else {
-                    info!("acquired empty body value from cache");
+                .and_then(|acquired| {
+                    if let Some(result) = acquired {
+                        future::ok(Ok(Some(result)))
+                    } else {
+                        info!("acquired empty body value from cache");
 
-                    future::ok(Err(CacheReadError::Empty))
+                        future::ok(Err(CacheReadError::Empty))
+                    }
                 })
                 .or_else(|err| {
                     error!("could not acquire body value from cache because: {:?}", err);
@@ -91,10 +95,8 @@ mod tests {
     #[test]
     #[should_panic]
     fn it_fails_acquiring_cache_body() {
-        assert!(
-            CacheRead::acquire_body("bloom:0:c:90d52bc6:f773d6f1")
-                .poll()
-                .is_err()
-        );
+        assert!(CacheRead::acquire_body("bloom:0:c:90d52bc6:f773d6f1")
+            .poll()
+            .is_err());
     }
 }

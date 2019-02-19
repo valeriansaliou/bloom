@@ -4,12 +4,12 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use std::thread;
-use std::process;
 use std::net::TcpListener;
+use std::process;
+use std::thread;
 
 use super::handle::ControlHandle;
-use crate::{APP_CONF, THREAD_NAME_CONTROL_MASTER, THREAD_NAME_CONTROL_CLIENT};
+use crate::{APP_CONF, THREAD_NAME_CONTROL_CLIENT, THREAD_NAME_CONTROL_MASTER};
 
 pub struct ControlListenBuilder;
 pub struct ControlListen;

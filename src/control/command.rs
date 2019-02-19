@@ -103,9 +103,7 @@ impl ControlCommand {
             Err(err) => {
                 warn!(
                     "could not flush {:?} for pattern: {} because: {:?}",
-                    variant,
-                    pattern,
-                    err
+                    variant, pattern, err
                 );
 
                 Err(None)

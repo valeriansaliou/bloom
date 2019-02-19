@@ -12,39 +12,39 @@ extern crate clap;
 extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
-extern crate toml;
-extern crate httparse;
-extern crate hyper;
-extern crate tokio_core;
-extern crate farmhash;
 extern crate brotli;
+extern crate farmhash;
 extern crate futures;
 extern crate futures_cpupool;
-extern crate rand;
+extern crate httparse;
+extern crate hyper;
 extern crate r2d2;
 extern crate r2d2_redis;
+extern crate rand;
 extern crate redis;
+extern crate tokio_core;
+extern crate toml;
 extern crate unicase;
 
+mod cache;
 mod config;
+mod control;
 mod header;
 mod proxy;
-mod cache;
-mod control;
 mod server;
 
-use std::thread;
 use std::ops::Deref;
-use std::time::Duration;
 use std::str::FromStr;
+use std::thread;
+use std::time::Duration;
 
 use clap::{App, Arg};
 use log::LevelFilter;
 
+use cache::store::{CacheStore, CacheStoreBuilder};
 use config::config::Config;
 use config::logger::ConfigLogger;
 use config::reader::ConfigReader;
-use cache::store::{CacheStore, CacheStoreBuilder};
 use control::listen::ControlListenBuilder;
 use server::listen::ServerListenBuilder;
 
@@ -80,7 +80,9 @@ fn make_app_args() -> AppArgs {
         .get_matches();
 
     // Generate owned app arguments
-    AppArgs { config: String::from(matches.value_of("config").expect("invalid config value")) }
+    AppArgs {
+        config: String::from(matches.value_of("config").expect("invalid config value")),
+    }
 }
 
 fn ensure_states() {
@@ -112,9 +114,9 @@ fn spawn_worker() {
 }
 
 fn main() {
-    let _logger = ConfigLogger::init(LevelFilter::from_str(&APP_CONF.server.log_level).expect(
-        "invalid log level",
-    ));
+    let _logger = ConfigLogger::init(
+        LevelFilter::from_str(&APP_CONF.server.log_level).expect("invalid log level"),
+    );
 
     info!("starting up");
 

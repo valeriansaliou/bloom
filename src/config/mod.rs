@@ -6,6 +6,6 @@
 
 mod defaults;
 
-pub mod logger;
 pub mod config;
+pub mod logger;
 pub mod reader;

@@ -6,18 +6,18 @@
 
 use futures::future::{self, Future};
 use httparse;
-use hyper::{Error, Method, StatusCode, Uri, HttpVersion, Headers, Body};
-use hyper::header::{Origin, IfNoneMatch, ETag, EntityTag};
+use hyper::header::{ETag, EntityTag, IfNoneMatch, Origin};
 use hyper::server::{Request, Response};
+use hyper::{Body, Error, Headers, HttpVersion, Method, StatusCode, Uri};
 
 use super::header::ProxyHeader;
 use super::tunnel::ProxyTunnel;
+use crate::cache::read::CacheRead;
+use crate::cache::route::CacheRoute;
+use crate::cache::write::CacheWrite;
 use crate::header::janitor::HeaderJanitor;
 use crate::header::request_shard::HeaderRequestBloomRequestShard;
 use crate::header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
-use crate::cache::read::CacheRead;
-use crate::cache::write::CacheWrite;
-use crate::cache::route::CacheRoute;
 use crate::LINE_FEED;
 
 pub struct ProxyServe;
@@ -35,8 +35,13 @@ impl ProxyServe {
 
         if req.headers().has::<HeaderRequestBloomRequestShard>() == true {
             match *req.method() {
-                Method::Options | Method::Head | Method::Get | Method::Post | Method::Patch |
-                Method::Put | Method::Delete => Self::accept(req),
+                Method::Options
+                | Method::Head
+                | Method::Get
+                | Method::Post
+                | Method::Patch
+                | Method::Put
+                | Method::Delete => Self::accept(req),
                 _ => Self::reject(req, StatusCode::MethodNotAllowed),
             }
         } else {
@@ -78,34 +83,13 @@ impl ProxyServe {
             Self::fetch_cached_data(shard, &ns, &method, &headers)
                 .or_else(|_| Err(Error::Incomplete))
                 .and_then(move |result| match result {
-                    Ok(value) => {
-                        Self::dispatch_cached(
-                            shard,
-                            ns,
-                            ns_mask,
-                            auth_hash,
-                            method,
-                            uri,
-                            version,
-                            headers,
-                            body,
-                            value.0,
-                            value.1,
-                        )
-                    }
-                    Err(_) => {
-                        Self::tunnel_over_proxy(
-                            shard,
-                            ns,
-                            ns_mask,
-                            auth_hash,
-                            method,
-                            uri,
-                            version,
-                            headers,
-                            body,
-                        )
-                    }
+                    Ok(value) => Self::dispatch_cached(
+                        shard, ns, ns_mask, auth_hash, method, uri, version, headers, body,
+                        value.0, value.1,
+                    ),
+                    Err(_) => Self::tunnel_over_proxy(
+                        shard, ns, ns_mask, auth_hash, method, uri, version, headers, body,
+                    ),
                 }),
         )
     }
@@ -127,34 +111,30 @@ impl ProxyServe {
                         Ok(fingerprint) => {
                             debug!(
                                 "got fingerprint for cached data = {} on ns = {}",
-                                &fingerprint,
-                                &ns_string
+                                &fingerprint, &ns_string
                             );
 
                             // Check if not modified?
                             let isnt_modified = match header_if_none_match {
-                                Some(ref req_if_none_match) => {
-                                    match req_if_none_match {
-                                        &IfNoneMatch::Any => true,
-                                        &IfNoneMatch::Items(ref req_etags) => {
-                                            if let Some(req_etag) = req_etags.first() {
-                                                req_etag.weak_eq(&EntityTag::new(
-                                                    false,
-                                                    fingerprint.to_owned(),
-                                                ))
-                                            } else {
-                                                false
-                                            }
+                                Some(ref req_if_none_match) => match req_if_none_match {
+                                    &IfNoneMatch::Any => true,
+                                    &IfNoneMatch::Items(ref req_etags) => {
+                                        if let Some(req_etag) = req_etags.first() {
+                                            req_etag.weak_eq(&EntityTag::new(
+                                                false,
+                                                fingerprint.to_owned(),
+                                            ))
+                                        } else {
+                                            false
                                         }
                                     }
-                                }
+                                },
                                 _ => false,
                             };
 
                             debug!(
                                 "got not modified status for cached data = {} on ns = {}",
-                                &isnt_modified,
-                                &ns_string
+                                &isnt_modified, &ns_string
                             );
 
                             Self::fetch_cached_data_body(ns_string, fingerprint, !isnt_modified)
@@ -186,9 +166,9 @@ impl ProxyServe {
         Box::new(
             body_fetcher
                 .and_then(|body_result| {
-                    body_result.or_else(|_| Err(())).map(|body| {
-                        Ok((fingerprint, body))
-                    })
+                    body_result
+                        .or_else(|_| Err(()))
+                        .map(|body| Ok((fingerprint, body)))
                 })
                 .or_else(|_| {
                     error!("failed fetching cached data body");
@@ -230,16 +210,14 @@ impl ProxyServe {
                     )
                 })
                 .and_then(move |mut result| match result.body {
-                    Ok(body_string) => {
-                        Self::dispatch_fetched(
-                            &method_success,
-                            &result.status,
-                            result.headers,
-                            HeaderBloomStatusValue::Miss,
-                            body_string,
-                            result.fingerprint,
-                        )
-                    }
+                    Ok(body_string) => Self::dispatch_fetched(
+                        &method_success,
+                        &result.status,
+                        result.headers,
+                        HeaderBloomStatusValue::Miss,
+                        body_string,
+                        result.fingerprint,
+                    ),
                     Err(body_string_values) => {
                         match body_string_values {
                             Some(body_string) => {
@@ -307,21 +285,18 @@ impl ProxyServe {
                     let mut headers = Headers::new();
 
                     for header in res.headers {
-                        if let (Ok(header_name), Ok(header_value)) =
-                            (
-                                String::from_utf8(Vec::from(header.name)),
-                                String::from_utf8(Vec::from(header.value)),
-                            )
-                        {
+                        if let (Ok(header_name), Ok(header_value)) = (
+                            String::from_utf8(Vec::from(header.name)),
+                            String::from_utf8(Vec::from(header.value)),
+                        ) {
                             headers.set_raw(header_name, header_value);
                         }
                     }
 
                     ProxyHeader::set_etag(&mut headers, Self::fingerprint_etag(res_fingerprint));
 
-                    headers.set::<HeaderBloomStatus>(
-                        HeaderBloomStatus(HeaderBloomStatusValue::Hit),
-                    );
+                    headers
+                        .set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
                     // Serve cached response
                     Self::respond(&method, status, headers, res_body_string)

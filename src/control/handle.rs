@@ -4,16 +4,16 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use std::str;
-use std::io::{Read, Write, ErrorKind};
-use std::result::Result;
-use std::net::TcpStream;
-use std::time::Duration;
-use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
+use std::io::{ErrorKind, Read, Write};
+use std::net::TcpStream;
+use std::result::Result;
+use std::str;
+use std::time::Duration;
 
-use super::command::ControlCommandResponse;
 use super::command::ControlCommand;
+use super::command::ControlCommandResponse;
 use super::command::COMMAND_SIZE;
 use crate::cache::route::CacheRoute;
 use crate::cache::route::ROUTE_HASH_SIZE;
@@ -50,8 +50,11 @@ static BUFFER_LINE_SEPARATOR: u8 = '\n' as u8;
 pub type ControlShard = u8;
 
 lazy_static! {
-    static ref CONNECTED_BANNER: String = format!("CONNECTED <{} v{}>",
-        env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+    static ref CONNECTED_BANNER: String = format!(
+        "CONNECTED <{} v{}>",
+        env!("CARGO_PKG_NAME"),
+        env!("CARGO_PKG_VERSION")
+    );
 }
 
 impl ControlHandleError {
@@ -114,8 +117,8 @@ impl ControlHandle {
 
                                     for line in buffer_split {
                                         if line.is_empty() == false {
-                                            if Self::on_message(&mut shard, &stream, line) ==
-                                                ControlHandleMessageResult::Close
+                                            if Self::on_message(&mut shard, &stream, line)
+                                                == ControlHandleMessageResult::Close
                                             {
                                                 // Should close?
                                                 break 'handler;
@@ -151,16 +154,12 @@ impl ControlHandle {
 
         assert!(stream.set_nodelay(true).is_ok());
 
-        assert!(
-            stream
-                .set_read_timeout(Some(Duration::new(tcp_timeout, 0)))
-                .is_ok()
-        );
-        assert!(
-            stream
-                .set_write_timeout(Some(Duration::new(tcp_timeout, 0)))
-                .is_ok()
-        );
+        assert!(stream
+            .set_read_timeout(Some(Duration::new(tcp_timeout, 0)))
+            .is_ok());
+        assert!(stream
+            .set_write_timeout(Some(Duration::new(tcp_timeout, 0)))
+            .is_ok());
     }
 
     fn ensure_hasher(mut stream: &TcpStream) -> Result<Option<()>, ControlHandleError> {
@@ -174,8 +173,7 @@ impl ControlHandle {
 
         debug!(
             "sent hasher request: {} and expecting hash: {}",
-            test_value,
-            test_hash
+            test_value, test_hash
         );
 
         loop {
@@ -194,8 +192,7 @@ impl ControlHandle {
 
                         debug!(
                             "got hasher response: {} and expecting: {}",
-                            res_hash,
-                            test_hash
+                            res_hash, test_hash
                         );
 
                         // Validate hash
@@ -234,21 +231,19 @@ impl ControlHandle {
         let mut result = ControlHandleMessageResult::Continue;
 
         let response = match Self::handle_message(shard, &message) {
-            Ok(resp) => {
-                match resp {
-                    ControlCommandResponse::Ok |
-                    ControlCommandResponse::Pong |
-                    ControlCommandResponse::Ended |
-                    ControlCommandResponse::Nil |
-                    ControlCommandResponse::Void => {
-                        if resp == ControlCommandResponse::Ended {
-                            result = ControlHandleMessageResult::Close;
-                        }
-                        resp.to_str()
+            Ok(resp) => match resp {
+                ControlCommandResponse::Ok
+                | ControlCommandResponse::Pong
+                | ControlCommandResponse::Ended
+                | ControlCommandResponse::Nil
+                | ControlCommandResponse::Void => {
+                    if resp == ControlCommandResponse::Ended {
+                        result = ControlHandleMessageResult::Close;
                     }
-                    _ => ControlCommandResponse::Err.to_str(),
+                    resp.to_str()
                 }
-            }
+                _ => ControlCommandResponse::Err.to_str(),
+            },
             _ => ControlCommandResponse::Err.to_str(),
         };
 

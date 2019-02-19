@@ -4,9 +4,9 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::{Method, HttpVersion};
-use hyper::header::Origin;
 use farmhash;
+use hyper::header::Origin;
+use hyper::{HttpVersion, Method};
 
 pub struct CacheRoute;
 
@@ -46,8 +46,7 @@ impl CacheRoute {
         query: Option<&str>,
         origin: Option<&Origin>,
     ) -> (String, String) {
-        let bucket_raw =
-            format!(
+        let bucket_raw = format!(
             "[{}|{}|{}|{}|{}]",
             version,
             method,

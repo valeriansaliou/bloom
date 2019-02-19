@@ -4,7 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::{Method, StatusCode, Headers};
+use hyper::{Headers, Method, StatusCode};
 
 use crate::header::response_ignore::HeaderResponseBloomResponseIgnore;
 
@@ -16,8 +16,9 @@ impl CacheCheck {
     }
 
     pub fn from_response(method: &Method, status: &StatusCode, headers: &Headers) -> bool {
-        Self::is_cacheable_method(method) == true && Self::is_cacheable_status(status) == true &&
-            Self::is_cacheable_response(headers) == true
+        Self::is_cacheable_method(method) == true
+            && Self::is_cacheable_status(status) == true
+            && Self::is_cacheable_response(headers) == true
     }
 
     fn is_cacheable_method(method: &Method) -> bool {
@@ -29,35 +30,35 @@ impl CacheCheck {
 
     fn is_cacheable_status(status: &StatusCode) -> bool {
         match *status {
-            StatusCode::Ok |
-            StatusCode::NonAuthoritativeInformation |
-            StatusCode::NoContent |
-            StatusCode::ResetContent |
-            StatusCode::PartialContent |
-            StatusCode::MultiStatus |
-            StatusCode::AlreadyReported |
-            StatusCode::MultipleChoices |
-            StatusCode::MovedPermanently |
-            StatusCode::Found |
-            StatusCode::SeeOther |
-            StatusCode::PermanentRedirect |
-            StatusCode::Unauthorized |
-            StatusCode::PaymentRequired |
-            StatusCode::Forbidden |
-            StatusCode::NotFound |
-            StatusCode::MethodNotAllowed |
-            StatusCode::Gone |
-            StatusCode::UriTooLong |
-            StatusCode::UnsupportedMediaType |
-            StatusCode::RangeNotSatisfiable |
-            StatusCode::ExpectationFailed |
-            StatusCode::ImATeapot |
-            StatusCode::Locked |
-            StatusCode::FailedDependency |
-            StatusCode::PreconditionRequired |
-            StatusCode::RequestHeaderFieldsTooLarge |
-            StatusCode::NotImplemented |
-            StatusCode::NotExtended => true,
+            StatusCode::Ok
+            | StatusCode::NonAuthoritativeInformation
+            | StatusCode::NoContent
+            | StatusCode::ResetContent
+            | StatusCode::PartialContent
+            | StatusCode::MultiStatus
+            | StatusCode::AlreadyReported
+            | StatusCode::MultipleChoices
+            | StatusCode::MovedPermanently
+            | StatusCode::Found
+            | StatusCode::SeeOther
+            | StatusCode::PermanentRedirect
+            | StatusCode::Unauthorized
+            | StatusCode::PaymentRequired
+            | StatusCode::Forbidden
+            | StatusCode::NotFound
+            | StatusCode::MethodNotAllowed
+            | StatusCode::Gone
+            | StatusCode::UriTooLong
+            | StatusCode::UnsupportedMediaType
+            | StatusCode::RangeNotSatisfiable
+            | StatusCode::ExpectationFailed
+            | StatusCode::ImATeapot
+            | StatusCode::Locked
+            | StatusCode::FailedDependency
+            | StatusCode::PreconditionRequired
+            | StatusCode::RequestHeaderFieldsTooLarge
+            | StatusCode::NotImplemented
+            | StatusCode::NotExtended => true,
             _ => false,
         }
     }

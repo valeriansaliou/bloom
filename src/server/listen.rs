@@ -4,9 +4,9 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use hyper::server::Http;
 use std::cell::Cell;
 use std::sync::{Arc, Mutex};
-use hyper::server::Http;
 use tokio_core::reactor::Remote;
 
 use super::handle::ServerRequestHandle;
@@ -38,12 +38,10 @@ impl ServerListen {
             .expect("error binding server");
 
         // Assign remote, used later on by the proxy client
-        LISTEN_REMOTE.lock().unwrap().set(Some(
-            server
-                .handle()
-                .remote()
-                .to_owned(),
-        ));
+        LISTEN_REMOTE
+            .lock()
+            .unwrap()
+            .set(Some(server.handle().remote().to_owned()));
 
         info!("listening on http://{}", server.local_addr().unwrap());
 

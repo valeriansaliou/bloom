@@ -5,7 +5,7 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use hyper;
-use hyper::server::{Service, Request, Response};
+use hyper::server::{Request, Response, Service};
 
 use crate::proxy::serve::{ProxyServe, ProxyServeResponseFuture};
 

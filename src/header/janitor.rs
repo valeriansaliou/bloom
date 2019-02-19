@@ -4,8 +4,8 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::{header, Headers};
 use hyper::header::HeaderView;
+use hyper::{header, Headers};
 
 use super::response_buckets::HeaderResponseBloomResponseBuckets;
 use super::response_ignore::HeaderResponseBloomResponseIgnore;
@@ -20,8 +20,7 @@ impl HeaderJanitor {
 
         for header_view in headers.iter() {
             // Do not forward contextual and internal headers (ie. 'Bloom-Response-*' headers)
-            if Self::is_contextual(&header_view) == true ||
-                Self::is_internal(&header_view) == true
+            if Self::is_contextual(&header_view) == true || Self::is_internal(&header_view) == true
             {
                 headers_remove.push(String::from(header_view.name()));
             }
@@ -34,13 +33,15 @@ impl HeaderJanitor {
     }
 
     pub fn is_contextual(header: &HeaderView) -> bool {
-        header.is::<header::Connection>() || header.is::<header::Date>() ||
-            header.is::<header::Upgrade>() || header.is::<header::Cookie>()
+        header.is::<header::Connection>()
+            || header.is::<header::Date>()
+            || header.is::<header::Upgrade>()
+            || header.is::<header::Cookie>()
     }
 
     pub fn is_internal(header: &HeaderView) -> bool {
-        header.is::<HeaderResponseBloomResponseBuckets>() ||
-            header.is::<HeaderResponseBloomResponseIgnore>() ||
-            header.is::<HeaderResponseBloomResponseTTL>()
+        header.is::<HeaderResponseBloomResponseBuckets>()
+            || header.is::<HeaderResponseBloomResponseIgnore>()
+            || header.is::<HeaderResponseBloomResponseTTL>()
     }
 }

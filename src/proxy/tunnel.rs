@@ -4,10 +4,10 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use std::time::Duration;
 use futures::{future, Future};
-use hyper::{Error, Client, Method, Uri, Headers, Body, Request};
 use hyper::client::{HttpConnector, Response};
+use hyper::{Body, Client, Error, Headers, Method, Request, Uri};
+use std::time::Duration;
 
 use crate::server::listen::LISTEN_REMOTE;
 use crate::APP_CONF;
@@ -31,35 +31,23 @@ fn make_client() -> Client<HttpConnector> {
     Client::configure()
         .keep_alive(true)
         .keep_alive_timeout(Some(Duration::from_secs(CLIENT_KEEP_ALIVE_TIMEOUT_SECONDS)))
-        .build(&LISTEN_REMOTE
-            .lock()
-            .unwrap()
-            .get_mut()
-            .to_owned()
-            .unwrap()
-            .handle()
-            .unwrap())
+        .build(
+            &LISTEN_REMOTE
+                .lock()
+                .unwrap()
+                .get_mut()
+                .to_owned()
+                .unwrap()
+                .handle()
+                .unwrap(),
+        )
 }
 
 fn map_shards() -> [Option<Uri>; MAX_SHARDS as usize] {
     // Notice: this array cannot be initialized using the short format, as hyper::Uri doesnt \
     //   implement the Copy trait, hence the ugly hardcoded initialization vector w/ Nones.
     let mut shards = [
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
+        None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None,
     ];
 
@@ -73,10 +61,10 @@ fn map_shards() -> [Option<Uri>; MAX_SHARDS as usize] {
         shards[shard.shard as usize] = Some(
             format!(
                 "http://{}:{}",
-                APP_CONF.proxy.shard[0].host,
-                APP_CONF.proxy.shard[0].port
-            ).parse()
-                .expect("could not build shard uri"),
+                APP_CONF.proxy.shard[0].host, APP_CONF.proxy.shard[0].port
+            )
+            .parse()
+            .expect("could not build shard uri"),
         );
     }
 

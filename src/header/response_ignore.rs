@@ -4,9 +4,9 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
+use hyper::header::{Formatter, Header, Raw};
+use hyper::{Error, Result};
 use std::fmt;
-use hyper::{Result, Error};
-use hyper::header::{Header, Raw, Formatter};
 
 #[derive(Clone)]
 pub struct HeaderResponseBloomResponseIgnore();
