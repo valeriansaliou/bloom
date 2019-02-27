@@ -27,6 +27,8 @@ impl ControlListen {
             .spawn(move || {
                 match TcpListener::bind(APP_CONF.control.inet) {
                     Ok(listener) => {
+                        info!("listening on tcp://{}", APP_CONF.control.inet);
+
                         for stream in listener.incoming() {
                             match stream {
                                 Ok(stream) => {
@@ -47,8 +49,6 @@ impl ControlListen {
                                 }
                             }
                         }
-
-                        info!("listening on tcp://{}", APP_CONF.control.inet);
                     }
                     Err(err) => {
                         error!("error binding control listener: {}", err);
