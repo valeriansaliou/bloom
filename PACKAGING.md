@@ -5,17 +5,16 @@ This file contains quick reminders and notes on how to package Bloom.
 
 We consider here the packaging flow of Bloom version `1.0` for Debian, for target architecture `x86_64` (the steps are alike for `i686`):
 
-1. **How to setup Rustup Linux toolchain on MacOS:**
-    1. `brew install filosottile/musl-cross/musl-cross` (see: [FiloSottile/homebrew-musl-cross](https://github.com/FiloSottile/homebrew-musl-cross))
-    2. `rustup target add x86_64-unknown-linux-musl`
+1. **How to setup `rust-musl-builder` on MacOS:**
+    1. Follow setup instructions from: [rust-musl-builder](https://github.com/emk/rust-musl-builder)
 
 2. **How to bump Bloom version before a release:**
     1. Bump version in `Cargo.toml` to `1.0.0`
     2. Execute `cargo update` to bump `Cargo.lock`
     3. Bump Debian package version in `debian/rules` to `1.0`
 
-3. **How to build Bloom for Linux on macOS:**
-    1. `cargo build --target=x86_64-unknown-linux-musl --release`
+3. **How to build Bloom for Linux on MacOS:**
+    1. `rust-musl-builder cargo build --target=x86_64-unknown-linux-musl --release`
 
 4. **How to package built binary and release it on GitHub:**
     1. `mkdir bloom`
@@ -40,13 +39,3 @@ We consider here the packaging flow of Bloom version `1.0` for Debian, for targe
     1. Publish package on Crates: `cargo publish`
 
 Notice: upon packaging `x86_64` becomes `amd64` and `i686` becomes `i386`.
-
-Cargo configuration for custom Linux linkers (`~/.cargo/config`):
-
-```toml
-[target.x86_64-unknown-linux-musl]
-linker = "x86_64-linux-musl-gcc"
-
-[target.i686-unknown-linux-musl]
-linker = "i486-linux-musl-gcc"
-```
