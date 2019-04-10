@@ -16,6 +16,7 @@ We consider here the packaging flow of Bloom version `1.0` for Debian, for targe
 
 3. **How to build Bloom for Linux on MacOS:**
     1. `rust-musl-builder-stable cargo build --target=x86_64-unknown-linux-musl --release`
+    2. `rust-musl-builder-stable strip ./target/x86_64-unknown-linux-musl/release/bloom`
 
 4. **How to package built binary and release it on GitHub:**
     1. `mkdir bloom`
