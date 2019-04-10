@@ -7,6 +7,7 @@ We consider here the packaging flow of Bloom version `1.0` for Debian, for targe
 
 1. **How to setup `rust-musl-builder` on MacOS:**
     1. Follow setup instructions from: [rust-musl-builder](https://github.com/emk/rust-musl-builder)
+    2. Pull the stable Docker image: `docker pull ekidd/rust-musl-builder:stable`
 
 2. **How to bump Bloom version before a release:**
     1. Bump version in `Cargo.toml` to `1.0.0`
@@ -14,7 +15,7 @@ We consider here the packaging flow of Bloom version `1.0` for Debian, for targe
     3. Bump Debian package version in `debian/rules` to `1.0`
 
 3. **How to build Bloom for Linux on MacOS:**
-    1. `rust-musl-builder cargo build --target=x86_64-unknown-linux-musl --release`
+    1. `rust-musl-builder-stable cargo build --target=x86_64-unknown-linux-musl --release`
 
 4. **How to package built binary and release it on GitHub:**
     1. `mkdir bloom`
