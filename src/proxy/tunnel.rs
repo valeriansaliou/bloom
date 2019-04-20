@@ -85,8 +85,8 @@ impl ProxyTunnel {
                 Some(ref shard_uri) => {
                     let mut tunnel_uri = format!(
                         "{}://{}{}",
-                        shard_uri.scheme().unwrap_or(""),
-                        shard_uri.authority().unwrap_or(""),
+                        shard_uri.scheme().unwrap(),
+                        shard_uri.authority().unwrap(),
                         uri.path()
                     );
 
