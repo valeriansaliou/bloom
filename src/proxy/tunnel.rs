@@ -83,7 +83,12 @@ impl ProxyTunnel {
             // Route to target shard
             match SHARD_REGISTER[shard as usize] {
                 Some(ref shard_uri) => {
-                    let mut tunnel_uri = format!("{}{}", shard_uri, uri.path());
+                    let mut tunnel_uri = format!(
+                        "{}://{}{}",
+                        shard_uri.scheme().unwrap_or(""),
+                        shard_uri.authority().unwrap_or(""),
+                        uri.path()
+                    );
 
                     if let Some(query) = uri.query() {
                         tunnel_uri.push_str("?");
