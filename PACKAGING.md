@@ -32,12 +32,12 @@ We consider here the packaging flow of Bloom version `1.0` for Debian, for targe
     4. `git push origin 1.0:1.0`
     5. Quickly upload the archive files as GitHub releases before the build triggers, named as eg. `v1.0-amd64.tar.gz`
 
-6. **How to update Docker:**
+6. **How to update Crates:**
+    1. Publish package on Crates: `cargo publish`
+
+7. **How to update Docker:**
     1. `docker build .`
     2. `docker tag [DOCKER_IMAGE_ID] valeriansaliou/bloom:v1.0.0` (insert the built image identifier)
     3. `docker push valeriansaliou/bloom:v1.0.0`
-
-7. **How to update Crates:**
-    1. Publish package on Crates: `cargo publish`
 
 Notice: upon packaging `x86_64` becomes `amd64` and `i686` becomes `i386`.
