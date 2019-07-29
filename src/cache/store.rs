@@ -107,7 +107,7 @@ impl CacheStore {
         let pool = self.pool.to_owned();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
-            get_cache_store_client!(pool, CacheStoreError::Disconnected, client {
+            get_cache_store_client_try!(pool, CacheStoreError::Disconnected, client {
                 match (*client).hget::<_, _, (Value, Value)>(key, (KEY_FINGERPRINT, KEY_TAGS)) {
                     Ok(value) => {
                         match value {
@@ -187,7 +187,7 @@ impl CacheStore {
         let pool = self.pool.to_owned();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
-            get_cache_store_client!(pool, CacheStoreError::Disconnected, client {
+            get_cache_store_client_try!(pool, CacheStoreError::Disconnected, client {
                 match (*client).hget::<_, _, Value>(key, KEY_BODY) {
                     Ok(value) => {
                         match value {
@@ -257,7 +257,7 @@ impl CacheStore {
         let pool = self.pool.to_owned();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
-            Ok(get_cache_store_client!(
+            Ok(get_cache_store_client_try!(
                 pool,
                 (CacheStoreError::Disconnected, fingerprint),
 
@@ -351,7 +351,7 @@ impl CacheStore {
         shard: u8,
         key_tag: &str,
     ) -> CachePurgeResult {
-        get_cache_store_client!(self.pool, CacheStoreError::Disconnected, client {
+        get_cache_store_client_wait!(self.pool, CacheStoreError::Disconnected, client {
             // Invoke keyspace cleanup script for key tag
             let result = redis::Script::new(variant.get_script())
                 .arg(ROUTE_PREFIX)
