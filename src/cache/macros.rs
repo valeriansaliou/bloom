@@ -11,7 +11,7 @@ macro_rules! get_cache_store_client {
         //   performing as many pool 'get' as the pool size would incur a synchronous locking, \
         //   which would wait forever until the Redis connection is restored (this is dangerous).
         match $pool.try_get() {
-            Some($client) => $code,
+            Some(mut $client) => $code,
             None => {
                 error!("failed getting a cache store client from pool");
 

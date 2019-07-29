@@ -142,7 +142,7 @@ impl CacheStore {
                                             let tags_count = tags.len();
 
                                             match redis::cmd("TOUCH").arg(tags)
-                                                .query::<usize>(&*client) {
+                                                .query::<usize>(&mut *client) {
                                                 Ok(bump_count) => {
                                                     // Partial bump count? Consider cache as \
                                                     //   non-existing
@@ -326,7 +326,7 @@ impl CacheStore {
                             }
 
                             // Bucket (MULTI operation for main data + bucket marker)
-                            match pipeline.query::<()>(&*client) {
+                            match pipeline.query::<()>(&mut *client) {
                                 Ok(_) => Ok(fingerprint),
                                 Err(err) => {
                                     error!("got store error: {}", err);
@@ -357,7 +357,7 @@ impl CacheStore {
                 .arg(ROUTE_PREFIX)
                 .arg(shard)
                 .arg(key_tag)
-                .invoke::<()>(&*client);
+                .invoke::<()>(&mut *client);
 
             result
                 .and(Ok(()))
