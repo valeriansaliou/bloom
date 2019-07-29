@@ -6,9 +6,17 @@
 
 macro_rules! get_cache_store_client {
     ($pool:expr, $error:expr, $client:ident $code:block) => {
-        match $pool.get() {
-            Ok($client) => $code,
-            _ => Err($error),
+        // In the event of a Redis failure, 'try_get' allows a full pass-through to be performed, \
+        //   thus ensuring service continuity with degraded performance. If 'get' was used there, \
+        //   performing as many pool 'get' as the pool size would incur a synchronous locking, \
+        //   which would wait forever until the Redis connection is restored (this is dangerous).
+        match $pool.try_get() {
+            Some($client) => $code,
+            None => {
+                error!("failed getting a cache store client from pool");
+
+                Err($error)
+            }
         }
     };
 }
