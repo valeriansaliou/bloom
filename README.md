@@ -11,7 +11,7 @@ Bloom relies on `redis`, [configured as a cache](https://github.com/valeriansali
 
 **Important: Bloom works great if your API implements REST conventions. Your API needs to use HTTP read methods, namely `GET`, `HEAD`, `OPTIONS` solely as read methods (do not use HTTP GET parameters as a way to update data).**
 
-_Tested at Rust version: `rustc 1.35.0-nightly (e3428db7c 2019-03-31)`_
+_Tested at Rust version: `rustc 1.35.0-nightly (aa99abeb2 2019-04-14)`_
 
 **🇫🇷 Crafted in Brest, France.**
 
@@ -103,13 +103,13 @@ You might find it convenient to run Bloom via Docker. You can find the pre-built
 First, pull the `valeriansaliou/bloom` image:
 
 ```bash
-docker pull valeriansaliou/bloom:v1.26.0
+docker pull valeriansaliou/bloom:v1.27.0
 ```
 
 Then, seed it a configuration file and run it (replace `/path/to/your/bloom/config.cfg` with the path to your configuration file):
 
 ```bash
-docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.26.0
+docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.27.0
 ```
 
 In the configuration file, ensure that:
