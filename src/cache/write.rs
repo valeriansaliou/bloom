@@ -25,7 +25,7 @@ pub struct CacheWriteResult {
     pub headers: Headers,
 }
 
-pub type CacheWriteResultFuture = Box<Future<Item = CacheWriteResult, Error = Error>>;
+pub type CacheWriteResultFuture = Box<dyn Future<Item = CacheWriteResult, Error = Error>>;
 
 impl CacheWrite {
     pub fn save(

@@ -25,9 +25,9 @@ pub struct ProxyServe;
 const CACHED_PARSE_MAX_HEADERS: usize = 100;
 
 type ProxyServeResult = Result<(String, Option<String>), ()>;
-type ProxyServeResultFuture = Box<Future<Item = ProxyServeResult, Error = ()>>;
+type ProxyServeResultFuture = Box<dyn Future<Item = ProxyServeResult, Error = ()>>;
 
-pub type ProxyServeResponseFuture = Box<Future<Item = Response, Error = Error>>;
+pub type ProxyServeResponseFuture = Box<dyn Future<Item = Response, Error = Error>>;
 
 impl ProxyServe {
     pub fn handle(req: Request) -> ProxyServeResponseFuture {

@@ -25,7 +25,7 @@ thread_local! {
 
 pub struct ProxyTunnel;
 
-pub type ProxyTunnelFuture = Box<Future<Item = Response, Error = Error>>;
+pub type ProxyTunnelFuture = Box<dyn Future<Item = Response, Error = Error>>;
 
 fn make_client() -> Client<HttpConnector> {
     Client::configure()

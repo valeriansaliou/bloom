@@ -21,10 +21,10 @@ pub enum CacheReadError {
 }
 
 type CacheReadResult = Result<String, CacheReadError>;
-type CacheReadResultFuture = Box<Future<Item = CacheReadResult, Error = ()>>;
+type CacheReadResultFuture = Box<dyn Future<Item = CacheReadResult, Error = ()>>;
 
 type CacheReadOptionalResult = Result<Option<String>, CacheReadError>;
-type CacheReadOptionalResultFuture = Box<Future<Item = CacheReadOptionalResult, Error = ()>>;
+type CacheReadOptionalResultFuture = Box<dyn Future<Item = CacheReadOptionalResult, Error = ()>>;
 
 impl CacheRead {
     pub fn acquire_meta(shard: u8, key: &str, method: &Method) -> CacheReadResultFuture {
