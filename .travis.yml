@@ -4,7 +4,7 @@ services:
 
 language: rust
 rust:
-  - nightly
+  - stable
 
 cache: cargo
 
