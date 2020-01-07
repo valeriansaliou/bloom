@@ -222,7 +222,7 @@ Now that Bloom is running in front of your API and serving requests on behalf of
 
 Your API can send private HTTP headers in responses to Bloom, that are used by Bloom and removed from the response that is served to the request client (the `Bloom-Response-*` HTTP headers).
 
-_Note that your API should not serve responses in a compressed format. Please disable any Gzip or Brotli middleware on your application server, as Bloom will not be able to decode compressed response bodies. Compression of dynamic content should be handled by the load balancer._
+_Note that your API should not serve responses in a compressed format. Please disable any Gzip or Brotli middleware on your application server, as Bloom will not be able to decode compressed response bodies. Compression of dynamic content should be handled by the load balancer itself._
 
 **➡️ Do not cache response:**
 
