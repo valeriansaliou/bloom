@@ -67,7 +67,7 @@ lazy_static! {
 fn make_app_args() -> AppArgs {
     let matches = App::new(crate_name!())
         .version(crate_version!())
-        .author(crate_authors!("\n"))
+        .author(crate_authors!())
         .about(crate_description!())
         .arg(
             Arg::with_name("config")
