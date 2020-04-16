@@ -38,10 +38,9 @@ function release_for_architecture {
     final_tar="v$BLOOM_VERSION-$1.tar.gz"
 
     rm -rf ./bloom/ && \
-        docker run --rm -it -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder:stable cargo build --target=$2 --release && \
-        docker run --rm -it -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder:stable strip ./target/$2/release/bloom && \
+        RUSTFLAGS="-C link-arg=-s" cross build --target "$2" --release && \
         mkdir ./bloom && \
-        mv "target/$2/release/bloom" ./bloom/ && \
+        cp -p "target/$2/release/bloom" ./bloom/ && \
         cp ./config.cfg bloom/ && \
         tar -czvf "$final_tar" ./bloom && \
         rm -r ./bloom/
@@ -63,7 +62,9 @@ rc=0
 pushd "$BASE_DIR" > /dev/null
     echo "Executing release steps for Bloom v$BLOOM_VERSION..."
 
-    release_for_architecture "amd64" "x86_64-unknown-linux-musl"
+    release_for_architecture "x86_64" "x86_64-unknown-linux-musl" && \
+        release_for_architecture "i686" "i686-unknown-linux-musl" && \
+        release_for_architecture "armv7" "armv7-unknown-linux-musleabihf"
     rc=$?
 
     if [ $rc -eq 0 ]; then
