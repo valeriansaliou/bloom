@@ -59,12 +59,9 @@ fn map_shards() -> [Option<Uri>; MAX_SHARDS as usize] {
 
         // Store this shard
         shards[shard.shard as usize] = Some(
-            format!(
-                "http://{}:{}",
-                APP_CONF.proxy.shard[0].host, APP_CONF.proxy.shard[0].port
-            )
-            .parse()
-            .expect("could not build shard uri"),
+            format!("http://{}:{}", shard.host, shard.port)
+                .parse()
+                .expect("could not build shard uri"),
         );
     }
 
