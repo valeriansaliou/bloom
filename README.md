@@ -11,7 +11,7 @@ Bloom relies on `redis`, [configured as a cache](https://github.com/valeriansali
 
 **Important: Bloom works great if your API implements REST conventions. Your API needs to use HTTP read methods, namely `GET`, `HEAD`, `OPTIONS` solely as read methods (do not use HTTP GET parameters as a way to update data).**
 
-_Tested at Rust version: `rustc 1.40.0 (73528e339 2019-12-16)`_
+_Tested at Rust version: `rustc 1.43.0 (4fb7144ed 2020-04-20)`_
 
 **🇫🇷 Crafted in Brest, France.**
 

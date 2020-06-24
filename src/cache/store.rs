@@ -50,7 +50,7 @@ pub enum CachePurgeVariant {
 }
 
 type CacheReadResultFuture = Box<dyn Future<Item = Option<String>, Error = CacheStoreError>>;
-type CacheWriteResult = Result<(String), (CacheStoreError, String)>;
+type CacheWriteResult = Result<String, (CacheStoreError, String)>;
 type CacheWriteResultFuture = Box<dyn Future<Item = CacheWriteResult, Error = ()>>;
 type CachePurgeResult = Result<(), CacheStoreError>;
 
