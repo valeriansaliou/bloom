@@ -1,7 +1,7 @@
 Bloom
 =====
 
-[![Build Status](https://travis-ci.org/valeriansaliou/bloom.svg?branch=master)](https://travis-ci.org/valeriansaliou/bloom) [![Dependency Status](https://deps.rs/repo/github/valeriansaliou/bloom/status.svg)](https://deps.rs/repo/github/valeriansaliou/bloom) [![Buy Me A Coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg)](https://www.buymeacoffee.com/valeriansaliou)
+[![Build Status](https://travis-ci.org/valeriansaliou/bloom.svg?branch=master)](https://travis-ci.org/valeriansaliou/bloom) [![Buy Me A Coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg)](https://www.buymeacoffee.com/valeriansaliou)
 
 **Bloom is a REST API caching middleware, acting as a reverse proxy between your load balancers and your REST API workers.**
 
