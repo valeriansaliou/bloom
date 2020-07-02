@@ -294,12 +294,12 @@ By default, a cached response has no tag, thus it cannot be purged via Bloom Con
 
 Bloom provides [pre-built packages](https://packagecloud.io/valeriansaliou/bloom) for Debian-based systems (Debian, Ubuntu, etc.).
 
-**Important: Bloom only provides Debian 8 64 bits packages for now (Debian Jessie). You will still be able to use them on other Debian versions, as well as Ubuntu.**
+**Important: Bloom only provides Debian 8 64 bits packages for now (Debian Buster). You will still be able to use them on other Debian versions, as well as Ubuntu.**
 
-**1️⃣ Add the Bloom APT repository (eg. for Debian Jessie):**
+**1️⃣ Add the Bloom APT repository (eg. for Debian Buster):**
 
 ```bash
-echo "deb https://packagecloud.io/valeriansaliou/bloom/debian/ jessie main" > /etc/apt/sources.list.d/valeriansaliou_bloom.list
+echo "deb https://packagecloud.io/valeriansaliou/bloom/debian/ buster main" > /etc/apt/sources.list.d/valeriansaliou_bloom.list
 curl -L https://packagecloud.io/valeriansaliou/bloom/gpgkey 2> /dev/null | apt-key add - &>/dev/null
 apt-get update
 ```

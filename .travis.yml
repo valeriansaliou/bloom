@@ -10,7 +10,7 @@ cache: cargo
 
 env:
   matrix:
-    - OS=debian DIST=jessie ARCH=x86_64
+    - OS=debian DIST=buster ARCH=x86_64
 
 script:
   - git clone https://github.com/packpack/packpack.git packpack
