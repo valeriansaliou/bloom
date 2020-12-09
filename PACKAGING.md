@@ -15,7 +15,7 @@ We consider here the packaging flow of Bloom version `1.0.0` for Linux.
     2. Release all binaries: `./scripts/release_binaries.sh --version=1.0`
     3. Publish all the built archives on the [releases](https://github.com/valeriansaliou/bloom/releases) page on GitHub
 
-3. **How to trigger a Debian build from Travis CI:**
+3. **How to trigger a Debian build from GitHub Actions:**
     1. Commit your changes locally
     2. `git describe --always --long` eg. gives `8aca211` (copy this)
     3. `git tag -a 1.0` insert description eg. `1.0-0-8aca211` and save

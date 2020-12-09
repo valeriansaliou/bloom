@@ -11,10 +11,6 @@ keywords = ["proxy", "http", "api", "rest", "cache"]
 categories = ["caching", "web-programming"]
 authors = ["Valerian Saliou <valerian@valeriansaliou.name>"]
 
-[badges]
-travis-ci = { repository = "valeriansaliou/bloom", branch = "master" }
-coveralls = { repository = "valeriansaliou/bloom", branch = "master", service = "github" }
-
 [[bin]]
 name = "bloom"
 path = "src/main.rs"
