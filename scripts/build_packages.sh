@@ -8,34 +8,9 @@
 #  License: Mozilla Public License v2.0 (MPL v2.0)
 ##
 
-# Read arguments
-while [ "$1" != "" ]; do
-    argument_key=`echo $1 | awk -F= '{print $1}'`
-    argument_value=`echo $1 | awk -F= '{print $2}'`
-
-    case $argument_key in
-        -v | --version)
-            BLOOM_VERSION="$argument_value"
-            ;;
-        *)
-            echo "Unknown argument received: '$argument_key'"
-            exit 1
-            ;;
-    esac
-
-    shift
-done
-
-# Ensure release version is provided
-if [ -z "$BLOOM_VERSION" ]; then
-  echo "No Bloom release version was provided, please provide it using '--version'"
-
-  exit 1
-fi
-
 # Define build pipeline
 function build_for_target {
-    OS="$2" DIST="$3" ARCH="$1" VERSION="$BLOOM_VERSION" ./packpack/packpack
+    OS="$2" DIST="$3" ARCH="$1" ./packpack/packpack
     release_result=$?
 
     if [ $release_result -eq 0 ]; then
@@ -54,7 +29,7 @@ BASE_DIR="$ABSPATH/../"
 rc=0
 
 pushd "$BASE_DIR" > /dev/null
-    echo "Executing packages build steps for Bloom v$BLOOM_VERSION..."
+    echo "Executing packages build steps for Bloom..."
 
     # Initialize `packpack`
     rm -rf ./packpack && \
@@ -71,9 +46,9 @@ pushd "$BASE_DIR" > /dev/null
     rm -rf ./build ./packpack
 
     if [ $rc -eq 0 ]; then
-        echo "Success: Done executing packages build steps for Bloom v$BLOOM_VERSION"
+        echo "Success: Done executing packages build steps for Bloom"
     else
-        echo "Error: Failed executing packages build steps for Bloom v$BLOOM_VERSION"
+        echo "Error: Failed executing packages build steps for Bloom"
     fi
 popd > /dev/null
 

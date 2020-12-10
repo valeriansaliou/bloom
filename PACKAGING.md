@@ -15,9 +15,13 @@ We consider here the packaging flow of Bloom version `1.0.0` for Linux.
     2. Release all binaries: `./scripts/release_binaries.sh --version=1.0`
     3. Publish all the built archives on the [releases](https://github.com/valeriansaliou/bloom/releases) page on GitHub
 
-3. **How to build install packages from Bloom version:**
+3. **How to build install packages from latest Bloom version:**
     1. Ensure Docker is running, and that the target build archive is published on GitHub Releases
-    2. Build all packages: `./scripts/build_packages.sh --version=1.0`
+    2. Commit your changes locally
+    3. `git describe --always --long` eg. gives `8aca211` (copy this)
+    4. `git tag -a 1.0` insert description eg. `1.0-0-8aca211` and save
+    5. `git push origin 1.0:1.0`
+    6. Build all packages: `./scripts/build_packages.sh` (this will use the latest tag description)
 
 4. **How to update Bloom on Crates:**
     1. Publish package on Crates: `cargo publish --no-verify`
