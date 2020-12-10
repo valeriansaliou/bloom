@@ -15,12 +15,11 @@ We consider here the packaging flow of Bloom version `1.0.0` for Linux.
     2. Release all binaries: `./scripts/release_binaries.sh --version=1.0`
     3. Publish all the built archives on the [releases](https://github.com/valeriansaliou/bloom/releases) page on GitHub
 
-3. **How to trigger a Debian build from GitHub Actions:**
-    1. Commit your changes locally
-    2. `git describe --always --long` eg. gives `8aca211` (copy this)
-    3. `git tag -a 1.0` insert description eg. `1.0-0-8aca211` and save
-    4. `git push origin 1.0:1.0`
-    5. Quickly upload the archive files as GitHub releases before the build triggers, named as eg. `v1.0-amd64.tar.gz`
+3. **How build a Debian package from latest tag:**
+    1. Clone `packpack` locally: `git clone https://github.com/packpack/packpack.git packpack`
+    2. Run `packpack`: `./packpack/packpack`
+    3. Upload the archive built in `./build` to PackageCloud
+    4. Remove the `./packpack` and `./build` directories
 
 4. **How to update Bloom on Crates:**
     1. Publish package on Crates: `cargo publish --no-verify`
