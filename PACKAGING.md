@@ -15,11 +15,9 @@ We consider here the packaging flow of Bloom version `1.0.0` for Linux.
     2. Release all binaries: `./scripts/release_binaries.sh --version=1.0`
     3. Publish all the built archives on the [releases](https://github.com/valeriansaliou/bloom/releases) page on GitHub
 
-3. **How build a Debian package from latest tag:**
-    1. Clone `packpack` locally: `git clone https://github.com/packpack/packpack.git packpack`
-    2. Run `packpack`: `./packpack/packpack`
-    3. Upload the archive built in `./build` to PackageCloud
-    4. Remove the `./packpack` and `./build` directories
+3. **How to build install packages from Bloom version:**
+    1. Ensure Docker is running, and that the target build archive is published on GitHub Releases
+    2. Build all packages: `./scripts/build_packages.sh --version=1.0`
 
 4. **How to update Bloom on Crates:**
     1. Publish package on Crates: `cargo publish --no-verify`
