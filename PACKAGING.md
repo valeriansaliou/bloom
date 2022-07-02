@@ -13,7 +13,7 @@ We consider here the packaging flow of Bloom version `1.0.0` for Linux.
 2. **How to build Bloom, package it and release it on GitHub (multiple architectures):**
     1. Install the cross-compilation utility: `cargo install cross`
     2. Release all binaries: `./scripts/release_binaries.sh --version=1.0`
-    3. Publish all the built archives on the [releases](https://github.com/valeriansaliou/bloom/releases) page on GitHub
+    3. Publish all the built archives and their signatures on the [releases](https://github.com/valeriansaliou/bloom/releases) page on GitHub
 
 3. **How to build install packages from latest Bloom version:**
     1. Ensure Docker is running, and that the target build archive is published on GitHub Releases
