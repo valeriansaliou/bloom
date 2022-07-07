@@ -14,7 +14,8 @@ function build_for_target {
     release_result=$?
 
     if [ $release_result -eq 0 ]; then
-        mv ./build/*$4 ./
+        mkdir -p "./packages/$2_$3/"
+        mv ./build/*$4 "./packages/$2_$3/"
 
         echo "Result: Packaged architecture: $1 for OS: $2:$3 (*$4)"
     fi

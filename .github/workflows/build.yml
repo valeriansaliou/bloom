@@ -65,6 +65,13 @@ jobs:
       - name: Build packages
         run: ./scripts/build_packages.sh
 
+      - name: Push packages to Packagecloud
+        uses: faucetsdn/action-packagecloud-upload-debian-packages@v1
+        with:
+          path: ./packages
+          repo: ${{ secrets.PACKAGECLOUD_REPO }}
+          token: ${{ secrets.PACKAGECLOUD_TOKEN }}
+
   build-docker:
     runs-on: ubuntu-latest
 
