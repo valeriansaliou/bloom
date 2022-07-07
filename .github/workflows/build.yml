@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - "v*.*"
+      - "*.*"
 
 name: Build and Release
 
@@ -42,15 +42,15 @@ jobs:
         uses: WyriHaximus/github-action-get-previous-tag@v1
 
       - name: Release binaries
-        run: ./scripts/release_binaries.sh --version=${{ steps.current_tag.outputs.tag }}
+        run: ./scripts/release_binaries.sh --version=v${{ steps.current_tag.outputs.tag }}
 
       - name: Release new version
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.current_tag.outputs.tag }}
-          name: Bloom ${{ steps.current_tag.outputs.tag }}
+          name: Bloom v${{ steps.current_tag.outputs.tag }}
           body: "⚠️ Changelog not yet provided."
-          files: ./${{ steps.current_tag.outputs.tag }}-*.tar.gz
+          files: ./v${{ steps.current_tag.outputs.tag }}-*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
