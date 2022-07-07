@@ -302,7 +302,13 @@ Bloom provides [pre-built packages](https://packagecloud.io/valeriansaliou/bloom
 
 ```bash
 echo "deb https://packagecloud.io/valeriansaliou/bloom/debian/ buster main" > /etc/apt/sources.list.d/valeriansaliou_bloom.list
-curl -L https://packagecloud.io/valeriansaliou/bloom/gpgkey 2> /dev/null | apt-key add - &>/dev/null
+```
+
+```bash
+curl --silent -L https://packagecloud.io/valeriansaliou/bloom/gpgkey | apt-key add -
+```
+
+```bash
 apt-get update
 ```
 
