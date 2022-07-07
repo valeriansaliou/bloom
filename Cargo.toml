@@ -46,3 +46,4 @@ opt-level = "s"
 lto = true
 debug = false
 debug-assertions = false
+strip = true
