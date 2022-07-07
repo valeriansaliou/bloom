@@ -43,7 +43,7 @@ function release_for_architecture {
         mkdir ./bloom && \
         cp -p "target/$2/release/bloom" ./bloom/ && \
         cp ./config.cfg bloom/ && \
-        tar -czvf "$final_tar" ./bloom && \
+        tar --owner=0 --group=0 -czvf "$final_tar" ./bloom && \
         rm -r ./bloom/
     release_result=$?
 
