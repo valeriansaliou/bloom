@@ -53,7 +53,6 @@ pub fn cache_disable_write() -> bool {
 pub fn cache_compress_body() -> bool {
     true
 }
-
 pub fn redis_host() -> String {
     "localhost".to_string()
 }
@@ -88,4 +87,8 @@ pub fn redis_max_key_size() -> usize {
 
 pub fn redis_max_key_expiration() -> usize {
     2592000
+}
+
+pub fn default_shard() -> Option<u8> {
+    None
 }
