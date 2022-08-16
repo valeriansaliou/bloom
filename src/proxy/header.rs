@@ -9,10 +9,8 @@ use hyper::Headers;
 use std::str::from_utf8;
 use unicase::Ascii;
 
-use crate::APP_CONF;
-
 use super::defaults;
-use crate::header::request_shard::HeaderRequestBloomRequestShard;
+use crate::{header::request_shard::HeaderRequestBloomRequestShard, APP_CONF};
 
 pub struct ProxyHeader;
 
