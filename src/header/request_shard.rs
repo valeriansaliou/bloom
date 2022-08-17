@@ -4,7 +4,6 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use crate::APP_CONF;
 use hyper::header::{parsing, Formatter, Header, Raw};
 use hyper::Result;
 use std::fmt;
@@ -18,12 +17,7 @@ impl Header for HeaderRequestBloomRequestShard {
     }
 
     fn parse_header(raw: &Raw) -> Result<HeaderRequestBloomRequestShard> {
-        parsing::from_one_raw_str(raw)
-            .map(HeaderRequestBloomRequestShard)
-            .or_else(|e| match APP_CONF.server.default_shard {
-                Some(default) => Ok(HeaderRequestBloomRequestShard(default)),
-                None => Err(e),
-            })
+        parsing::from_one_raw_str(raw).map(HeaderRequestBloomRequestShard)
     }
 
     fn fmt_header(&self, f: &mut Formatter) -> fmt::Result {

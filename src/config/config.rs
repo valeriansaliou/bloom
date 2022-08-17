@@ -24,9 +24,6 @@ pub struct ConfigServer {
 
     #[serde(default = "defaults::server_inet")]
     pub inet: SocketAddr,
-
-    #[serde(default = "defaults::default_shard")]
-    pub default_shard: Option<u8>,
 }
 
 #[derive(Deserialize)]
@@ -40,6 +37,9 @@ pub struct ConfigControl {
 
 #[derive(Deserialize)]
 pub struct ConfigProxy {
+    #[serde(default = "defaults::proxy_shard_default")]
+    pub shard_default: u8,
+
     pub shard: Vec<ConfigProxyShard>,
 }
 

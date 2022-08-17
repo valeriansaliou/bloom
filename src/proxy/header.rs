@@ -24,14 +24,9 @@ impl ProxyHeader {
         }
         .to_string();
 
-        let default_shard = APP_CONF
-            .server
-            .default_shard
-            .unwrap_or(defaults::REQUEST_SHARD_DEFAULT);
-
         // Request header: 'Bloom-Request-Shard'
         let shard = match headers.get::<HeaderRequestBloomRequestShard>() {
-            None => default_shard,
+            None => APP_CONF.proxy.shard_default,
             Some(value) => value.0,
         };
 

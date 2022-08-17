@@ -141,6 +141,8 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 
 **[proxy]**
 
+* `shard_default` (type: _integer_, allowed: `0` to `15`, default: `0`) — Default shard index to use when no shard is specified in proxied HTTP requests
+
 **[[proxy.shard]]**
 
 * `shard` (type: _integer_, allowed: `0` to `15`, default: `0`) — Shard index (routed using `Bloom-Request-Shard` in requests to Bloom)

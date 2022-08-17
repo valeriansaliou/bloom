@@ -42,7 +42,7 @@ const LINE_END_GAP: usize = 1;
 const MAX_LINE_SIZE: usize = COMMAND_SIZE + ROUTE_HASH_SIZE + LINE_END_GAP + 1;
 const HASH_VALUE_SIZE: usize = 10;
 const HASH_RESULT_SIZE: usize = 7 + ROUTE_HASH_SIZE + LINE_END_GAP + 1;
-const SHARD_DEFAULT: ControlShard = 0;
+const SHARD_INITIAL: ControlShard = 0;
 const TCP_TIMEOUT_NON_ESTABLISHED: u64 = 20;
 
 static BUFFER_LINE_SEPARATOR: u8 = '\n' as u8;
@@ -88,8 +88,8 @@ impl ControlHandle {
                 // Send started acknowledgement
                 write!(stream, "STARTED{}", LINE_FEED).expect("write failed");
 
-                // Select default shard
-                let mut shard = SHARD_DEFAULT;
+                // Select initial shard
+                let mut shard = SHARD_INITIAL;
 
                 // Initialize packet buffer
                 let mut buffer = Vec::new();

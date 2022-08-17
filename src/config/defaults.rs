@@ -22,6 +22,10 @@ pub fn control_tcp_timeout() -> u64 {
     300
 }
 
+pub fn proxy_shard_default() -> u8 {
+    0
+}
+
 pub fn proxy_shard_shard() -> u8 {
     0
 }
@@ -87,8 +91,4 @@ pub fn redis_max_key_size() -> usize {
 
 pub fn redis_max_key_expiration() -> usize {
     2592000
-}
-
-pub fn default_shard() -> Option<u8> {
-    None
 }
