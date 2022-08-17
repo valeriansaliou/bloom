@@ -10,7 +10,7 @@ use std::str::from_utf8;
 use unicase::Ascii;
 
 use super::defaults;
-use crate::header::request_shard::HeaderRequestBloomRequestShard;
+use crate::{header::request_shard::HeaderRequestBloomRequestShard, APP_CONF};
 
 pub struct ProxyHeader;
 
@@ -24,9 +24,14 @@ impl ProxyHeader {
         }
         .to_string();
 
+        let default_shard = APP_CONF
+            .server
+            .default_shard
+            .unwrap_or(defaults::REQUEST_SHARD_DEFAULT);
+
         // Request header: 'Bloom-Request-Shard'
         let shard = match headers.get::<HeaderRequestBloomRequestShard>() {
-            None => defaults::REQUEST_SHARD_DEFAULT,
+            None => default_shard,
             Some(value) => value.0,
         };
 

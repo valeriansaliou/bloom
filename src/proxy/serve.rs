@@ -18,6 +18,7 @@ use crate::cache::write::CacheWrite;
 use crate::header::janitor::HeaderJanitor;
 use crate::header::request_shard::HeaderRequestBloomRequestShard;
 use crate::header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
+use crate::APP_CONF;
 use crate::LINE_FEED;
 
 pub struct ProxyServe;
@@ -33,7 +34,10 @@ impl ProxyServe {
     pub fn handle(req: Request) -> ProxyServeResponseFuture {
         info!("handled request: {} on {}", req.method(), req.path());
 
-        if req.headers().has::<HeaderRequestBloomRequestShard>() == true {
+        let has_shard = APP_CONF.server.default_shard.is_some()
+            || req.headers().has::<HeaderRequestBloomRequestShard>();
+
+        if has_shard {
             match *req.method() {
                 Method::Options
                 | Method::Head
