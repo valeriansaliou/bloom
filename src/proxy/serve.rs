@@ -16,7 +16,6 @@ use crate::cache::read::CacheRead;
 use crate::cache::route::CacheRoute;
 use crate::cache::write::CacheWrite;
 use crate::header::janitor::HeaderJanitor;
-use crate::header::request_shard::HeaderRequestBloomRequestShard;
 use crate::header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
 use crate::LINE_FEED;
 
@@ -33,19 +32,15 @@ impl ProxyServe {
     pub fn handle(req: Request) -> ProxyServeResponseFuture {
         info!("handled request: {} on {}", req.method(), req.path());
 
-        if req.headers().has::<HeaderRequestBloomRequestShard>() == true {
-            match *req.method() {
-                Method::Options
-                | Method::Head
-                | Method::Get
-                | Method::Post
-                | Method::Patch
-                | Method::Put
-                | Method::Delete => Self::accept(req),
-                _ => Self::reject(req, StatusCode::MethodNotAllowed),
-            }
-        } else {
-            Self::reject(req, StatusCode::NotExtended)
+        match *req.method() {
+            Method::Options
+            | Method::Head
+            | Method::Get
+            | Method::Post
+            | Method::Patch
+            | Method::Put
+            | Method::Delete => Self::accept(req),
+            _ => Self::reject(req, StatusCode::MethodNotAllowed),
         }
     }
 
