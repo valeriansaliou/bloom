@@ -9,6 +9,7 @@ use httparse;
 use hyper::header::{ETag, EntityTag, IfNoneMatch, Origin};
 use hyper::server::{Request, Response};
 use hyper::{Body, Error, Headers, HttpVersion, Method, StatusCode, Uri};
+use itertools::{Itertools, Position};
 
 use super::header::ProxyHeader;
 use super::tunnel::ProxyTunnel;
@@ -256,18 +257,7 @@ impl ProxyServe {
             let mut res = httparse::Response::new(&mut headers);
 
             // Split headers from body
-            let mut res_body_string = String::new();
-            let mut is_last_line_empty = false;
-
-            for res_line in res_string_value.lines() {
-                if res_body_string.is_empty() == false || is_last_line_empty == true {
-                    // Write to body
-                    res_body_string.push_str(res_line.as_ref());
-                    res_body_string.push_str(LINE_FEED);
-                }
-
-                is_last_line_empty = res_line.is_empty();
-            }
+            let body = Self::create_response_body(&res_string_value);
 
             match res.parse(res_string_value.as_bytes()) {
                 Ok(_) => {
@@ -294,7 +284,7 @@ impl ProxyServe {
                         .set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
                     // Serve cached response
-                    Self::respond(&method, status, headers, res_body_string)
+                    Self::respond(&method, status, headers, body)
                 }
                 Err(err) => {
                     error!("failed parsing cached response: {}", err);
@@ -371,5 +361,36 @@ impl ProxyServe {
             }
             _ => Response::new().with_status(status).with_headers(headers),
         }))
+    }
+
+    fn create_response_body(res_string_value: &str) -> String {
+      let mut body = String::new();
+      let mut is_last_line_empty = false;
+      let lines = res_string_value.lines().with_position();
+
+      for line_with_position in lines {
+        let line = line_with_position.into_inner();
+        if !body.is_empty() || is_last_line_empty {
+          body.push_str(line);
+          if let Position::First(_) | Position::Middle(_) = line_with_position {
+            body.push_str(LINE_FEED);
+          }
+        }
+        is_last_line_empty = line.is_empty();
+      }
+      body
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_doesnt_add_a_newline_to_body() {
+        let response_string = "Content-Type: text/plain; charset=utf-8\nServer: Kestrel\nTransfer-Encoding: chunked\n\n2022-10-03";
+        let body = ProxyServe::create_response_body(&response_string);
+
+        assert!(!body.ends_with(LINE_FEED));
     }
 }
