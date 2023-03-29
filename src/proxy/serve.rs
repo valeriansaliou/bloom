@@ -364,21 +364,21 @@ impl ProxyServe {
     }
 
     fn create_response_body(res_string_value: &str) -> String {
-      let mut body = String::new();
-      let mut is_last_line_empty = false;
-      let lines = res_string_value.lines().with_position();
+        let mut body = String::new();
+        let mut is_last_line_empty = false;
+        let lines = res_string_value.lines().with_position();
 
-      for line_with_position in lines {
-        let line = line_with_position.into_inner();
-        if !body.is_empty() || is_last_line_empty {
-          body.push_str(line);
-          if let Position::First(_) | Position::Middle(_) = line_with_position {
-            body.push_str(LINE_FEED);
-          }
+        for line_with_position in lines {
+            let line = line_with_position.into_inner();
+            if !body.is_empty() || is_last_line_empty {
+                body.push_str(line);
+                if let Position::First(_) | Position::Middle(_) = line_with_position {
+                    body.push_str(LINE_FEED);
+                }
+            }
+            is_last_line_empty = line.is_empty();
         }
-        is_last_line_empty = line.is_empty();
-      }
-      body
+        body
     }
 }
 
@@ -387,10 +387,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_doesnt_add_a_newline_to_body() {
-        let response_string = "Content-Type: text/plain; charset=utf-8\nServer: Kestrel\nTransfer-Encoding: chunked\n\n2022-10-03";
-        let body = ProxyServe::create_response_body(&response_string);
+    fn body_remains_the_same() {
+        let body = "2022-10-03";
+        let headers =
+            "Content-Type: text/plain; charset=utf-8\nServer: Kestrel\nTransfer-Encoding: chunked";
+        let response_string = format!("{headers}\n\n{body}");
+        let expected_body = ProxyServe::create_response_body(&response_string);
 
-        assert!(!body.ends_with(LINE_FEED));
+        assert_eq!(body, expected_body);
     }
 }
