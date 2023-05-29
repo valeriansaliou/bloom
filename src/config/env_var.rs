@@ -19,7 +19,7 @@ where
     let value = String::deserialize(deserializer)?;
 
     match is_env_var(&value) {
-        true => Ok(get_env_var(&value)),
+        true => Ok(get_env_var_str(&value)),
         false => Ok(value),
     }
 }
@@ -33,7 +33,7 @@ where
             let value = wrapped.0;
 
             match is_env_var(&value) {
-                true => get_env_var(&value),
+                true => get_env_var_str(&value),
                 false => value,
             }
         })
@@ -47,7 +47,7 @@ where
     let value = String::deserialize(deserializer)?;
 
     match is_env_var(&value) {
-        true => Ok(get_env_var(&value).parse().unwrap()),
+        true => Ok(get_env_var_str(&value).parse().unwrap()),
         false => Ok(value.parse().unwrap()),
     }
 }
@@ -59,8 +59,20 @@ where
     let value = String::deserialize(deserializer)?;
 
     match is_env_var(&value) {
-        true => Ok(PathBuf::from(get_env_var(&value))),
+        true => Ok(PathBuf::from(get_env_var_str(&value))),
         false => Ok(PathBuf::from(value)),
+    }
+}
+
+pub fn bool<'de,D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = String::deserialize(deserializer)?;
+
+    match is_env_var(&value) {
+        true => Ok(get_env_var_bool(&value)),
+        false => Ok(value.parse().unwrap()),
     }
 }
 
@@ -70,12 +82,29 @@ fn is_env_var(value: &str) -> bool {
         .is_match(value)
 }
 
-fn get_env_var(wrapped_key: &str) -> String {
+fn get_env_var_str(wrapped_key: &str) -> String {
     let key: String = String::from(wrapped_key)
         .drain(2..(wrapped_key.len() - 1))
         .collect();
 
     std::env::var(key.clone()).unwrap_or_else(|_| panic!("env_var: variable '{}' is not set", key))
+}
+
+fn get_env_var_bool(wrapped_key: &str) -> bool {
+    let key: String = String::from(wrapped_key)
+        .drain(2..(wrapped_key.len() - 1))
+        .collect();
+
+    let value = std::env::var(key.clone())
+        .unwrap_or_else(|_| panic!("env_var: variable '{}' is not set", key))
+        .to_lowercase();
+    match value.as_ref() {
+        "0" => false,
+        "1" => true,
+        "true" => true,
+        "false" => false,
+        _ => panic!("env_var: variable '{}' is not a boolean", key),
+    }
 }
 
 #[cfg(test)]
@@ -101,11 +130,33 @@ mod tests {
     }
 
     #[test]
-    fn it_gets_environment_variable() {
+    fn it_gets_string_value() {
         std::env::set_var("TEST", "test");
 
-        assert_eq!(get_env_var("${TEST}"), "test");
+        assert_eq!(get_env_var_str("${TEST}"), "test");
 
         std::env::remove_var("TEST");
+    }
+
+    #[test]
+    fn it_gets_bool_value() {
+        std::env::set_var("TEST_BOOL_STR_TRUE", "true");
+        std::env::set_var("TEST_BOOL_STR_FALSE", "false");
+        std::env::set_var("TEST_BOOL_STR_TRUE_UP", "TRUE");
+        std::env::set_var("TEST_BOOL_STR_FALSE_UP", "FALSE");
+        std::env::set_var("TEST_BOOL_STR_1", "1");
+        std::env::set_var("TEST_BOOL_STR_0", "0");
+
+        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_TRUE}"), true);
+        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_FALSE}"), false);
+        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_TRUE_UP}"), true);
+        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_FALSE_UP}"), false);
+        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_1}"), true);
+        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_0}"), false);
+
+        std::env::remove_var("TEST_BOOL_STR_TRUE");
+        std::env::remove_var("TEST_BOOL_STR_FALSE");
+        std::env::remove_var("TEST_BOOL_STR_1");
+        std::env::remove_var("TEST_BOOL_STR_0");
     }
 }
