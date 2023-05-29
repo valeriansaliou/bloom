@@ -25,6 +25,7 @@ extern crate redis;
 extern crate tokio_core;
 extern crate toml;
 extern crate unicase;
+extern crate regex;
 
 mod cache;
 mod config;
