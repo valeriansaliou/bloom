@@ -170,6 +170,29 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 * `max_key_size` (type: _integer_, allowed: bytes, default: `256000`) — Maximum data size in bytes to store in Redis for a key (safeguard to prevent very large responses to be cached)
 * `max_key_expiration` (type: _integer_, allowed: seconds, default: `2592000`) — Maximum TTL for a key cached in Redis (prevents erroneous `Bloom-Response-TTL` values)
 
+#### Environment variables
+
+You are allowed to use **environment variables** in the config file. Example configuration using environment variables:
+
+```toml
+[cache]
+compress_body = "${BLOOM_COMPRESS_BODY}"
+```
+
+[redis]
+host = "${BLOOM_REDIS_HOST}"
+```
+
+And then you can run bloom providing a defined environment variable:
+
+```bash
+BLOOM_REDIS_HOST=redis.example.com \
+BLOOM_COMPRESS_BODY=false \
+./bloom -c /path/to/config.cfg
+```
+
+**It can be used only for string-like an boolean values**
+
 ### Run Bloom
 
 Bloom can be run as such:
