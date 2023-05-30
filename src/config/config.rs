@@ -103,7 +103,7 @@ pub struct ConfigRedis {
     #[serde(default = "defaults::redis_port")]
     pub port: u16,
 
-    #[serde(deserialize_with = "env_var::opt_str")]
+    #[serde(default, deserialize_with = "env_var::opt_str")]
     pub password: Option<String>,
 
     #[serde(default = "defaults::redis_database")]
