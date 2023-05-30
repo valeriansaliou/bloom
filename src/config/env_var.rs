@@ -62,7 +62,11 @@ where
             true => get_env_var_bool(&s),
             false => s.parse().unwrap(),
         },
-        _ => return Err(de::Error::custom("Wrong type, expected boolean, string or env var")),
+        _ => {
+            return Err(de::Error::custom(
+                "Wrong type, expected boolean, string or env var",
+            ))
+        }
     })
 }
 
