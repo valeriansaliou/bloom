@@ -5,8 +5,9 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use regex::Regex;
-use serde::{Deserialize, Deserializer};
+use serde::{de, Deserialize, Deserializer};
 use std::net::SocketAddr;
+use toml::Value;
 
 #[derive(Deserialize, PartialEq)]
 struct WrappedString(String);
@@ -55,12 +56,14 @@ pub fn bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let value = String::deserialize(deserializer)?;
-
-    match is_env_var(&value) {
-        true => Ok(get_env_var_bool(&value)),
-        false => Ok(value.parse().unwrap()),
-    }
+    Ok(match Value::deserialize(deserializer)? {
+        Value::Boolean(b) => b,
+        Value::String(s) => match is_env_var(&s) {
+            true => get_env_var_bool(&s),
+            false => s.parse().unwrap(),
+        },
+        _ => return Err(de::Error::custom("Wrong type, expected boolean, string or env var")),
+    })
 }
 
 fn is_env_var(value: &str) -> bool {
