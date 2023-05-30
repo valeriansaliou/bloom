@@ -7,7 +7,6 @@
 use regex::Regex;
 use serde::{Deserialize, Deserializer};
 use std::net::SocketAddr;
-use std::path::PathBuf;
 
 #[derive(Deserialize, PartialEq)]
 struct WrappedString(String);
@@ -52,19 +51,7 @@ where
     }
 }
 
-pub fn path_buf<'de, D>(deserializer: D) -> Result<PathBuf, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let value = String::deserialize(deserializer)?;
-
-    match is_env_var(&value) {
-        true => Ok(PathBuf::from(get_env_var_str(&value))),
-        false => Ok(PathBuf::from(value)),
-    }
-}
-
-pub fn bool<'de,D>(deserializer: D) -> Result<bool, D::Error>
+pub fn bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
     D: Deserializer<'de>,
 {
