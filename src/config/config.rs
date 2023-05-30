@@ -7,6 +7,7 @@
 use std::net::SocketAddr;
 
 use super::defaults;
+use super::env_var;
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -19,16 +20,25 @@ pub struct Config {
 
 #[derive(Deserialize)]
 pub struct ConfigServer {
-    #[serde(default = "defaults::server_log_level")]
+    #[serde(
+        default = "defaults::server_log_level",
+        deserialize_with = "env_var::str"
+    )]
     pub log_level: String,
 
-    #[serde(default = "defaults::server_inet")]
+    #[serde(
+        default = "defaults::server_inet",
+        deserialize_with = "env_var::socket_addr"
+    )]
     pub inet: SocketAddr,
 }
 
 #[derive(Deserialize)]
 pub struct ConfigControl {
-    #[serde(default = "defaults::control_inet")]
+    #[serde(
+        default = "defaults::control_inet",
+        deserialize_with = "env_var::socket_addr"
+    )]
     pub inet: SocketAddr,
 
     #[serde(default = "defaults::control_tcp_timeout")]
@@ -48,7 +58,10 @@ pub struct ConfigProxyShard {
     #[serde(default = "defaults::proxy_shard_shard")]
     pub shard: u8,
 
-    #[serde(default = "defaults::proxy_shard_host")]
+    #[serde(
+        default = "defaults::proxy_shard_host",
+        deserialize_with = "env_var::str"
+    )]
     pub host: String,
 
     #[serde(default = "defaults::proxy_shard_port")]
@@ -63,24 +76,34 @@ pub struct ConfigCache {
     #[serde(default = "defaults::cache_executor_pool")]
     pub executor_pool: u16,
 
-    #[serde(default = "defaults::cache_disable_read")]
+    #[serde(
+        default = "defaults::cache_disable_read",
+        deserialize_with = "env_var::bool"
+    )]
     pub disable_read: bool,
 
-    #[serde(default = "defaults::cache_disable_write")]
+    #[serde(
+        default = "defaults::cache_disable_write",
+        deserialize_with = "env_var::bool"
+    )]
     pub disable_write: bool,
 
-    #[serde(default = "defaults::cache_compress_body")]
+    #[serde(
+        default = "defaults::cache_compress_body",
+        deserialize_with = "env_var::bool"
+    )]
     pub compress_body: bool,
 }
 
 #[derive(Deserialize)]
 pub struct ConfigRedis {
-    #[serde(default = "defaults::redis_host")]
+    #[serde(default = "defaults::redis_host", deserialize_with = "env_var::str")]
     pub host: String,
 
     #[serde(default = "defaults::redis_port")]
     pub port: u16,
 
+    #[serde(deserialize_with = "env_var::opt_str")]
     pub password: Option<String>,
 
     #[serde(default = "defaults::redis_database")]
