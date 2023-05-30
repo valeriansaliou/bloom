@@ -99,10 +99,8 @@ fn get_env_var_bool(wrapped_key: &str) -> bool {
         .unwrap_or_else(|_| panic!("env_var: variable '{}' is not set", key))
         .to_lowercase();
     match value.as_ref() {
-        "0" => false,
-        "1" => true,
-        "true" => true,
-        "false" => false,
+        "0" | "false" => false,
+        "1" | "true" => true,
         _ => panic!("env_var: variable '{}' is not a boolean", key),
     }
 }
