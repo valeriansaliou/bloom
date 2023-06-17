@@ -1,0 +1,115 @@
+# Default values for bloom.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: valeriansaliou/bloom
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+bloom:
+  server:
+    log_level: "error"
+    inet: "[::1]:8080"
+  control:
+    tcp_timeout: 300
+    inet: "[::1]:8811"
+  proxy:
+    # -- sets the default shard if none is set in the request
+    shard_default: 0
+    shards:
+      - shard: 0
+        host: ""
+        port: ""
+        ingress:
+          enabled: true
+          className: ""
+          annotations: { }
+          # kubernetes.io/ingress.class: nginx
+          # kubernetes.io/tls-acme: "true"
+          hosts:
+            - host: chart-example.local
+              paths:
+                - path: /
+                  pathType: ImplementationSpecific
+          tls: [ ]
+          #  - secretName: chart-example-tls
+          #    hosts:
+          #      - chart-example.local
+  cache:
+    ttl_default: 600
+    executor_pool: 64
+    disable_read: false
+    disable_write: false
+    compress_body: true
+  redis:
+    host:
+    port:
+    database: 0
+    pool_size: 80
+    max_lifetime_seconds: 60
+    idle_timeout_seconds: 600
+    connection_timeout_seconds: 1
+    max_key_size: 256000
+    max_key_expiration: 2592000
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  http:
+    port: 80
+  control:
+    port: 8811
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# -- This Horizontal Pod Autoscaler works from K8S version 1.23 onwards
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

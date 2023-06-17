@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "bloom.fullname" . }}-config
+  labels:
+    {{- include "bloom.labels" . | nindent 4 }}
+data:
+  config.cfg: |
+    [server]
+
+    log_level = {{ .Values.bloom.server.log_level | default "error" }}
+    inet = {{ .Values.bloom.server.inet | default "[::1]:8080" }}
+
+
+    [control]
+
+    inet = {{ .Values.bloom.control.inet | default "[::1]:8811" }}
+    tcp_timeout = {{ .Values.bloom.control.tcp_timeout | default "300" }}
+
+
+    [proxy]
+
+    shard_default = {{ .Values.bloom.proxy.shard_default | default 0 }}
+
+    {{ range .Values.bloom.proxy.shards | required "At least one valis list entry is required" }}
+    [[proxy.shard]]
+    shard = {{ .shard }}
+    host = {{ .host }}
+    port = {{ .port }}
+    {{end}}
+
+    [cache]
+
+    ttl_default = {{ .Values.bloom.cache.ttl_default | default 600 }}
+    executor_pool = {{ .Values.bloom.cache.executor_pool | default 64 }}
+
+    disable_read = {{ .Values.bloom.cache.disable_read | default false}}
+    disable_write = {{ .Values.bloom.cache.disable_write | default false }}
+
+    compress_body = {{ .Values.bloom.cache.compress_body | default true }}
+
+
+    [redis]
+
+    host = {{.Values.bloom.redis.host | default "redis.svc.cluster.local" }}
+    port = {{.Values.bloom.redis.port | default 6379 }}
+
+    database = {{ .Values.bloom.redis.database |default 0 }}
+
+    pool_size = {{ .Values.bloom.redis.pool_size | default 80 }}
+    max_lifetime_seconds = {{ .Values.bloom.redis.max_lifetime_seconds | default 60 }}
+    idle_timeout_seconds = {{ .Values.bloom.redis.idle_timeout_seconds | default 600 }}
+    connection_timeout_seconds = {{ .Values.bloom.redis.connection_timeout_seconds | default 1 }}
+
+    max_key_size = {{ .Values.bloom.redis.max_key_size | default 256000 }}
+    max_key_expiration = {{ .Values.bloom.redis.max_key_expiration | default 2592000 }}
