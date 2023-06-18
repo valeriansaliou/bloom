@@ -11,9 +11,5 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
-    - port: {{ .Values.service.control.port }}
-      targetPort: control
-      protocol: TCP
-      name: control
   selector:
     {{- include "bloom.selectorLabels" . | nindent 4 }}

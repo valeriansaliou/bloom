@@ -1,6 +1,6 @@
 {{- $fullName := include "bloom.fullname" . -}}
 {{- $labels := include "bloom.labels" . }}
-{{- $svcPort := .Values.service.port -}}
+{{- $svcPort := .Values.service.http.port -}}
 {{- $kubeversion := .Capabilities.KubeVersion.GitVersion}}
 {{ range .Values.bloom.proxy.shards }}
 {{- if .ingress.enabled -}}
@@ -31,7 +31,7 @@ metadata:
 
 spec:
   {{- if and .ingress.className (semverCompare ">=1.18-0" $kubeversion) }}
-  ingressClassName: {{ .Values.ingress.className }}
+  ingressClassName: {{ .ingress.className }}
   {{- end }}
   {{- if .ingress.tls }}
   tls:

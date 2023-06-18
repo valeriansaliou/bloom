@@ -5,16 +5,16 @@ metadata:
   labels:
     {{- include "bloom.labels" . | nindent 4 }}
 data:
-  config.cfg: |
+  bloom.cfg: |
     [server]
 
-    log_level = {{ .Values.bloom.server.log_level | default "error" }}
-    inet = {{ .Values.bloom.server.inet | default "[::1]:8080" }}
+    log_level = {{ .Values.bloom.server.log_level | default "error" | quote }}
+    inet = {{ .Values.bloom.server.inet | default "[::1]:8080" | quote }}
 
 
     [control]
 
-    inet = {{ .Values.bloom.control.inet | default "[::1]:8811" }}
+    inet = {{ .Values.bloom.control.inet | default "[::1]:8811" | quote }}
     tcp_timeout = {{ .Values.bloom.control.tcp_timeout | default "300" }}
 
 
@@ -22,10 +22,10 @@ data:
 
     shard_default = {{ .Values.bloom.proxy.shard_default | default 0 }}
 
-    {{ range .Values.bloom.proxy.shards | required "At least one valis list entry is required" }}
+    {{ range .Values.bloom.proxy.shards | required "At least one valid list entry is required" }}
     [[proxy.shard]]
     shard = {{ .shard }}
-    host = {{ .host }}
+    host = {{ .host | quote}}
     port = {{ .port }}
     {{end}}
 
@@ -42,7 +42,7 @@ data:
 
     [redis]
 
-    host = {{.Values.bloom.redis.host | default "redis.svc.cluster.local" }}
+    host = {{.Values.bloom.redis.host | default "redis.svc.cluster.local" | quote }}
     port = {{.Values.bloom.redis.port | default 6379 }}
 
     database = {{ .Values.bloom.redis.database |default 0 }}
@@ -53,4 +53,4 @@ data:
     connection_timeout_seconds = {{ .Values.bloom.redis.connection_timeout_seconds | default 1 }}
 
     max_key_size = {{ .Values.bloom.redis.max_key_size | default 256000 }}
-    max_key_expiration = {{ .Values.bloom.redis.max_key_expiration | default 2592000 }}
+    max_key_expiration = {{ .Values.bloom.redis.max_key_expiration | default 2592000 | int}}
