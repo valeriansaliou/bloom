@@ -27,8 +27,15 @@ type CacheReadOptionalResult = Result<Option<String>, CacheReadError>;
 type CacheReadOptionalResultFuture = Box<dyn Future<Item = CacheReadOptionalResult, Error = ()>>;
 
 impl CacheRead {
-    pub fn acquire_meta(shard: u8, key: &str, method: &Method, headers: &Headers) -> CacheReadResultFuture {
-        if APP_CONF.cache.disable_read == false && CacheCheck::from_request(&method, headers) == true {
+    pub fn acquire_meta(
+        shard: u8,
+        key: &str,
+        method: &Method,
+        headers: &Headers,
+    ) -> CacheReadResultFuture {
+        if APP_CONF.cache.disable_read == false
+            && CacheCheck::from_request(&method, headers) == true
+        {
             debug!("key: {} cacheable, reading cache", &key);
 
             Box::new(
@@ -85,11 +92,14 @@ mod tests {
     #[test]
     #[should_panic]
     fn it_fails_acquiring_cache_meta() {
-        assert!(
-            CacheRead::acquire_meta(0, "bloom:0:c:90d52bc6:f773d6f1", &Method::Get, &Headers::new() )
-                .poll()
-                .is_err()
-        );
+        assert!(CacheRead::acquire_meta(
+            0,
+            "bloom:0:c:90d52bc6:f773d6f1",
+            &Method::Get,
+            &Headers::new()
+        )
+        .poll()
+        .is_err());
     }
 
     #[test]
