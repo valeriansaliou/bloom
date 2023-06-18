@@ -33,3 +33,28 @@ impl fmt::Display for HeaderResponseBloomResponseIgnore {
         fmt::Display::fmt(&1, f)
     }
 }
+#[derive(Clone)]
+pub struct HeaderRequestBloomRequestCache();
+
+impl Header for HeaderRequestBloomRequestCache {
+    fn header_name() -> &'static str {
+        "Bloom-Request-Cache-Forced"
+    }
+
+    fn parse_header(raw: &Raw) -> Result<HeaderRequestBloomRequestCache> {
+        if raw.eq("1") == true {
+            return Ok(HeaderRequestBloomRequestCache());
+        }
+        Err(Error::Header)
+    }
+
+    fn fmt_header(&self, f: &mut Formatter) -> fmt::Result {
+        f.fmt_line(self)
+    }
+}
+
+impl fmt::Display for HeaderRequestBloomRequestCache {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&1, f)
+    }
+}

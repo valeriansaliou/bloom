@@ -5,20 +5,31 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use hyper::{Headers, Method, StatusCode};
-
-use crate::header::response_ignore::HeaderResponseBloomResponseIgnore;
-
+use crate::header::response_ignore::{HeaderRequestBloomRequestCache, HeaderResponseBloomResponseIgnore};
 pub struct CacheCheck;
 
 impl CacheCheck {
-    pub fn from_request(method: &Method) -> bool {
+    pub fn from_request(method: &Method, headers: &Headers) -> bool {
         Self::is_cacheable_method(method) == true
+         || Self::is_cacheable_path(headers, method) == true
     }
 
     pub fn from_response(method: &Method, status: &StatusCode, headers: &Headers) -> bool {
         Self::is_cacheable_method(method) == true
             && Self::is_cacheable_status(status) == true
             && Self::is_cacheable_response(headers) == true
+    }
+    fn is_cacheable_request(headers: &Headers) -> bool {
+        // Ignore responses with 'Bloom-Response-Ignore'
+        headers.has::<HeaderRequestBloomRequestCache>() == false
+    }
+    fn is_cacheable_path(headers: &Headers, method: &Method) -> bool {
+        match method {
+            &Method::Get | &Method::Head | &Method::Options | &Method::Post => {
+             Self::is_cacheable_request(headers)
+            }
+            _ => false,
+        }
     }
 
     fn is_cacheable_method(method: &Method) -> bool {

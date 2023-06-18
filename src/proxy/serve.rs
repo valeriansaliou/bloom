@@ -100,7 +100,7 @@ impl ProxyServe {
         let ns_string = ns.to_string();
 
         Box::new(
-            CacheRead::acquire_meta(shard, ns, method)
+            CacheRead::acquire_meta(shard, ns, method, headers)
                 .and_then(move |result| {
                     match result {
                         Ok(fingerprint) => {
