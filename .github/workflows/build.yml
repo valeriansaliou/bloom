@@ -57,4 +57,4 @@ jobs:
         with:
           charts_dir: deploy/charts
         env:
-          CR_TOKEN: "${{ secrets.RELEASE_TOKEN }}"
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
