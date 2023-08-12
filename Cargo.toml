@@ -1,6 +1,6 @@
 [package]
 name = "bloom-server"
-version = "1.31.0"
+version = "1.32.0"
 description = "HTTP REST API caching middleware, to be used between load balancers and REST API workers."
 readme = "README.md"
 license = "MPL-2.0"
@@ -35,7 +35,8 @@ farmhash = "1.1"
 brotli = "3.3"
 rand = "0.7"
 unicase = "2.6"
-itertools = "0.10.5"
+regex = "1.8"
+itertools = "0.11"
 
 [profile.dev]
 opt-level = 0

@@ -8,6 +8,7 @@ User=bloom
 Group=bloom
 ExecStart=/usr/bin/bloom -c /etc/bloom.cfg
 Restart=on-failure
+LimitNOFILE=infinity
 
 [Install]
 WantedBy=multi-user.target

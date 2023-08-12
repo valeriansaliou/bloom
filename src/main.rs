@@ -22,6 +22,7 @@ extern crate r2d2;
 extern crate r2d2_redis;
 extern crate rand;
 extern crate redis;
+extern crate regex;
 extern crate tokio_core;
 extern crate toml;
 extern crate unicase;

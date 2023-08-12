@@ -105,13 +105,13 @@ You might find it convenient to run Bloom via Docker. You can find the pre-built
 First, pull the `valeriansaliou/bloom` image:
 
 ```bash
-docker pull valeriansaliou/bloom:v1.31.0
+docker pull valeriansaliou/bloom:v1.32.0
 ```
 
 Then, seed it a configuration file and run it (replace `/path/to/your/bloom/config.cfg` with the path to your configuration file):
 
 ```bash
-docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.31.0
+docker run -p 8080:8080 -p 8811:8811 -v /path/to/your/bloom/config.cfg:/etc/bloom.cfg valeriansaliou/bloom:v1.32.0
 ```
 
 In the configuration file, ensure that:
@@ -127,7 +127,9 @@ Use the sample [config.cfg](https://github.com/valeriansaliou/bloom/blob/master/
 
 Make sure to properly configure the `[proxy]` section so that Bloom points to your API worker host and port.
 
-**Available configuration options are commented below, with allowed values:**
+#### Available options
+
+Available configuration options are commented below, with allowed values:
 
 **[server]**
 
@@ -169,6 +171,29 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 * `connection_timeout_seconds` (type: _integer_, allowed: seconds, default: `1`) — Timeout in seconds to consider Redis dead and emit a `DIRECT` connection to API without using cache (keep this low, as when Redis is down it dictates how much time to wait before ignoring Redis response and proxying directly)
 * `max_key_size` (type: _integer_, allowed: bytes, default: `256000`) — Maximum data size in bytes to store in Redis for a key (safeguard to prevent very large responses to be cached)
 * `max_key_expiration` (type: _integer_, allowed: seconds, default: `2592000`) — Maximum TTL for a key cached in Redis (prevents erroneous `Bloom-Response-TTL` values)
+
+#### Environment variables
+
+You are allowed to use **environment variables** within the configuration file.
+
+This is an example configuration using environment variables:
+
+```toml
+[cache]
+compress_body = "${BLOOM_COMPRESS_BODY}"
+
+[redis]
+host = "${BLOOM_REDIS_HOST}"
+```
+
+Then, you can run Bloom providing all sourced environment variables:
+
+```bash
+BLOOM_REDIS_HOST=localhost BLOOM_COMPRESS_BODY=false \
+  ./bloom -c /path/to/config.cfg
+```
+
+**Notice: it can only be used for string-like and boolean values**
 
 ### Run Bloom
 
