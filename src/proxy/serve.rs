@@ -257,7 +257,7 @@ impl ProxyServe {
             let mut res = httparse::Response::new(&mut headers);
 
             // Split headers from body
-            let body = Self::create_response_body(&res_string_value);
+            let body = Self::parse_response_body(&res_string_value);
 
             match res.parse(res_string_value.as_bytes()) {
                 Ok(_) => {
@@ -346,6 +346,31 @@ impl ProxyServe {
         ETag(EntityTag::new(false, fingerprint))
     }
 
+    fn parse_response_body(res_string_value: &str) -> String {
+        let (mut body, mut is_last_line_empty) = (String::new(), false);
+
+        // Scan response lines
+        let lines = res_string_value.lines().with_position();
+
+        for line_with_position in lines {
+            let line = line_with_position.into_inner();
+
+            if body.is_empty() == false || is_last_line_empty == true {
+                // Append line to body
+                body.push_str(line);
+
+                // Append line feed character?
+                if let Position::First(_) | Position::Middle(_) = line_with_position {
+                    body.push_str(LINE_FEED);
+                }
+            }
+
+            is_last_line_empty = line.is_empty();
+        }
+
+        body
+    }
+
     fn respond(
         method: &Method,
         status: StatusCode,
@@ -362,24 +387,6 @@ impl ProxyServe {
             _ => Response::new().with_status(status).with_headers(headers),
         }))
     }
-
-    fn create_response_body(res_string_value: &str) -> String {
-        let mut body = String::new();
-        let mut is_last_line_empty = false;
-        let lines = res_string_value.lines().with_position();
-
-        for line_with_position in lines {
-            let line = line_with_position.into_inner();
-            if !body.is_empty() || is_last_line_empty {
-                body.push_str(line);
-                if let Position::First(_) | Position::Middle(_) = line_with_position {
-                    body.push_str(LINE_FEED);
-                }
-            }
-            is_last_line_empty = line.is_empty();
-        }
-        body
-    }
 }
 
 #[cfg(test)]
@@ -387,13 +394,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn body_remains_the_same() {
+    fn it_parses_response_body() {
         let body = "2022-10-03";
         let headers =
             "Content-Type: text/plain; charset=utf-8\nServer: Kestrel\nTransfer-Encoding: chunked";
-        let response_string = format!("{headers}\n\n{body}");
-        let expected_body = ProxyServe::create_response_body(&response_string);
 
-        assert_eq!(body, expected_body);
+        let response_string = format!("{headers}\n\n{body}");
+
+        assert_eq!(body, ProxyServe::parse_response_body(&response_string));
     }
 }
