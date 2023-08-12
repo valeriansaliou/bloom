@@ -129,7 +129,7 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 
 #### Available options
 
-**Available configuration options are commented below, with allowed values:**
+Available configuration options are commented below, with allowed values:
 
 **[server]**
 
