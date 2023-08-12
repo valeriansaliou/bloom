@@ -35,6 +35,7 @@ farmhash = "1.1"
 brotli = "3.3"
 rand = "0.7"
 unicase = "2.6"
+regex = "1.8.3"
 
 [profile.dev]
 opt-level = 0
