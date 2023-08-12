@@ -127,6 +127,8 @@ Use the sample [config.cfg](https://github.com/valeriansaliou/bloom/blob/master/
 
 Make sure to properly configure the `[proxy]` section so that Bloom points to your API worker host and port.
 
+#### Available options
+
 **Available configuration options are commented below, with allowed values:**
 
 **[server]**
@@ -172,26 +174,26 @@ Make sure to properly configure the `[proxy]` section so that Bloom points to yo
 
 #### Environment variables
 
-You are allowed to use **environment variables** in the config file. Example configuration using environment variables:
+You are allowed to use **environment variables** within the configuration file.
+
+This is an example configuration using environment variables:
 
 ```toml
 [cache]
 compress_body = "${BLOOM_COMPRESS_BODY}"
-```
 
 [redis]
 host = "${BLOOM_REDIS_HOST}"
 ```
 
-And then you can run bloom providing a defined environment variable:
+Then, you can run Bloom providing all sourced environment variables:
 
 ```bash
-BLOOM_REDIS_HOST=redis.example.com \
-BLOOM_COMPRESS_BODY=false \
-./bloom -c /path/to/config.cfg
+BLOOM_REDIS_HOST=localhost BLOOM_COMPRESS_BODY=false \
+  ./bloom -c /path/to/config.cfg
 ```
 
-**It can be used only for string-like an boolean values**
+**Notice: it can only be used for string-like and boolean values**
 
 ### Run Bloom
 
