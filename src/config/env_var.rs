@@ -62,11 +62,7 @@ where
             true => get_env_var_bool(&s),
             false => s.parse().unwrap(),
         },
-        _ => {
-            return Err(de::Error::custom(
-                "Wrong type, expected boolean, string or env var",
-            ))
-        }
+        _ => return Err(de::Error::custom("Wrong type: expected boolean or string")),
     })
 }
 
@@ -148,6 +144,8 @@ mod tests {
 
         std::env::remove_var("TEST_BOOL_STR_TRUE");
         std::env::remove_var("TEST_BOOL_STR_FALSE");
+        std::env::remove_var("TEST_BOOL_STR_TRUE_UP");
+        std::env::remove_var("TEST_BOOL_STR_FALSE_UP");
         std::env::remove_var("TEST_BOOL_STR_1");
         std::env::remove_var("TEST_BOOL_STR_0");
     }
