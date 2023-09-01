@@ -40,8 +40,11 @@ pushd "$BASE_DIR" > /dev/null
     # Proceed build for each target?
     if [ $rc -eq 0 ]; then
         build_for_target "x86_64" "debian" "buster" ".deb" && \
+            build_for_target "armhf" "debian" "buster" ".deb" && \
             build_for_target "x86_64" "debian" "bullseye" ".deb" && \
-            build_for_target "x86_64" "debian" "bookworm" ".deb"
+            build_for_target "armhf" "debian" "bullseye" ".deb" && \
+            build_for_target "x86_64" "debian" "bookworm" ".deb" && \
+            build_for_target "armhf" "debian" "bookworm" ".deb"
         rc=$?
     fi
 
