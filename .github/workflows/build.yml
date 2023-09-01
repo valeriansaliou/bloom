@@ -41,7 +41,7 @@ jobs:
         id: current_tag
         uses: WyriHaximus/github-action-get-previous-tag@v1
 
-      - name: Release binaries
+      - name: Release binaries (no package)
         run: ./scripts/release_binaries.sh --version=v${{ steps.current_tag.outputs.tag }}
 
       - name: Release new version
