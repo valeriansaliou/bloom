@@ -328,11 +328,11 @@ Bloom provides [pre-built packages](https://packagecloud.io/valeriansaliou/bloom
 **1️⃣ Add the Bloom APT repository (eg. for Debian `bookworm`):**
 
 ```bash
-echo "deb https://packagecloud.io/valeriansaliou/bloom/debian/ bookworm main" > /etc/apt/sources.list.d/valeriansaliou_bloom.list
+echo "deb [signed-by=/usr/share/keyrings/valeriansaliou_bloom.gpg] https://packagecloud.io/valeriansaliou/bloom/debian/ bookworm main" > /etc/apt/sources.list.d/valeriansaliou_bloom.list
 ```
 
 ```bash
-curl --silent -L https://packagecloud.io/valeriansaliou/bloom/gpgkey | apt-key add -
+curl -fsSL https://packagecloud.io/valeriansaliou/bloom/gpgkey | gpg --dearmor -o /usr/share/keyrings/valeriansaliou_bloom.gpg
 ```
 
 ```bash
