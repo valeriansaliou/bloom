@@ -59,7 +59,7 @@ pushd "$BASE_DIR" > /dev/null
     echo "Executing sign steps for Bloom v$BLOOM_VERSION..."
 
     sign_for_architecture "x86_64" && \
-        sign_for_architecture "armhf"
+        sign_for_architecture "armv7"
     rc=$?
 
     if [ $rc -eq 0 ]; then

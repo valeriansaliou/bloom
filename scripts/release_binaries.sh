@@ -64,7 +64,7 @@ pushd "$BASE_DIR" > /dev/null
     echo "Executing release steps for Bloom v$BLOOM_VERSION..."
 
     release_for_architecture "x86_64" "x86_64-unknown-linux-musl" && \
-        release_for_architecture "armhf" "armv7-unknown-linux-musleabihf"
+        release_for_architecture "armv7" "armv7-unknown-linux-musleabihf"
     rc=$?
 
     if [ $rc -eq 0 ]; then
