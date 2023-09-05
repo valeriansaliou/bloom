@@ -47,15 +47,15 @@ jobs:
           CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
 
       - name: Release binaries
-        run: ./scripts/release_binaries.sh --version=v${{ steps.current_tag.outputs.tag }}
+        run: ./scripts/release_binaries.sh --version=${{ steps.current_tag.outputs.tag }}
 
       - name: Release new version
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.current_tag.outputs.tag }}
-          name: Bloom v${{ steps.current_tag.outputs.tag }}
+          name: Bloom ${{ steps.current_tag.outputs.tag }}
           body: "⚠️ Changelog not yet provided."
-          files: ./v${{ steps.current_tag.outputs.tag }}-*.tar.gz
+          files: ./${{ steps.current_tag.outputs.tag }}-*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
