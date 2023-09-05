@@ -58,7 +58,7 @@ rc=0
 pushd "$BASE_DIR" > /dev/null
     echo "Executing sign steps for Bloom v$BLOOM_VERSION..."
 
-    sign_for_architecture "amd64" && \
+    sign_for_architecture "x86_64" && \
         sign_for_architecture "armhf"
     rc=$?
 
