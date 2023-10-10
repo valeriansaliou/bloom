@@ -1,25 +1,14 @@
-FROM rustlang/rust:nightly-bookworm-slim AS build
-
-RUN apt-get update
-RUN apt-get install -y musl-tools
-
-RUN rustup --version
-RUN rustup target add x86_64-unknown-linux-musl
-
-RUN rustc --version && \
-    rustup --version && \
-    cargo --version
+FROM rust:1.73-slim-buster AS build
 
 WORKDIR /app
 COPY . /app
-RUN cargo clean && cargo build --release --target x86_64-unknown-linux-musl
-RUN strip ./target/x86_64-unknown-linux-musl/release/bloom
+RUN cargo build --release
 
-FROM scratch
+FROM gcr.io/distroless/cc
 
 WORKDIR /usr/src/bloom
 
-COPY --from=build /app/target/x86_64-unknown-linux-musl/release/bloom /usr/local/bin/bloom
+COPY --from=build /app/target/release/bloom /usr/local/bin/bloom
 
 CMD [ "bloom", "-c", "/etc/bloom.cfg" ]
 
