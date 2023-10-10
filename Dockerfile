@@ -1,7 +1,10 @@
 FROM rust:1.73-slim-buster AS build
-
+ARG CPU_TARGET
 WORKDIR /app
 COPY . /app
+RUN if [ "$CPU_TARGET" = "neoverse" ]; then \
+      export RUSTFLAGS="-Ctarget-feature=+lse -Ctarget-cpu=neoverse-n1"; \
+    fi
 RUN cargo build --release
 
 FROM gcr.io/distroless/cc
