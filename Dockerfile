@@ -1,4 +1,4 @@
-FROM rust:1.73-slim-buster AS build
+FROM rust:1.75-slim-buster AS build
 ARG CPU_TARGET
 WORKDIR /app
 COPY . /app
