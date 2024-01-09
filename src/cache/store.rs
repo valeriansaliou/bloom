@@ -373,15 +373,24 @@ impl CachePurgeVariant {
         match *self {
             CachePurgeVariant::Bucket | CachePurgeVariant::Auth => {
                 r#"
-                  local targets = redis.call('SMEMBERS', ARGV[3])
+                  local batch_size = 1000
+                  local cursor = "0"
+                  local targets, result
 
-                  for i, tag in ipairs(targets) do
-                      targets[i] = ARGV[1] .. ":" .. ARGV[2] .. ":c:" .. tag
-                  end
+                  repeat
+                      targets = {}
+                      result = redis.call('SSCAN', ARGV[3], cursor, 'COUNT', batch_size)
+                      cursor = result[1]
+                      for _, tag in ipairs(result[2]) do
+                          table.insert(targets, ARGV[1] .. ":" .. ARGV[2] .. ":c:" .. tag)
+                      end
 
-                  table.insert(targets, ARGV[3])
+                      if #targets > 0 then
+                          redis.call('UNLINK', unpack(targets))
+                      end
+                  until cursor == "0"
 
-                  redis.call('UNLINK', unpack(targets))
+                  redis.call('UNLINK', ARGV[3])
                 "#
             }
         }
