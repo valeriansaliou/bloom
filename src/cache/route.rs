@@ -65,7 +65,7 @@ impl CacheRoute {
     pub fn hash(value: &str) -> String {
         debug!("hashing value: {}", value);
 
-        format!("{:x}", farmhash::fingerprint32(value.as_bytes()))
+        format!("{:x}", farmhash::fingerprint64(value.as_bytes()))
     }
 }
 
