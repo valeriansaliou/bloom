@@ -10,7 +10,7 @@ use hyper::{HttpVersion, Method};
 
 pub struct CacheRoute;
 
-pub const ROUTE_HASH_SIZE: usize = 8;
+pub const ROUTE_HASH_SIZE: usize = 16;
 
 pub static ROUTE_PREFIX: &'static str = "bloom";
 
@@ -65,7 +65,7 @@ impl CacheRoute {
     pub fn hash(value: &str) -> String {
         debug!("hashing value: {}", value);
 
-        format!("{:x}", farmhash::fingerprint32(value.as_bytes()))
+        format!("{:x}", farmhash::fingerprint64(value.as_bytes()))
     }
 }
 
@@ -86,8 +86,8 @@ mod tests {
                 None,
             ),
             (
-                "bloom:0:c:dc56d17a:e6a8b05d".to_string(),
-                "dc56d17a:e6a8b05d".to_string(),
+                "bloom:0:c:dc56d17a:7cf7a048e7a274fb".to_string(),
+                "dc56d17a:7cf7a048e7a274fb".to_string(),
             ),
             "[shard=0][auth=no] HTTP/1.1 GET /"
         );
@@ -102,8 +102,8 @@ mod tests {
                 None,
             ),
             (
-                "bloom:0:c:dc56d17a:fbdc5f7c".to_string(),
-                "dc56d17a:fbdc5f7c".to_string(),
+                "bloom:0:c:dc56d17a:b09a457c8d1e7a99".to_string(),
+                "dc56d17a:b09a457c8d1e7a99".to_string(),
             ),
             "[shard=0][auth=no] HTTP/1.1 POST /login"
         );
@@ -118,8 +118,8 @@ mod tests {
                 None,
             ),
             (
-                "bloom:7:c:6d0f1448:2f484c4a".to_string(),
-                "6d0f1448:2f484c4a".to_string(),
+                "bloom:7:c:6d0f1448:f5cb99aa5aceb0e9".to_string(),
+                "6d0f1448:f5cb99aa5aceb0e9".to_string(),
             ),
             "[shard=7][auth=yes] HTTP/1.1 OPTIONS /feed"
         );
@@ -134,15 +134,15 @@ mod tests {
                 Some(&Origin::new("https", "valeriansaliou.name", None)),
             ),
             (
-                "bloom:80:c:d73f0f31:e186dab7".to_string(),
-                "d73f0f31:e186dab7".to_string(),
+                "bloom:80:c:d73f0f31:e258b8e6d24173f5".to_string(),
+                "d73f0f31:e258b8e6d24173f5".to_string(),
             ),
             "[shard=80][auth=yes] h2 HEAD /feed"
         );
         assert_eq!(
             ROUTE_HASH_SIZE,
             CacheRoute::hash("7gCq81kzO5").len(),
-            "Route size should be 8 (dynamic)"
+            "Route size should be 16 (dynamic)"
         );
     }
 }
