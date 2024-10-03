@@ -94,10 +94,10 @@ impl CacheStoreBuilder {
 
                         CacheStore { pool: pool }
                     }
-                    Err(_) => panic!("could not spawn redis pool"),
+                    Err(e) => panic!("could not spawn redis pool: {}", e),
                 }
             }
-            Err(_) => panic!("could not create redis connection manager"),
+            Err(e) => panic!("could not create redis connection manager: {}", e),
         }
     }
 }
