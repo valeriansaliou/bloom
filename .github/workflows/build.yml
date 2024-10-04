@@ -6,17 +6,6 @@ on:
 name: Build and Release
 
 jobs:
-  build-packages:
-    needs: build-releases
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Build packages
-        run: ./scripts/build_packages.sh
-
   build-docker:
     runs-on: ubuntu-latest
 
