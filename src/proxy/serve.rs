@@ -166,8 +166,8 @@ impl ProxyServe {
                         .or_else(|_| Err(()))
                         .map(|body| Ok((fingerprint, body)))
                 })
-                .or_else(|_| {
-                    error!("failed fetching cached data body");
+                .or_else(|e| {
+                    error!("failed fetching cached data body {:?}", e);
 
                     future::ok(Err(()))
                 }),
@@ -217,7 +217,7 @@ impl ProxyServe {
                     Err(body_string_values) => {
                         match body_string_values {
                             Some(body_string) => {
-                                // Enforce clean headers, has usually they get \
+                                // Enforce clean headers, as usually they get \
                                 //   cleaned from cache writer
                                 HeaderJanitor::clean(&mut result.headers);
 
