@@ -17,18 +17,18 @@ pub struct ProxyHeader;
 impl ProxyHeader {
     pub fn parse_from_request(headers: Headers) -> (Headers, String, u8) {
         // Request header: 'Authorization'
-        let auth = match headers.get_raw("authorization") {
-            None => defaults::REQUEST_AUTHORIZATION_DEFAULT,
-            Some(value) => from_utf8(value.one().unwrap_or(&[]))
-                .unwrap_or(defaults::REQUEST_AUTHORIZATION_DEFAULT),
-        }
-        .to_string();
+        let auth = headers
+            .get_raw("authorization")
+            .map_or(defaults::REQUEST_AUTHORIZATION_DEFAULT, |value| {
+                from_utf8(value.one().unwrap_or(&[]))
+                    .unwrap_or(defaults::REQUEST_AUTHORIZATION_DEFAULT)
+            })
+            .to_string();
 
         // Request header: 'Bloom-Request-Shard'
-        let shard = match headers.get::<HeaderRequestBloomRequestShard>() {
-            None => APP_CONF.proxy.shard_default,
-            Some(value) => value.0,
-        };
+        let shard = headers
+            .get::<HeaderRequestBloomRequestShard>()
+            .map_or_else(|| APP_CONF.proxy.shard_default, |value| value.0);
 
         (headers, auth, shard)
     }

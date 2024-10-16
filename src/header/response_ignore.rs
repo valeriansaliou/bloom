@@ -16,9 +16,9 @@ impl Header for HeaderResponseBloomResponseIgnore {
         "Bloom-Response-Ignore"
     }
 
-    fn parse_header(raw: &Raw) -> Result<HeaderResponseBloomResponseIgnore> {
-        if raw.eq("1") == true {
-            return Ok(HeaderResponseBloomResponseIgnore());
+    fn parse_header(raw: &Raw) -> Result<Self> {
+        if raw.eq("1") {
+            return Ok(Self());
         }
         Err(Error::Header)
     }

@@ -46,16 +46,16 @@ impl CacheWrite {
                     if let Ok(body_value) = body_result {
                         debug!("checking whether to write cache for key: {}", &key);
 
-                        if APP_CONF.cache.disable_write == false
-                            && CacheCheck::from_response(&method, &status, &headers) == true
+                        if !APP_CONF.cache.disable_write
+                            && CacheCheck::from_response(&method, status, &headers)
                         {
                             debug!("key: {} cacheable, writing cache", &key);
 
                             // Acquire bucket from response, or fallback to no bucket
-                            let mut key_tags =
-                                match headers.get::<HeaderResponseBloomResponseBuckets>() {
-                                    None => Vec::new(),
-                                    Some(value) => value
+                            let mut key_tags = headers
+                                .get::<HeaderResponseBloomResponseBuckets>()
+                                .map_or_else(Vec::new, |value| {
+                                    value
                                         .0
                                         .iter()
                                         .map(|value| {
@@ -64,16 +64,15 @@ impl CacheWrite {
                                                 &CacheRoute::hash(value),
                                             )
                                         })
-                                        .collect::<Vec<(String, String)>>(),
-                                };
+                                        .collect::<Vec<(String, String)>>()
+                                });
 
                             key_tags.push(CacheRoute::gen_key_auth_from_hash(shard, &auth_hash));
 
                             // Acquire TTL from response, or fallback to default TTL
-                            let ttl = match headers.get::<HeaderResponseBloomResponseTTL>() {
-                                None => APP_CONF.cache.ttl_default,
-                                Some(value) => value.0,
-                            };
+                            let ttl = headers
+                                .get::<HeaderResponseBloomResponseTTL>()
+                                .map_or_else(|| APP_CONF.cache.ttl_default, |value| value.0);
 
                             // Clean headers before they get stored
                             HeaderJanitor::clean(&mut headers);
@@ -81,8 +80,8 @@ impl CacheWrite {
                             // Generate storable value
                             let body_string = format!(
                                 "{}\n{}\n{}",
-                                CacheWrite::generate_chain_banner(&version, &status),
-                                CacheWrite::generate_chain_headers(&headers),
+                                Self::generate_chain_banner(&version, &status),
+                                Self::generate_chain_headers(&headers),
                                 body_value
                             );
 
@@ -93,7 +92,7 @@ impl CacheWrite {
                             Box::new(
                                 APP_CACHE_STORE
                                     .set(key, key_mask, body_string, fingerprint, ttl, key_tags)
-                                    .or_else(|_| Err(Error::Incomplete))
+                                    .or_else(|()| Err(Error::Incomplete))
                                     .and_then(move |result| {
                                         future::ok(match result {
                                             Ok(fingerprint) => {
@@ -102,8 +101,8 @@ impl CacheWrite {
                                                 CacheWriteResult {
                                                     body: Ok(body_value),
                                                     fingerprint: Some(fingerprint),
-                                                    status: status,
-                                                    headers: headers,
+                                                    status,
+                                                    headers,
                                                 }
                                             }
                                             Err(forward) => {
@@ -115,8 +114,8 @@ impl CacheWrite {
                                                 CacheWriteResult {
                                                     body: Err(Some(body_value)),
                                                     fingerprint: Some(forward.1),
-                                                    status: status,
-                                                    headers: headers,
+                                                    status,
+                                                    headers,
                                                 }
                                             }
                                         })
@@ -138,13 +137,13 @@ impl CacheWrite {
     }
 
     fn generate_chain_banner(version: &HttpVersion, status: &StatusCode) -> String {
-        format!("{} {}", version, status)
+        format!("{version} {status}")
     }
 
     fn generate_chain_headers(headers: &Headers) -> String {
         headers
             .iter()
-            .filter(|header_view| HeaderJanitor::is_contextual(&header_view) == false)
+            .filter(|header_view| !HeaderJanitor::is_contextual(header_view))
             .map(|header_view| format!("{}: {}\n", header_view.name(), header_view.value_string()))
             .collect()
     }
@@ -161,8 +160,8 @@ impl CacheWrite {
         Box::new(future::ok(CacheWriteResult {
             body: Err(body),
             fingerprint: None,
-            status: status,
-            headers: headers,
+            status,
+            headers,
         }))
     }
 }

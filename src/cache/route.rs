@@ -12,7 +12,7 @@ pub struct CacheRoute;
 
 pub const ROUTE_HASH_SIZE: usize = 16;
 
-pub static ROUTE_PREFIX: &'static str = "bloom";
+pub static ROUTE_PREFIX: &str = "bloom";
 
 impl CacheRoute {
     pub fn gen_key_cache_from_hash(
@@ -20,21 +20,21 @@ impl CacheRoute {
         auth_hash: &str,
         route_hash: &str,
     ) -> (String, String) {
-        let mask = format!("{}:{}", auth_hash, route_hash);
+        let mask = format!("{auth_hash}:{route_hash}");
 
         (format!("{}:{}:c:{}", ROUTE_PREFIX, shard, &mask), mask)
     }
 
     pub fn gen_key_auth_from_hash(shard: u8, auth_hash: &str) -> (String, String) {
-        let mask = format!("a:{}", auth_hash);
+        let mask = format!("a:{auth_hash}");
 
-        (format!("{}:{}:{}", ROUTE_PREFIX, shard, mask), mask)
+        (format!("{ROUTE_PREFIX}:{shard}:{mask}"), mask)
     }
 
     pub fn gen_key_bucket_from_hash(shard: u8, bucket_hash: &str) -> (String, String) {
-        let mask = format!("b:{}", bucket_hash);
+        let mask = format!("b:{bucket_hash}");
 
-        (format!("{}:{}:{}", ROUTE_PREFIX, shard, mask), mask)
+        (format!("{ROUTE_PREFIX}:{shard}:{mask}"), mask)
     }
 
     pub fn gen_key_cache(

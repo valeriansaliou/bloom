@@ -53,9 +53,10 @@ fn map_shards() -> [Option<Uri>; MAX_SHARDS as usize] {
 
     for shard in &APP_CONF.proxy.shard {
         // Shard number overflows?
-        if shard.shard >= MAX_SHARDS {
-            panic!("shard number overflows maximum of {} shards", MAX_SHARDS);
-        }
+        assert!(
+            shard.shard < MAX_SHARDS,
+            "shard number overflows maximum of {MAX_SHARDS} shards"
+        );
 
         // Store this shard
         shards[shard.shard as usize] = Some(
@@ -88,7 +89,7 @@ impl ProxyTunnel {
                     );
 
                     if let Some(query) = uri.query() {
-                        tunnel_uri.push_str("?");
+                        tunnel_uri.push('?');
                         tunnel_uri.push_str(query);
                     }
 

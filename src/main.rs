@@ -18,8 +18,6 @@ extern crate futures;
 extern crate futures_cpupool;
 extern crate httparse;
 extern crate hyper;
-extern crate r2d2;
-extern crate r2d2_redis;
 extern crate rand;
 extern crate redis;
 extern crate regex;
@@ -34,12 +32,11 @@ mod header;
 mod proxy;
 mod server;
 
-use std::ops::Deref;
 use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
 
-use clap::{App, Arg};
+use clap::{Arg, Command};
 use log::LevelFilter;
 
 use cache::store::{CacheStore, CacheStoreBuilder};
@@ -53,20 +50,20 @@ struct AppArgs {
     config: String,
 }
 
-pub static LINE_FEED: &'static str = "\r\n";
+pub static LINE_FEED: &str = "\r\n";
 
-pub static THREAD_NAME_WORKER: &'static str = "bloom-worker";
-pub static THREAD_NAME_CONTROL_MASTER: &'static str = "bloom-control-master";
-pub static THREAD_NAME_CONTROL_CLIENT: &'static str = "bloom-control-client";
+pub static THREAD_NAME_WORKER: &str = "bloom-worker";
+pub static THREAD_NAME_CONTROL_MASTER: &str = "bloom-control-master";
+pub static THREAD_NAME_CONTROL_CLIENT: &str = "bloom-control-client";
 
 lazy_static! {
     static ref APP_ARGS: AppArgs = make_app_args();
     static ref APP_CONF: Config = ConfigReader::make();
-    static ref APP_CACHE_STORE: CacheStore = CacheStoreBuilder::new();
+    static ref APP_CACHE_STORE: CacheStore = CacheStoreBuilder::create();
 }
 
 fn make_app_args() -> AppArgs {
-    let matches = App::new(crate_name!())
+    let matches = Command::new(crate_name!())
         .version(crate_version!())
         .author(crate_authors!())
         .about(crate_description!())
@@ -75,20 +72,23 @@ fn make_app_args() -> AppArgs {
                 .short('c')
                 .long("config")
                 .help("Path to configuration file")
-                .default_value("./config.cfg")
-                .takes_value(true),
+                .default_value("./config.cfg"),
         )
         .get_matches();
 
     // Generate owned app arguments
     AppArgs {
-        config: String::from(matches.value_of("config").expect("invalid config value")),
+        config: String::from(
+            matches
+                .get_one::<String>("config")
+                .expect("invalid config value"),
+        ),
     }
 }
 
 fn ensure_states() {
     // Ensure all statics are valid (a `deref` is enough to lazily initialize them)
-    let (_, _, _) = (APP_ARGS.deref(), APP_CONF.deref(), APP_CACHE_STORE.deref());
+    let (_, _, _) = (&*APP_ARGS, &*APP_CONF, &*APP_CACHE_STORE);
 }
 
 fn spawn_worker() {
@@ -97,14 +97,10 @@ fn spawn_worker() {
         .spawn(|| ServerListenBuilder::new().run());
 
     // Block on worker thread (join it)
-    let has_error = if let Ok(worker_thread) = worker {
-        worker_thread.join().is_err()
-    } else {
-        true
-    };
+    let has_error = worker.map_or(true, |worker_thread| worker_thread.join().is_err());
 
     // Worker thread crashed?
-    if has_error == true {
+    if has_error {
         error!("worker thread crashed, setting it up again");
 
         // Prevents thread start loop floods

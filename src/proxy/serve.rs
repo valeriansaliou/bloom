@@ -54,7 +54,7 @@ impl ProxyServe {
 
         headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Reject));
 
-        Self::respond(&req.method(), status, headers, format!("{}", status))
+        Self::respond(req.method(), status, headers, format!("{status}"))
     }
 
     fn tunnel(req: Request) -> ProxyServeResponseFuture {
@@ -77,13 +77,13 @@ impl ProxyServe {
 
         Box::new(
             Self::fetch_cached_data(shard, &ns, &method, &headers)
-                .or_else(|_| Err(Error::Incomplete))
+                .or_else(|()| Err(Error::Incomplete))
                 .and_then(move |result| match result {
                     Ok(value) => Self::dispatch_cached(
                         shard, ns, ns_mask, auth_hash, method, uri, version, headers, body,
                         value.0, value.1,
                     ),
-                    Err(_) => Self::tunnel_over_proxy(
+                    Err(()) => Self::tunnel_over_proxy(
                         shard, ns, ns_mask, auth_hash, method, uri, version, headers, body,
                     ),
                 }),
@@ -97,7 +97,9 @@ impl ProxyServe {
         headers: &Headers,
     ) -> ProxyServeResultFuture {
         // Clone inner If-None-Match header value (pass it to future)
-        let header_if_none_match = headers.get::<IfNoneMatch>().map(|value| value.to_owned());
+        let header_if_none_match = headers
+            .get::<IfNoneMatch>()
+            .map(std::borrow::ToOwned::to_owned);
         let ns_string = ns.to_string();
 
         Box::new(
@@ -111,34 +113,34 @@ impl ProxyServe {
                             );
 
                             // Check if not modified?
-                            let isnt_modified = match header_if_none_match {
-                                Some(ref req_if_none_match) => match req_if_none_match {
-                                    &IfNoneMatch::Any => true,
-                                    &IfNoneMatch::Items(ref req_etags) => {
-                                        if let Some(req_etag) = req_etags.first() {
-                                            req_etag.weak_eq(&EntityTag::new(
-                                                false,
-                                                fingerprint.to_owned(),
-                                            ))
-                                        } else {
-                                            false
+                            let isnt_modified =
+                                header_if_none_match
+                                    .as_ref()
+                                    .map_or(false, |req_if_none_match| match req_if_none_match {
+                                        &IfNoneMatch::Any => true,
+                                        IfNoneMatch::Items(req_etags) => {
+                                            if let Some(req_etag) = req_etags.first() {
+                                                req_etag.weak_eq(&EntityTag::new(
+                                                    false,
+                                                    fingerprint.clone(),
+                                                ))
+                                            } else {
+                                                false
+                                            }
                                         }
-                                    }
-                                },
-                                _ => false,
-                            };
+                                    });
 
                             debug!(
                                 "got not modified status for cached data = {} on ns = {}",
                                 &isnt_modified, &ns_string
                             );
 
-                            Self::fetch_cached_data_body(ns_string, fingerprint, !isnt_modified)
+                            Self::fetch_cached_data_body(&ns_string, fingerprint, !isnt_modified)
                         }
                         _ => Box::new(future::ok(Err(()))),
                     }
                 })
-                .or_else(|_| {
+                .or_else(|()| {
                     error!("failed fetching cached data meta");
 
                     future::ok(Err(()))
@@ -147,23 +149,23 @@ impl ProxyServe {
     }
 
     fn fetch_cached_data_body(
-        ns: String,
+        ns: &str,
         fingerprint: String,
         do_acquire_body: bool,
     ) -> ProxyServeResultFuture {
         // Do not acquire body? (not modified)
-        let body_fetcher = if do_acquire_body == false {
-            Box::new(future::ok(Ok(None)))
-        } else {
+        let body_fetcher = if do_acquire_body {
             // Will acquire body (modified)
-            CacheRead::acquire_body(&ns)
+            CacheRead::acquire_body(ns)
+        } else {
+            Box::new(future::ok(Ok(None)))
         };
 
         Box::new(
             body_fetcher
                 .and_then(|body_result| {
                     body_result
-                        .or_else(|_| Err(()))
+                        .map_err(|_| ())
                         .map(|body| Ok((fingerprint, body)))
                 })
                 .or_else(|e| {
@@ -187,8 +189,8 @@ impl ProxyServe {
     ) -> ProxyServeResponseFuture {
         // Clone method value for closures. Sadly, it looks like Rust borrow \
         //   checker doesnt discriminate properly on this check.
-        let method_success = method.to_owned();
-        let method_failure = method.to_owned();
+        let method_success = method.clone();
+        let method_failure = method.clone();
 
         Box::new(
             ProxyTunnel::run(&method, &uri, &headers, body, shard)
@@ -310,7 +312,7 @@ impl ProxyServe {
             headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
             // Serve non-modified response
-            Self::respond(&method, StatusCode::NotModified, headers, String::from(""))
+            Self::respond(&method, StatusCode::NotModified, headers, String::new())
         }
     }
 
@@ -339,7 +341,7 @@ impl ProxyServe {
 
         headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Offline));
 
-        Self::respond(method, status, headers, format!("{}", status))
+        Self::respond(method, status, headers, format!("{status}"))
     }
 
     fn fingerprint_etag(fingerprint: String) -> ETag {
@@ -352,15 +354,13 @@ impl ProxyServe {
         // Scan response lines
         let lines = res_string_value.lines().with_position();
 
-        for line_with_position in lines {
-            let line = line_with_position.into_inner();
-
-            if body.is_empty() == false || is_last_line_empty == true {
+        for (position, line) in lines {
+            if !body.is_empty() || is_last_line_empty {
                 // Append line to body
                 body.push_str(line);
 
                 // Append line feed character?
-                if let Position::First(_) | Position::Middle(_) = line_with_position {
+                if matches!(position, Position::First | Position::Middle) {
                     body.push_str(LINE_FEED);
                 }
             }

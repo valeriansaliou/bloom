@@ -16,7 +16,7 @@ impl Header for HeaderResponseBloomResponseBuckets {
         "Bloom-Response-Buckets"
     }
 
-    fn parse_header(raw: &Raw) -> Result<HeaderResponseBloomResponseBuckets> {
+    fn parse_header(raw: &Raw) -> Result<Self> {
         parsing::from_comma_delimited(raw).map(HeaderResponseBloomResponseBuckets)
     }
 

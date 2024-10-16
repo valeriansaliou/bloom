@@ -4,7 +4,7 @@ version = "1.36.0"
 description = "HTTP REST API caching middleware, to be used between load balancers and REST API workers."
 readme = "README.md"
 license = "MPL-2.0"
-edition = "2018"
+edition = "2021"
 homepage = "https://github.com/valeriansaliou/bloom"
 repository = "https://github.com/valeriansaliou/bloom.git"
 keywords = ["proxy", "http", "api", "rest", "cache"]
@@ -18,8 +18,8 @@ doc = false
 
 [dependencies]
 log = "0.4"
-toml = "0.5"
-clap = { version = "3.2", features = ["std", "cargo"] }
+toml = "0.8"
+clap = { version = "4.5", features = ["std", "cargo"] }
 lazy_static = "1.4"
 serde = "1.0"
 serde_derive = "1.0"
@@ -29,14 +29,13 @@ httparse = "1.3"
 hyper = "0.11"
 tokio-core = "0.1"
 r2d2 = "0.8"
-r2d2_redis = "0.14"
-redis = "0.20"
+redis = { version = "0.27", features = ["r2d2"] }
 farmhash = "1.1"
-brotli = "3.3"
-rand = "0.7"
+brotli = "7"
+rand = "0.8"
 unicase = "2.6"
 regex = "1.8"
-itertools = "0.10"
+itertools = "0.13"
 
 [profile.dev]
 opt-level = 0

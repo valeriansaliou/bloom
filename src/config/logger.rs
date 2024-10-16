@@ -26,6 +26,6 @@ impl log::Log for ConfigLogger {
 impl ConfigLogger {
     pub fn init(level: LevelFilter) -> Result<(), SetLoggerError> {
         log::set_max_level(level);
-        log::set_boxed_logger(Box::new(ConfigLogger))
+        log::set_boxed_logger(Box::new(Self))
     }
 }

@@ -8,7 +8,6 @@ use brotli::{CompressorReader as BrotliCompressor, Decompressor as BrotliDecompr
 use futures::future::Future;
 use futures_cpupool::CpuPool;
 use r2d2::Pool;
-use r2d2_redis::RedisConnectionManager;
 use redis::{self, Commands, Value};
 use std::cmp;
 use std::io::Read;
@@ -19,10 +18,10 @@ use crate::APP_CONF;
 
 pub const BODY_COMPRESS_RATIO: u32 = 5;
 
-static KEY_BODY: &'static str = "b";
-static KEY_FINGERPRINT: &'static str = "f";
-static KEY_TAGS: &'static str = "t";
-static KEY_TAGS_SEPARATOR: &'static str = ",";
+static KEY_BODY: &str = "b";
+static KEY_FINGERPRINT: &str = "f";
+static KEY_TAGS: &str = "t";
+static KEY_TAGS_SEPARATOR: &str = ",";
 
 lazy_static! {
     pub static ref EXECUTOR_POOL: CpuPool = CpuPool::new(APP_CONF.cache.executor_pool as usize);
@@ -31,7 +30,7 @@ lazy_static! {
 pub struct CacheStoreBuilder;
 
 pub struct CacheStore {
-    pool: Pool<RedisConnectionManager>,
+    pool: Pool<redis::Client>,
 }
 
 #[derive(Debug)]
@@ -54,17 +53,28 @@ type CacheWriteResult = Result<String, (CacheStoreError, String)>;
 type CacheWriteResultFuture = Box<dyn Future<Item = CacheWriteResult, Error = ()>>;
 type CachePurgeResult = Result<(), CacheStoreError>;
 
+const MAX_I64_TTL: usize = i64::MAX as usize;
+
+fn safe_usize_to_i64(value: usize) -> i64 {
+    if value > MAX_I64_TTL {
+        i64::MAX
+    } else {
+        value as i64
+    }
+}
+
 impl CacheStoreBuilder {
-    pub fn new() -> CacheStore {
+    pub fn create() -> CacheStore {
         info!(
             "binding to store backend at {}:{}",
             APP_CONF.redis.host, APP_CONF.redis.port
         );
 
-        let addr_auth = match APP_CONF.redis.password {
-            Some(ref password) => format!(":{}@", password),
-            None => "".to_string(),
-        };
+        let addr_auth = APP_CONF
+            .redis
+            .password
+            .as_ref()
+            .map_or_else(String::new, |password| format!(":{password}@"));
 
         let tcp_addr_raw = format!(
             "redis://{}{}:{}/{}",
@@ -73,7 +83,7 @@ impl CacheStoreBuilder {
 
         debug!("will connect to redis at: {}", tcp_addr_raw);
 
-        match RedisConnectionManager::new(tcp_addr_raw.as_ref()) {
+        match redis::Client::open(tcp_addr_raw.as_ref()) {
             Ok(manager) => {
                 let builder = Pool::builder()
                     .test_on_check_out(false)
@@ -92,36 +102,33 @@ impl CacheStoreBuilder {
                     Ok(pool) => {
                         info!("bound to store backend");
 
-                        CacheStore { pool: pool }
+                        CacheStore { pool }
                     }
-                    Err(e) => panic!("could not spawn redis pool: {}", e),
+                    Err(e) => panic!("could not spawn redis pool: {e}"),
                 }
             }
-            Err(e) => panic!("could not create redis connection manager: {}", e),
+            Err(e) => panic!("could not create redis connection manager: {e}"),
         }
     }
 }
 
 impl CacheStore {
     pub fn get_meta(&self, shard: u8, key: String) -> CacheReadResultFuture {
-        let pool = self.pool.to_owned();
+        let pool = self.pool.clone();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             get_cache_store_client_try!(pool, CacheStoreError::Disconnected, client {
                 match (*client).hget::<_, _, (Value, Value)>(key, (KEY_FINGERPRINT, KEY_TAGS)) {
                     Ok(value) => {
                         match value {
-                            (Value::Data(fingerprint_bytes), tags_bytes) => {
+                            (Value::BulkString(fingerprint_bytes), tags_bytes) => {
                                 // Parse tags and bump their last access time
-                                if let Value::Data(tags_bytes_data) = tags_bytes {
-                                    if let Ok(tags_data) = String::from_utf8(
-                                        tags_bytes_data) {
-                                        if tags_data.is_empty() == false {
+                                if let Value::BulkString(tags_bytes_data) = tags_bytes {
+                                    if let Ok(tags_data) = String::from_utf8(tags_bytes_data) {
+                                        if !tags_data.is_empty() {
                                             let tags = tags_data.split(KEY_TAGS_SEPARATOR)
                                                 .map(|tag| {
-                                                    format!(
-                                                        "{}:{}:{}", ROUTE_PREFIX, shard, tag
-                                                    )
+                                                    format!("{ROUTE_PREFIX}:{shard}:{tag}")
                                                 })
                                                 .collect::<Vec<String>>();
 
@@ -144,8 +151,8 @@ impl CacheStore {
                                             match redis::cmd("TOUCH").arg(tags)
                                                 .query::<usize>(&mut *client) {
                                                 Ok(bump_count) => {
-                                                    // Partial bump count? Consider cache as \
-                                                    //   non-existing
+                                                   // Partial bump count? Consider cache as \
+                                                   // non-existing
                                                     if bump_count < tags_count {
                                                         info!(
                                                             "got only partial tag count: {}/{}",
@@ -167,11 +174,7 @@ impl CacheStore {
                                 }
 
                                 // Decode raw bytes to string
-                                if let Ok(fingerprint) = String::from_utf8(fingerprint_bytes) {
-                                    Ok(Some(fingerprint))
-                                } else {
-                                    Err(CacheStoreError::Corrupted)
-                                }
+                                String::from_utf8(fingerprint_bytes).map_or(Err(CacheStoreError::Corrupted), |fingerprint| Ok(Some(fingerprint)))
                             },
                             (Value::Nil, _) => Ok(None),
                             _ => Err(CacheStoreError::Invalid),
@@ -184,16 +187,14 @@ impl CacheStore {
     }
 
     pub fn get_body(&self, key: String) -> CacheReadResultFuture {
-        let pool = self.pool.to_owned();
+        let pool = self.pool.clone();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             get_cache_store_client_try!(pool, CacheStoreError::Disconnected, client {
-                match (*client).hget::<_, _, Value>(key, KEY_BODY) {
-                    Ok(value) => {
-                        match value {
-                            Value::Data(body_bytes_raw) => {
+                (*client).hget::<_, _, Value>(key, KEY_BODY).map_or(Err(CacheStoreError::Failed), |value| match value {
+                            Value::BulkString(body_bytes_raw) => {
                                 let body_bytes_result =
-                                if APP_CONF.cache.compress_body == true {
+                                if APP_CONF.cache.compress_body {
                                     // Decompress raw bytes
                                     let mut decompressor = BrotliDecompressor::new(
                                         &body_bytes_raw[..], 4096
@@ -203,8 +204,8 @@ impl CacheStore {
 
                                     match decompressor.read_to_end(&mut decompress_bytes) {
                                         Ok(_) => {
-                                            if body_bytes_raw.len() > 0 &&
-                                                    decompress_bytes.len() == 0 {
+                                            if !body_bytes_raw.is_empty() &&
+                                                    decompress_bytes.is_empty() {
                                                 error!(
                                                     "decompressed store value has empty body"
                                                 );
@@ -225,22 +226,11 @@ impl CacheStore {
                                 };
 
                                 // Decode raw bytes to string
-                                if let Ok(body_bytes) = body_bytes_result {
-                                    if let Ok(body) = String::from_utf8(body_bytes) {
-                                        Ok(Some(body))
-                                    } else {
-                                        Err(CacheStoreError::Corrupted)
-                                    }
-                                } else {
-                                    Err(CacheStoreError::Failed)
-                                }
+                                body_bytes_result.map_or(Err(CacheStoreError::Failed), |body_bytes| String::from_utf8(body_bytes).map_or(Err(CacheStoreError::Corrupted), |body| Ok(Some(body))))
                             },
                             Value::Nil => Ok(None),
                             _ => Err(CacheStoreError::Invalid),
-                        }
-                    },
-                    _ => Err(CacheStoreError::Failed),
-                }
+                        })
             })
         }))
     }
@@ -254,7 +244,7 @@ impl CacheStore {
         ttl: usize,
         key_tags: Vec<(String, String)>,
     ) -> CacheWriteResultFuture {
-        let pool = self.pool.to_owned();
+        let pool = self.pool.clone();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             Ok(get_cache_store_client_try!(
@@ -270,7 +260,7 @@ impl CacheStore {
                         Err((CacheStoreError::TooLarge, fingerprint))
                     } else {
                         // Compress value?
-                        let store_value_bytes_result = if APP_CONF.cache.compress_body == true {
+                        let store_value_bytes_result = if APP_CONF.cache.compress_body {
                             let mut compressor = BrotliCompressor::new(
                                 value.as_bytes(), 4096, BODY_COMPRESS_RATIO, 22
                             );
@@ -318,16 +308,16 @@ impl CacheStore {
                                 ).ignore();
                             }
 
-                            pipeline.expire(&key, ttl_cap).ignore();
+                            pipeline.expire(&key, safe_usize_to_i64(ttl_cap)).ignore();
 
                             for key_tag in key_tags {
                                 pipeline.sadd(&key_tag.0, &key_mask).ignore();
-                                pipeline.expire(&key_tag.0, APP_CONF.redis.max_key_expiration);
+                                pipeline.expire(&key_tag.0, safe_usize_to_i64(APP_CONF.redis.max_key_expiration));
                             }
 
                             // Bucket (MULTI operation for main data + bucket marker)
                             match pipeline.query::<()>(&mut *client) {
-                                Ok(_) => Ok(fingerprint),
+                                Ok(()) => Ok(fingerprint),
                                 Err(err) => {
                                     error!("got store error: {}", err);
 
@@ -367,11 +357,11 @@ impl CacheStore {
 }
 
 impl CachePurgeVariant {
-    fn get_script(&self) -> &'static str {
+    const fn get_script(&self) -> &'static str {
         // Notice: there is a limit of 1000 purgeable tags per bucket. Purging a lot of tags at \
         //   once is dangerous for Bloom, as the underlying Redis server is at risk of blocking.
         match *self {
-            CachePurgeVariant::Bucket | CachePurgeVariant::Auth => {
+            Self::Bucket | Self::Auth => {
                 r#"
                   local batch_size = 1000
                   local cursor = "0"
