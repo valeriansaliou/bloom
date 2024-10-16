@@ -53,6 +53,16 @@ type CacheWriteResult = Result<String, (CacheStoreError, String)>;
 type CacheWriteResultFuture = Box<dyn Future<Item = CacheWriteResult, Error = ()>>;
 type CachePurgeResult = Result<(), CacheStoreError>;
 
+const MAX_I64_TTL: usize = i64::MAX as usize;
+
+fn safe_usize_to_i64(value: usize) -> i64 {
+    if value > MAX_I64_TTL {
+        i64::MAX
+    } else {
+        value as i64
+    }
+}
+
 impl CacheStoreBuilder {
     pub fn create() -> CacheStore {
         info!(
@@ -111,41 +121,22 @@ impl CacheStore {
                 match (*client).hget::<_, _, (Value, Value)>(key, (KEY_FINGERPRINT, KEY_TAGS)) {
                     Ok(value) => {
                         match value {
-                            (Value::Data(fingerprint_bytes), tags_bytes) => {
+                            (Value::BulkString(fingerprint_bytes), tags_bytes) => {
                                 // Parse tags and bump their last access time
-                                if let Value::Data(tags_bytes_data) = tags_bytes {
-                                    if let Ok(tags_data) = String::from_utf8(
-                                        tags_bytes_data) {
+                                if let Value::BulkString(tags_bytes_data) = tags_bytes {
+                                    if let Ok(tags_data) = String::from_utf8(tags_bytes_data) {
                                         if !tags_data.is_empty() {
                                             let tags = tags_data.split(KEY_TAGS_SEPARATOR)
                                                 .map(|tag| {
-                                                    format!(
-                                                        "{ROUTE_PREFIX}:{shard}:{tag}"
-                                                    )
+                                                    format!("{ROUTE_PREFIX}:{shard}:{tag}")
                                                 })
                                                 .collect::<Vec<String>>();
 
-                                            // Proceed a soft bump of last access time of \
-                                            //   associated tag keys. This prevents a \
-                                            //   frequently accessed cache namespace to \
-                                            //   become 'orphan' (ie. one or more tag keys \
-                                            //   are LRU-expired), and thus cache namespace \
-                                            //   not to be properly removed on purge of an \
-                                            //   associated tag.
-                                            // Also, count bumped keys. It may happen that \
-                                            //   some tag keys are incorrectly removed by \
-                                            //   Redis LRU system, as it is probabilistic \
-                                            //   and thus might sample some keys incorrectly.
-                                            // The conditions explained above only happens on \
-                                            //   Redis instances with used memory going over \
-                                            //   the threshold of the max memory policy.
                                             let tags_count = tags.len();
 
                                             match redis::cmd("TOUCH").arg(tags)
                                                 .query::<usize>(&mut *client) {
                                                 Ok(bump_count) => {
-                                                    // Partial bump count? Consider cache as \
-                                                    //   non-existing
                                                     if bump_count < tags_count {
                                                         info!(
                                                             "got only partial tag count: {}/{}",
@@ -191,7 +182,7 @@ impl CacheStore {
                 match (*client).hget::<_, _, Value>(key, KEY_BODY) {
                     Ok(value) => {
                         match value {
-                            Value::Data(body_bytes_raw) => {
+                            Value::BulkString(body_bytes_raw) => {
                                 let body_bytes_result =
                                 if APP_CONF.cache.compress_body {
                                     // Decompress raw bytes
@@ -318,11 +309,11 @@ impl CacheStore {
                                 ).ignore();
                             }
 
-                            pipeline.expire(&key, ttl_cap).ignore();
+                            pipeline.expire(&key, safe_usize_to_i64(ttl_cap)).ignore();
 
                             for key_tag in key_tags {
                                 pipeline.sadd(&key_tag.0, &key_mask).ignore();
-                                pipeline.expire(&key_tag.0, APP_CONF.redis.max_key_expiration);
+                                pipeline.expire(&key_tag.0, safe_usize_to_i64(APP_CONF.redis.max_key_expiration));
                             }
 
                             // Bucket (MULTI operation for main data + bucket marker)
