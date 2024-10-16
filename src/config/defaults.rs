@@ -86,9 +86,9 @@ pub const fn redis_connection_timeout_seconds() -> u64 {
 }
 
 pub const fn redis_max_key_size() -> usize {
-    256000
+    256_000
 }
 
 pub const fn redis_max_key_expiration() -> usize {
-    2592000
+    2_592_000
 }

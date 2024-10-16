@@ -228,7 +228,9 @@ impl ControlHandle {
 
         let mut result = ControlHandleMessageResult::Continue;
 
-        let response = Self::handle_message(shard, message).map_or_else(|_| ControlCommandResponse::Err.to_str(), |resp| match resp {
+        let response = Self::handle_message(shard, message).map_or_else(
+            |_| ControlCommandResponse::Err.to_str(),
+            |resp| match resp {
                 ControlCommandResponse::Ok
                 | ControlCommandResponse::Pong
                 | ControlCommandResponse::Ended
@@ -240,7 +242,8 @@ impl ControlHandle {
                     resp.to_str()
                 }
                 ControlCommandResponse::Err => ControlCommandResponse::Err.to_str(),
-            });
+            },
+        );
 
         if !response.is_empty() {
             write!(stream, "{response}{LINE_FEED}").expect("write failed");

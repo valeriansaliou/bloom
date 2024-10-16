@@ -78,7 +78,11 @@ fn make_app_args() -> AppArgs {
 
     // Generate owned app arguments
     AppArgs {
-        config: String::from(matches.get_one::<String>("config").expect("invalid config value")),
+        config: String::from(
+            matches
+                .get_one::<String>("config")
+                .expect("invalid config value"),
+        ),
     }
 }
 
@@ -93,11 +97,7 @@ fn spawn_worker() {
         .spawn(|| ServerListenBuilder::new().run());
 
     // Block on worker thread (join it)
-    let has_error = if let Ok(worker_thread) = worker {
-        worker_thread.join().is_err()
-    } else {
-        true
-    };
+    let has_error = worker.map_or(true, |worker_thread| worker_thread.join().is_err());
 
     // Worker thread crashed?
     if has_error {

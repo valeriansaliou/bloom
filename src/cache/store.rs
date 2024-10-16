@@ -158,11 +158,7 @@ impl CacheStore {
                                 }
 
                                 // Decode raw bytes to string
-                                if let Ok(fingerprint) = String::from_utf8(fingerprint_bytes) {
-                                    Ok(Some(fingerprint))
-                                } else {
-                                    Err(CacheStoreError::Corrupted)
-                                }
+                                String::from_utf8(fingerprint_bytes).map_or(Err(CacheStoreError::Corrupted), |fingerprint| Ok(Some(fingerprint)))
                             },
                             (Value::Nil, _) => Ok(None),
                             _ => Err(CacheStoreError::Invalid),
@@ -179,9 +175,7 @@ impl CacheStore {
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             get_cache_store_client_try!(pool, CacheStoreError::Disconnected, client {
-                match (*client).hget::<_, _, Value>(key, KEY_BODY) {
-                    Ok(value) => {
-                        match value {
+                (*client).hget::<_, _, Value>(key, KEY_BODY).map_or(Err(CacheStoreError::Failed), |value| match value {
                             Value::BulkString(body_bytes_raw) => {
                                 let body_bytes_result =
                                 if APP_CONF.cache.compress_body {
@@ -216,22 +210,11 @@ impl CacheStore {
                                 };
 
                                 // Decode raw bytes to string
-                                if let Ok(body_bytes) = body_bytes_result {
-                                    if let Ok(body) = String::from_utf8(body_bytes) {
-                                        Ok(Some(body))
-                                    } else {
-                                        Err(CacheStoreError::Corrupted)
-                                    }
-                                } else {
-                                    Err(CacheStoreError::Failed)
-                                }
+                                body_bytes_result.map_or(Err(CacheStoreError::Failed), |body_bytes| String::from_utf8(body_bytes).map_or(Err(CacheStoreError::Corrupted), |body| Ok(Some(body))))
                             },
                             Value::Nil => Ok(None),
                             _ => Err(CacheStoreError::Invalid),
-                        }
-                    },
-                    _ => Err(CacheStoreError::Failed),
-                }
+                        })
             })
         }))
     }

@@ -35,13 +35,14 @@ impl CacheRead {
                 APP_CACHE_STORE
                     .get_meta(shard, key.to_string())
                     .and_then(|acquired| {
-                        if let Some(result) = acquired {
-                            future::ok(Ok(result))
-                        } else {
-                            info!("acquired empty meta value from cache");
+                        acquired.map_or_else(
+                            || {
+                                info!("acquired empty meta value from cache");
 
-                            future::ok(Err(CacheReadError::Empty))
-                        }
+                                future::ok(Err(CacheReadError::Empty))
+                            },
+                            |result| future::ok(Ok(result)),
+                        )
                     })
                     .or_else(|err| {
                         error!("could not acquire meta value from cache because: {:?}", err);
@@ -61,13 +62,14 @@ impl CacheRead {
             APP_CACHE_STORE
                 .get_body(key.to_string())
                 .and_then(|acquired| {
-                    if let Some(result) = acquired {
-                        future::ok(Ok(Some(result)))
-                    } else {
-                        info!("acquired empty body value from cache");
+                    acquired.map_or_else(
+                        || {
+                            info!("acquired empty body value from cache");
 
-                        future::ok(Err(CacheReadError::Empty))
-                    }
+                            future::ok(Err(CacheReadError::Empty))
+                        },
+                        |result| future::ok(Ok(Some(result))),
+                    )
                 })
                 .or_else(|err| {
                     error!("could not acquire body value from cache because: {:?}", err);

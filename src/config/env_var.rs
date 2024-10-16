@@ -18,9 +18,10 @@ where
 {
     let value = String::deserialize(deserializer)?;
 
-    match is_env_var(&value) {
-        true => Ok(get_env_var_str(&value)),
-        false => Ok(value),
+    if is_env_var(&value) {
+        Ok(get_env_var_str(&value))
+    } else {
+        Ok(value)
     }
 }
 
@@ -32,9 +33,10 @@ where
         option.map(|wrapped: WrappedString| {
             let value = wrapped.0;
 
-            match is_env_var(&value) {
-                true => get_env_var_str(&value),
-                false => value,
+            if is_env_var(&value) {
+                get_env_var_str(&value)
+            } else {
+                value
             }
         })
     })
@@ -46,9 +48,10 @@ where
 {
     let value = String::deserialize(deserializer)?;
 
-    match is_env_var(&value) {
-        true => Ok(get_env_var_str(&value).parse().unwrap()),
-        false => Ok(value.parse().unwrap()),
+    if is_env_var(&value) {
+        Ok(get_env_var_str(&value).parse().unwrap())
+    } else {
+        Ok(value.parse().unwrap())
     }
 }
 
@@ -58,10 +61,13 @@ where
 {
     Ok(match Value::deserialize(deserializer)? {
         Value::Boolean(b) => b,
-        Value::String(s) => match is_env_var(&s) {
-            true => get_env_var_bool(&s),
-            false => s.parse().unwrap(),
-        },
+        Value::String(s) => {
+            if is_env_var(&s) {
+                get_env_var_bool(&s)
+            } else {
+                s.parse().unwrap()
+            }
+        }
         _ => return Err(de::Error::custom("Wrong type: expected boolean or string")),
     })
 }

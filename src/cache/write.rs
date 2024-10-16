@@ -47,15 +47,15 @@ impl CacheWrite {
                         debug!("checking whether to write cache for key: {}", &key);
 
                         if !APP_CONF.cache.disable_write
-                            && CacheCheck::from_response(&method, &status, &headers)
+                            && CacheCheck::from_response(&method, status, &headers)
                         {
                             debug!("key: {} cacheable, writing cache", &key);
 
                             // Acquire bucket from response, or fallback to no bucket
-                            let mut key_tags =
-                                match headers.get::<HeaderResponseBloomResponseBuckets>() {
-                                    None => Vec::new(),
-                                    Some(value) => value
+                            let mut key_tags = headers
+                                .get::<HeaderResponseBloomResponseBuckets>()
+                                .map_or_else(Vec::new, |value| {
+                                    value
                                         .0
                                         .iter()
                                         .map(|value| {
@@ -64,16 +64,15 @@ impl CacheWrite {
                                                 &CacheRoute::hash(value),
                                             )
                                         })
-                                        .collect::<Vec<(String, String)>>(),
-                                };
+                                        .collect::<Vec<(String, String)>>()
+                                });
 
                             key_tags.push(CacheRoute::gen_key_auth_from_hash(shard, &auth_hash));
 
                             // Acquire TTL from response, or fallback to default TTL
-                            let ttl = match headers.get::<HeaderResponseBloomResponseTTL>() {
-                                None => APP_CONF.cache.ttl_default,
-                                Some(value) => value.0,
-                            };
+                            let ttl = headers
+                                .get::<HeaderResponseBloomResponseTTL>()
+                                .map_or_else(|| APP_CONF.cache.ttl_default, |value| value.0);
 
                             // Clean headers before they get stored
                             HeaderJanitor::clean(&mut headers);

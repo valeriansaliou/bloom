@@ -113,29 +113,29 @@ impl ProxyServe {
                             );
 
                             // Check if not modified?
-                            let isnt_modified = match header_if_none_match {
-                                Some(ref req_if_none_match) => match req_if_none_match {
-                                    &IfNoneMatch::Any => true,
-                                    IfNoneMatch::Items(req_etags) => {
-                                        if let Some(req_etag) = req_etags.first() {
-                                            req_etag.weak_eq(&EntityTag::new(
-                                                false,
-                                                fingerprint.clone(),
-                                            ))
-                                        } else {
-                                            false
+                            let isnt_modified =
+                                header_if_none_match
+                                    .as_ref()
+                                    .map_or(false, |req_if_none_match| match req_if_none_match {
+                                        &IfNoneMatch::Any => true,
+                                        IfNoneMatch::Items(req_etags) => {
+                                            if let Some(req_etag) = req_etags.first() {
+                                                req_etag.weak_eq(&EntityTag::new(
+                                                    false,
+                                                    fingerprint.clone(),
+                                                ))
+                                            } else {
+                                                false
+                                            }
                                         }
-                                    }
-                                },
-                                _ => false,
-                            };
+                                    });
 
                             debug!(
                                 "got not modified status for cached data = {} on ns = {}",
                                 &isnt_modified, &ns_string
                             );
 
-                            Self::fetch_cached_data_body(ns_string, fingerprint, !isnt_modified)
+                            Self::fetch_cached_data_body(&ns_string, fingerprint, !isnt_modified)
                         }
                         _ => Box::new(future::ok(Err(()))),
                     }
@@ -149,16 +149,16 @@ impl ProxyServe {
     }
 
     fn fetch_cached_data_body(
-        ns: String,
+        ns: &str,
         fingerprint: String,
         do_acquire_body: bool,
     ) -> ProxyServeResultFuture {
         // Do not acquire body? (not modified)
-        let body_fetcher = if !do_acquire_body {
-            Box::new(future::ok(Ok(None)))
-        } else {
+        let body_fetcher = if do_acquire_body {
             // Will acquire body (modified)
-            CacheRead::acquire_body(&ns)
+            CacheRead::acquire_body(ns)
+        } else {
+            Box::new(future::ok(Ok(None)))
         };
 
         Box::new(
