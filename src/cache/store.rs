@@ -132,11 +132,27 @@ impl CacheStore {
                                                 })
                                                 .collect::<Vec<String>>();
 
+                                            // Proceed a soft bump of last access time of \
+                                            //   associated tag keys. This prevents a \
+                                            //   frequently accessed cache namespace to \
+                                            //   become 'orphan' (ie. one or more tag keys \
+                                            //   are LRU-expired), and thus cache namespace \
+                                            //   not to be properly removed on purge of an \
+                                            //   associated tag.
+                                            // Also, count bumped keys. It may happen that \
+                                            //   some tag keys are incorrectly removed by \
+                                            //   Redis LRU system, as it is probabilistic \
+                                            //   and thus might sample some keys incorrectly.
+                                            // The conditions explained above only happens on \
+                                            //   Redis instances with used memory going over \
+                                            //   the threshold of the max memory policy.
                                             let tags_count = tags.len();
 
                                             match redis::cmd("TOUCH").arg(tags)
                                                 .query::<usize>(&mut *client) {
                                                 Ok(bump_count) => {
+                                                   // Partial bump count? Consider cache as \
+                                                   // non-existing
                                                     if bump_count < tags_count {
                                                         info!(
                                                             "got only partial tag count: {}/{}",
