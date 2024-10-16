@@ -62,8 +62,8 @@ impl CacheStoreBuilder {
         );
 
         let addr_auth = match APP_CONF.redis.password {
-            Some(ref password) => format!(":{}@", password),
-            None => "".to_string(),
+            Some(ref password) => format!(":{password}@"),
+            None => String::new(),
         };
 
         let tcp_addr_raw = format!(
@@ -94,17 +94,17 @@ impl CacheStoreBuilder {
 
                         CacheStore { pool }
                     }
-                    Err(e) => panic!("could not spawn redis pool: {}", e),
+                    Err(e) => panic!("could not spawn redis pool: {e}"),
                 }
             }
-            Err(e) => panic!("could not create redis connection manager: {}", e),
+            Err(e) => panic!("could not create redis connection manager: {e}"),
         }
     }
 }
 
 impl CacheStore {
     pub fn get_meta(&self, shard: u8, key: String) -> CacheReadResultFuture {
-        let pool = self.pool.to_owned();
+        let pool = self.pool.clone();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             get_cache_store_client_try!(pool, CacheStoreError::Disconnected, client {
@@ -120,7 +120,7 @@ impl CacheStore {
                                             let tags = tags_data.split(KEY_TAGS_SEPARATOR)
                                                 .map(|tag| {
                                                     format!(
-                                                        "{}:{}:{}", ROUTE_PREFIX, shard, tag
+                                                        "{ROUTE_PREFIX}:{shard}:{tag}"
                                                     )
                                                 })
                                                 .collect::<Vec<String>>();
@@ -184,7 +184,7 @@ impl CacheStore {
     }
 
     pub fn get_body(&self, key: String) -> CacheReadResultFuture {
-        let pool = self.pool.to_owned();
+        let pool = self.pool.clone();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             get_cache_store_client_try!(pool, CacheStoreError::Disconnected, client {
@@ -254,7 +254,7 @@ impl CacheStore {
         ttl: usize,
         key_tags: Vec<(String, String)>,
     ) -> CacheWriteResultFuture {
-        let pool = self.pool.to_owned();
+        let pool = self.pool.clone();
 
         Box::new(EXECUTOR_POOL.spawn_fn(move || {
             Ok(get_cache_store_client_try!(
@@ -327,7 +327,7 @@ impl CacheStore {
 
                             // Bucket (MULTI operation for main data + bucket marker)
                             match pipeline.query::<()>(&mut *client) {
-                                Ok(_) => Ok(fingerprint),
+                                Ok(()) => Ok(fingerprint),
                                 Err(err) => {
                                     error!("got store error: {}", err);
 

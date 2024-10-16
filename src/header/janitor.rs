@@ -27,7 +27,7 @@ impl HeaderJanitor {
         }
 
         // Proceed headers clean-up
-        for header_remove in headers_remove.iter() {
+        for header_remove in &headers_remove {
             headers.remove_raw(header_remove.as_ref());
         }
     }

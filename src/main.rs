@@ -34,7 +34,6 @@ mod header;
 mod proxy;
 mod server;
 
-use std::ops::Deref;
 use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
@@ -88,7 +87,7 @@ fn make_app_args() -> AppArgs {
 
 fn ensure_states() {
     // Ensure all statics are valid (a `deref` is enough to lazily initialize them)
-    let (_, _, _) = (APP_ARGS.deref(), APP_CONF.deref(), APP_CACHE_STORE.deref());
+    let (_, _, _) = (&*APP_ARGS, &*APP_CONF, &*APP_CACHE_STORE);
 }
 
 fn spawn_worker() {

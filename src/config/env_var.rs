@@ -77,7 +77,7 @@ fn get_env_var_str(wrapped_key: &str) -> String {
         .drain(2..(wrapped_key.len() - 1))
         .collect();
 
-    std::env::var(key.clone()).unwrap_or_else(|_| panic!("env_var: variable '{}' is not set", key))
+    std::env::var(key.clone()).unwrap_or_else(|_| panic!("env_var: variable '{key}' is not set"))
 }
 
 fn get_env_var_bool(wrapped_key: &str) -> bool {
@@ -86,12 +86,12 @@ fn get_env_var_bool(wrapped_key: &str) -> bool {
         .collect();
 
     let value = std::env::var(key.clone())
-        .unwrap_or_else(|_| panic!("env_var: variable '{}' is not set", key))
+        .unwrap_or_else(|_| panic!("env_var: variable '{key}' is not set"))
         .to_lowercase();
     match value.as_ref() {
         "0" | "false" => false,
         "1" | "true" => true,
-        _ => panic!("env_var: variable '{}' is not a boolean", key),
+        _ => panic!("env_var: variable '{key}' is not a boolean"),
     }
 }
 

@@ -95,7 +95,7 @@ impl ControlCommand {
         debug!("attempting to flush {:?} for pattern: {}", variant, pattern);
 
         match APP_CACHE_STORE.purge_tag(&variant, *shard, pattern) {
-            Ok(_) => {
+            Ok(()) => {
                 info!("flushed {:?} for pattern: {}", variant, pattern);
 
                 Ok(ControlCommandResponse::Ok)

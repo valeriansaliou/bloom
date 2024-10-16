@@ -86,7 +86,7 @@ impl ControlHandle {
                 Self::configure_stream(&stream, true);
 
                 // Send started acknowledgement
-                write!(stream, "STARTED{}", LINE_FEED).expect("write failed");
+                write!(stream, "STARTED{LINE_FEED}").expect("write failed");
 
                 // Select initial shard
                 let mut shard = SHARD_INITIAL;
@@ -165,7 +165,7 @@ impl ControlHandle {
             .collect();
         let test_hash = CacheRoute::hash(test_value.as_str());
 
-        write!(stream, "HASHREQ {}{}", test_value, LINE_FEED).expect("write failed");
+        write!(stream, "HASHREQ {test_value}{LINE_FEED}").expect("write failed");
 
         debug!(
             "sent hasher request: {} and expecting hash: {}",
@@ -244,7 +244,7 @@ impl ControlHandle {
         };
 
         if !response.is_empty() {
-            write!(stream, "{}{}", response, LINE_FEED).expect("write failed");
+            write!(stream, "{response}{LINE_FEED}").expect("write failed");
 
             debug!("wrote response: {}", response);
         }

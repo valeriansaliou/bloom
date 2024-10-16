@@ -54,7 +54,7 @@ impl ProxyServe {
 
         headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Reject));
 
-        Self::respond(req.method(), status, headers, format!("{}", status))
+        Self::respond(req.method(), status, headers, format!("{status}"))
     }
 
     fn tunnel(req: Request) -> ProxyServeResponseFuture {
@@ -77,13 +77,13 @@ impl ProxyServe {
 
         Box::new(
             Self::fetch_cached_data(shard, &ns, &method, &headers)
-                .or_else(|_| Err(Error::Incomplete))
+                .or_else(|()| Err(Error::Incomplete))
                 .and_then(move |result| match result {
                     Ok(value) => Self::dispatch_cached(
                         shard, ns, ns_mask, auth_hash, method, uri, version, headers, body,
                         value.0, value.1,
                     ),
-                    Err(_) => Self::tunnel_over_proxy(
+                    Err(()) => Self::tunnel_over_proxy(
                         shard, ns, ns_mask, auth_hash, method, uri, version, headers, body,
                     ),
                 }),
@@ -97,7 +97,7 @@ impl ProxyServe {
         headers: &Headers,
     ) -> ProxyServeResultFuture {
         // Clone inner If-None-Match header value (pass it to future)
-        let header_if_none_match = headers.get::<IfNoneMatch>().map(|value| value.to_owned());
+        let header_if_none_match = headers.get::<IfNoneMatch>().map(std::borrow::ToOwned::to_owned);
         let ns_string = ns.to_string();
 
         Box::new(
@@ -118,7 +118,7 @@ impl ProxyServe {
                                         if let Some(req_etag) = req_etags.first() {
                                             req_etag.weak_eq(&EntityTag::new(
                                                 false,
-                                                fingerprint.to_owned(),
+                                                fingerprint.clone(),
                                             ))
                                         } else {
                                             false
@@ -138,7 +138,7 @@ impl ProxyServe {
                         _ => Box::new(future::ok(Err(()))),
                     }
                 })
-                .or_else(|_| {
+                .or_else(|()| {
                     error!("failed fetching cached data meta");
 
                     future::ok(Err(()))
@@ -186,8 +186,8 @@ impl ProxyServe {
     ) -> ProxyServeResponseFuture {
         // Clone method value for closures. Sadly, it looks like Rust borrow \
         //   checker doesnt discriminate properly on this check.
-        let method_success = method.to_owned();
-        let method_failure = method.to_owned();
+        let method_success = method.clone();
+        let method_failure = method.clone();
 
         Box::new(
             ProxyTunnel::run(&method, &uri, &headers, body, shard)
@@ -309,7 +309,7 @@ impl ProxyServe {
             headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Hit));
 
             // Serve non-modified response
-            Self::respond(&method, StatusCode::NotModified, headers, String::from(""))
+            Self::respond(&method, StatusCode::NotModified, headers, String::new())
         }
     }
 
@@ -338,7 +338,7 @@ impl ProxyServe {
 
         headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Offline));
 
-        Self::respond(method, status, headers, format!("{}", status))
+        Self::respond(method, status, headers, format!("{status}"))
     }
 
     fn fingerprint_etag(fingerprint: String) -> ETag {

@@ -93,7 +93,7 @@ impl CacheWrite {
                             Box::new(
                                 APP_CACHE_STORE
                                     .set(key, key_mask, body_string, fingerprint, ttl, key_tags)
-                                    .or_else(|_| Err(Error::Incomplete))
+                                    .or_else(|()| Err(Error::Incomplete))
                                     .and_then(move |result| {
                                         future::ok(match result {
                                             Ok(fingerprint) => {
@@ -138,7 +138,7 @@ impl CacheWrite {
     }
 
     fn generate_chain_banner(version: &HttpVersion, status: &StatusCode) -> String {
-        format!("{} {}", version, status)
+        format!("{version} {status}")
     }
 
     fn generate_chain_headers(headers: &Headers) -> String {
