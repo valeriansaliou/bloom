@@ -53,11 +53,11 @@ struct AppArgs {
     config: String,
 }
 
-pub static LINE_FEED: &'static str = "\r\n";
+pub static LINE_FEED: &str = "\r\n";
 
-pub static THREAD_NAME_WORKER: &'static str = "bloom-worker";
-pub static THREAD_NAME_CONTROL_MASTER: &'static str = "bloom-control-master";
-pub static THREAD_NAME_CONTROL_CLIENT: &'static str = "bloom-control-client";
+pub static THREAD_NAME_WORKER: &str = "bloom-worker";
+pub static THREAD_NAME_CONTROL_MASTER: &str = "bloom-control-master";
+pub static THREAD_NAME_CONTROL_CLIENT: &str = "bloom-control-client";
 
 lazy_static! {
     static ref APP_ARGS: AppArgs = make_app_args();
@@ -104,7 +104,7 @@ fn spawn_worker() {
     };
 
     // Worker thread crashed?
-    if has_error == true {
+    if has_error {
         error!("worker thread crashed, setting it up again");
 
         // Prevents thread start loop floods

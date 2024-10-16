@@ -16,7 +16,7 @@ impl Header for HeaderRequestBloomRequestShard {
         "Bloom-Request-Shard"
     }
 
-    fn parse_header(raw: &Raw) -> Result<HeaderRequestBloomRequestShard> {
+    fn parse_header(raw: &Raw) -> Result<Self> {
         parsing::from_one_raw_str(raw).map(HeaderRequestBloomRequestShard)
     }
 

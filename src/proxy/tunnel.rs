@@ -88,7 +88,7 @@ impl ProxyTunnel {
                     );
 
                     if let Some(query) = uri.query() {
-                        tunnel_uri.push_str("?");
+                        tunnel_uri.push('?');
                         tunnel_uri.push_str(query);
                     }
 

@@ -15,7 +15,7 @@ pub struct ControlListenBuilder;
 pub struct ControlListen;
 
 impl ControlListenBuilder {
-    pub fn new() -> ControlListen {
+    pub const fn new() -> ControlListen {
         ControlListen {}
     }
 }

@@ -22,13 +22,13 @@ pub enum HeaderBloomStatusValue {
 pub struct HeaderBloomStatus(pub HeaderBloomStatusValue);
 
 impl HeaderBloomStatusValue {
-    fn to_str(&self) -> &str {
+    const fn to_str(&self) -> &str {
         match *self {
-            HeaderBloomStatusValue::Hit => "HIT",
-            HeaderBloomStatusValue::Miss => "MISS",
-            HeaderBloomStatusValue::Direct => "DIRECT",
-            HeaderBloomStatusValue::Reject => "REJECT",
-            HeaderBloomStatusValue::Offline => "OFFLINE",
+            Self::Hit => "HIT",
+            Self::Miss => "MISS",
+            Self::Direct => "DIRECT",
+            Self::Reject => "REJECT",
+            Self::Offline => "OFFLINE",
         }
     }
 }
@@ -38,14 +38,14 @@ impl Header for HeaderBloomStatus {
         "Bloom-Status"
     }
 
-    fn parse_header(raw: &Raw) -> Result<HeaderBloomStatus> {
+    fn parse_header(raw: &Raw) -> Result<Self> {
         match raw.one() {
             Some(header_raw) => match str::from_utf8(header_raw) {
-                Ok("HIT") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Hit)),
-                Ok("MISS") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Miss)),
-                Ok("DIRECT") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Direct)),
-                Ok("REJECT") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Reject)),
-                Ok("OFFLINE") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Offline)),
+                Ok("HIT") => Ok(Self(HeaderBloomStatusValue::Hit)),
+                Ok("MISS") => Ok(Self(HeaderBloomStatusValue::Miss)),
+                Ok("DIRECT") => Ok(Self(HeaderBloomStatusValue::Direct)),
+                Ok("REJECT") => Ok(Self(HeaderBloomStatusValue::Reject)),
+                Ok("OFFLINE") => Ok(Self(HeaderBloomStatusValue::Offline)),
                 _ => Err(Error::Header),
             },
             _ => Err(Error::Header),

@@ -46,8 +46,8 @@ impl CacheWrite {
                     if let Ok(body_value) = body_result {
                         debug!("checking whether to write cache for key: {}", &key);
 
-                        if APP_CONF.cache.disable_write == false
-                            && CacheCheck::from_response(&method, &status, &headers) == true
+                        if !APP_CONF.cache.disable_write
+                            && CacheCheck::from_response(&method, &status, &headers)
                         {
                             debug!("key: {} cacheable, writing cache", &key);
 
@@ -81,8 +81,8 @@ impl CacheWrite {
                             // Generate storable value
                             let body_string = format!(
                                 "{}\n{}\n{}",
-                                CacheWrite::generate_chain_banner(&version, &status),
-                                CacheWrite::generate_chain_headers(&headers),
+                                Self::generate_chain_banner(&version, &status),
+                                Self::generate_chain_headers(&headers),
                                 body_value
                             );
 
@@ -102,8 +102,8 @@ impl CacheWrite {
                                                 CacheWriteResult {
                                                     body: Ok(body_value),
                                                     fingerprint: Some(fingerprint),
-                                                    status: status,
-                                                    headers: headers,
+                                                    status,
+                                                    headers,
                                                 }
                                             }
                                             Err(forward) => {
@@ -115,8 +115,8 @@ impl CacheWrite {
                                                 CacheWriteResult {
                                                     body: Err(Some(body_value)),
                                                     fingerprint: Some(forward.1),
-                                                    status: status,
-                                                    headers: headers,
+                                                    status,
+                                                    headers,
                                                 }
                                             }
                                         })
@@ -144,7 +144,7 @@ impl CacheWrite {
     fn generate_chain_headers(headers: &Headers) -> String {
         headers
             .iter()
-            .filter(|header_view| HeaderJanitor::is_contextual(&header_view) == false)
+            .filter(|header_view| !HeaderJanitor::is_contextual(header_view))
             .map(|header_view| format!("{}: {}\n", header_view.name(), header_view.value_string()))
             .collect()
     }
@@ -161,8 +161,8 @@ impl CacheWrite {
         Box::new(future::ok(CacheWriteResult {
             body: Err(body),
             fingerprint: None,
-            status: status,
-            headers: headers,
+            status,
+            headers,
         }))
     }
 }

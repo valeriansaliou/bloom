@@ -11,7 +11,7 @@ use crate::cache::route::CacheRoute;
 use crate::cache::store::CachePurgeVariant;
 use crate::APP_CACHE_STORE;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum ControlCommandResponse {
     Void,
     Nil,
@@ -28,14 +28,14 @@ pub const COMMAND_SIZE: usize = 6;
 type ControlResult = Result<ControlCommandResponse, Option<()>>;
 
 impl ControlCommandResponse {
-    pub fn to_str(&self) -> &'static str {
+    pub const fn to_str(&self) -> &'static str {
         match *self {
-            ControlCommandResponse::Void => "",
-            ControlCommandResponse::Nil => "NIL",
-            ControlCommandResponse::Ok => "OK",
-            ControlCommandResponse::Pong => "PONG",
-            ControlCommandResponse::Ended => "ENDED quit",
-            ControlCommandResponse::Err => "ERR",
+            Self::Void => "",
+            Self::Nil => "NIL",
+            Self::Ok => "OK",
+            Self::Pong => "PONG",
+            Self::Ended => "ENDED quit",
+            Self::Err => "ERR",
         }
     }
 }
@@ -47,7 +47,7 @@ impl ControlCommand {
     ) -> ControlResult {
         let bucket = parts.next().unwrap_or("");
 
-        if bucket.is_empty() == false {
+        if !bucket.is_empty() {
             let (bucket_key, _) = CacheRoute::gen_key_bucket_from_hash(*shard, bucket);
 
             return Self::proceed_flush(CachePurgeVariant::Bucket, shard, &bucket_key);
@@ -59,7 +59,7 @@ impl ControlCommand {
     pub fn dispatch_flush_auth(shard: &ControlShard, mut parts: SplitWhitespace) -> ControlResult {
         let auth = parts.next().unwrap_or("");
 
-        if auth.is_empty() == false {
+        if !auth.is_empty() {
             let (auth_key, _) = CacheRoute::gen_key_auth_from_hash(*shard, auth);
 
             return Self::proceed_flush(CachePurgeVariant::Auth, shard, &auth_key);
@@ -68,7 +68,7 @@ impl ControlCommand {
         Err(None)
     }
 
-    pub fn dispatch_ping() -> ControlResult {
+    pub const fn dispatch_ping() -> ControlResult {
         Ok(ControlCommandResponse::Pong)
     }
 
@@ -83,7 +83,7 @@ impl ControlCommand {
         }
     }
 
-    pub fn dispatch_quit() -> ControlResult {
+    pub const fn dispatch_quit() -> ControlResult {
         Ok(ControlCommandResponse::Ended)
     }
 

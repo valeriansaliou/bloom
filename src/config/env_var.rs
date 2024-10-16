@@ -135,12 +135,12 @@ mod tests {
         std::env::set_var("TEST_BOOL_STR_1", "1");
         std::env::set_var("TEST_BOOL_STR_0", "0");
 
-        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_TRUE}"), true);
-        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_FALSE}"), false);
-        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_TRUE_UP}"), true);
-        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_FALSE_UP}"), false);
-        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_1}"), true);
-        assert_eq!(get_env_var_bool("${TEST_BOOL_STR_0}"), false);
+        assert!(get_env_var_bool("${TEST_BOOL_STR_TRUE}"));
+        assert!(!get_env_var_bool("${TEST_BOOL_STR_FALSE}"));
+        assert!(get_env_var_bool("${TEST_BOOL_STR_TRUE_UP}"));
+        assert!(!get_env_var_bool("${TEST_BOOL_STR_FALSE_UP}"));
+        assert!(get_env_var_bool("${TEST_BOOL_STR_1}"));
+        assert!(!get_env_var_bool("${TEST_BOOL_STR_0}"));
 
         std::env::remove_var("TEST_BOOL_STR_TRUE");
         std::env::remove_var("TEST_BOOL_STR_FALSE");

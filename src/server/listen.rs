@@ -21,7 +21,7 @@ pub struct ServerListenBuilder;
 pub struct ServerListen;
 
 impl ServerListenBuilder {
-    pub fn new() -> ServerListen {
+    pub const fn new() -> ServerListen {
         ServerListen {}
     }
 }

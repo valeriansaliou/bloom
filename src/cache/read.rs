@@ -28,7 +28,7 @@ type CacheReadOptionalResultFuture = Box<dyn Future<Item = CacheReadOptionalResu
 
 impl CacheRead {
     pub fn acquire_meta(shard: u8, key: &str, method: &Method) -> CacheReadResultFuture {
-        if APP_CONF.cache.disable_read == false && CacheCheck::from_request(&method) == true {
+        if !APP_CONF.cache.disable_read && CacheCheck::from_request(method) {
             debug!("key: {} cacheable, reading cache", &key);
 
             Box::new(

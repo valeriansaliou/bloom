@@ -16,7 +16,7 @@ impl Header for HeaderResponseBloomResponseTTL {
         "Bloom-Response-TTL"
     }
 
-    fn parse_header(raw: &Raw) -> Result<HeaderResponseBloomResponseTTL> {
+    fn parse_header(raw: &Raw) -> Result<Self> {
         parsing::from_one_raw_str(raw).map(HeaderResponseBloomResponseTTL)
     }
 

@@ -45,7 +45,7 @@ const HASH_RESULT_SIZE: usize = 7 + ROUTE_HASH_SIZE + LINE_END_GAP + 1;
 const SHARD_INITIAL: ControlShard = 0;
 const TCP_TIMEOUT_NON_ESTABLISHED: u64 = 20;
 
-static BUFFER_LINE_SEPARATOR: u8 = '\n' as u8;
+static BUFFER_LINE_SEPARATOR: u8 = b'\n';
 
 pub type ControlShard = u8;
 
@@ -58,15 +58,15 @@ lazy_static! {
 }
 
 impl ControlHandleError {
-    pub fn to_str(&self) -> &'static str {
+    pub const fn to_str(&self) -> &'static str {
         match *self {
-            ControlHandleError::Closed => "closed",
-            ControlHandleError::IncompatibleHasher => "incompatible_hasher",
-            ControlHandleError::NotRecognized => "not_recognized",
-            ControlHandleError::TimedOut => "timed_out",
-            ControlHandleError::ConnectionAborted => "connection_aborted",
-            ControlHandleError::Interrupted => "interrupted",
-            ControlHandleError::Unknown => "unknown",
+            Self::Closed => "closed",
+            Self::IncompatibleHasher => "incompatible_hasher",
+            Self::NotRecognized => "not_recognized",
+            Self::TimedOut => "timed_out",
+            Self::ConnectionAborted => "connection_aborted",
+            Self::Interrupted => "interrupted",
+            Self::Unknown => "unknown",
         }
     }
 }
@@ -74,7 +74,7 @@ impl ControlHandleError {
 impl ControlHandle {
     pub fn client(mut stream: TcpStream) {
         // Configure stream (non-established)
-        ControlHandle::configure_stream(&stream, false);
+        Self::configure_stream(&stream, false);
 
         // Send connected banner
         write!(stream, "{}{}", *CONNECTED_BANNER, LINE_FEED).expect("write failed");
@@ -83,7 +83,7 @@ impl ControlHandle {
         match Self::ensure_hasher(&stream) {
             Ok(_) => {
                 // Configure stream (established)
-                ControlHandle::configure_stream(&stream, true);
+                Self::configure_stream(&stream, true);
 
                 // Send started acknowledgement
                 write!(stream, "STARTED{}", LINE_FEED).expect("write failed");
@@ -116,13 +116,9 @@ impl ControlHandle {
                                         buffer.split(|value| value == &BUFFER_LINE_SEPARATOR);
 
                                     for line in buffer_split {
-                                        if line.is_empty() == false {
-                                            if Self::on_message(&mut shard, &stream, line)
-                                                == ControlHandleMessageResult::Close
-                                            {
-                                                // Should close?
-                                                break 'handler;
-                                            }
+                                        if !line.is_empty() && Self::on_message(&mut shard, &stream, line) == ControlHandleMessageResult::Close {
+                                            // Should close?
+                                            break 'handler;
                                         }
                                     }
                                 }
@@ -146,7 +142,7 @@ impl ControlHandle {
     }
 
     fn configure_stream(stream: &TcpStream, is_established: bool) {
-        let tcp_timeout = if is_established == true {
+        let tcp_timeout = if is_established {
             APP_CONF.control.tcp_timeout
         } else {
             TCP_TIMEOUT_NON_ESTABLISHED
@@ -196,7 +192,7 @@ impl ControlHandle {
                         );
 
                         // Validate hash
-                        if res_hash.is_empty() == false && res_hash == test_hash {
+                        if !res_hash.is_empty() && res_hash == test_hash {
                             return Ok(None);
                         }
 
@@ -230,7 +226,7 @@ impl ControlHandle {
 
         let mut result = ControlHandleMessageResult::Continue;
 
-        let response = match Self::handle_message(shard, &message) {
+        let response = match Self::handle_message(shard, message) {
             Ok(resp) => match resp {
                 ControlCommandResponse::Ok
                 | ControlCommandResponse::Pong
@@ -247,13 +243,13 @@ impl ControlHandle {
             _ => ControlCommandResponse::Err.to_str(),
         };
 
-        if response.is_empty() == false {
+        if !response.is_empty() {
             write!(stream, "{}{}", response, LINE_FEED).expect("write failed");
 
             debug!("wrote response: {}", response);
         }
 
-        return result;
+        result
     }
 
     fn handle_message(

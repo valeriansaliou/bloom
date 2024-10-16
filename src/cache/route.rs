@@ -12,7 +12,7 @@ pub struct CacheRoute;
 
 pub const ROUTE_HASH_SIZE: usize = 16;
 
-pub static ROUTE_PREFIX: &'static str = "bloom";
+pub static ROUTE_PREFIX: &str = "bloom";
 
 impl CacheRoute {
     pub fn gen_key_cache_from_hash(

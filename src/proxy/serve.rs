@@ -54,7 +54,7 @@ impl ProxyServe {
 
         headers.set::<HeaderBloomStatus>(HeaderBloomStatus(HeaderBloomStatusValue::Reject));
 
-        Self::respond(&req.method(), status, headers, format!("{}", status))
+        Self::respond(req.method(), status, headers, format!("{}", status))
     }
 
     fn tunnel(req: Request) -> ProxyServeResponseFuture {
@@ -114,7 +114,7 @@ impl ProxyServe {
                             let isnt_modified = match header_if_none_match {
                                 Some(ref req_if_none_match) => match req_if_none_match {
                                     &IfNoneMatch::Any => true,
-                                    &IfNoneMatch::Items(ref req_etags) => {
+                                    IfNoneMatch::Items(req_etags) => {
                                         if let Some(req_etag) = req_etags.first() {
                                             req_etag.weak_eq(&EntityTag::new(
                                                 false,
@@ -152,7 +152,7 @@ impl ProxyServe {
         do_acquire_body: bool,
     ) -> ProxyServeResultFuture {
         // Do not acquire body? (not modified)
-        let body_fetcher = if do_acquire_body == false {
+        let body_fetcher = if !do_acquire_body {
             Box::new(future::ok(Ok(None)))
         } else {
             // Will acquire body (modified)
@@ -162,8 +162,7 @@ impl ProxyServe {
         Box::new(
             body_fetcher
                 .and_then(|body_result| {
-                    body_result
-                        .or_else(|_| Err(()))
+                    body_result.map_err(|_| ())
                         .map(|body| Ok((fingerprint, body)))
                 })
                 .or_else(|e| {
@@ -355,7 +354,7 @@ impl ProxyServe {
         for line_with_position in lines {
             let line = line_with_position.into_inner();
 
-            if body.is_empty() == false || is_last_line_empty == true {
+            if !body.is_empty() || is_last_line_empty {
                 // Append line to body
                 body.push_str(line);
 
