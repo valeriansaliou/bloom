@@ -116,7 +116,10 @@ impl ControlHandle {
                                         buffer.split(|value| value == &BUFFER_LINE_SEPARATOR);
 
                                     for line in buffer_split {
-                                        if !line.is_empty() && Self::on_message(&mut shard, &stream, line) == ControlHandleMessageResult::Close {
+                                        if !line.is_empty()
+                                            && Self::on_message(&mut shard, &stream, line)
+                                                == ControlHandleMessageResult::Close
+                                        {
                                             // Should close?
                                             break 'handler;
                                         }
@@ -162,6 +165,7 @@ impl ControlHandle {
         let test_value: String = thread_rng()
             .sample_iter(&Alphanumeric)
             .take(HASH_VALUE_SIZE)
+            .map(char::from)
             .collect();
         let test_hash = CacheRoute::hash(test_value.as_str());
 
@@ -172,45 +176,43 @@ impl ControlHandle {
             test_value, test_hash
         );
 
-        loop {
-            let mut read = [0; HASH_RESULT_SIZE];
+        let mut read = [0; HASH_RESULT_SIZE];
 
-            match stream.read(&mut read) {
-                Ok(n) => {
-                    if n == 0 {
-                        return Err(ControlHandleError::Closed);
+        match stream.read(&mut read) {
+            Ok(n) => {
+                if n == 0 {
+                    return Err(ControlHandleError::Closed);
+                }
+
+                let mut parts = str::from_utf8(&read[0..n]).unwrap_or("").split_whitespace();
+
+                if parts.next().unwrap_or("") == "HASHRES" {
+                    let res_hash = parts.next().unwrap_or("");
+
+                    debug!(
+                        "got hasher response: {} and expecting: {}",
+                        res_hash, test_hash
+                    );
+
+                    // Validate hash
+                    if !res_hash.is_empty() && res_hash == test_hash {
+                        return Ok(None);
                     }
 
-                    let mut parts = str::from_utf8(&read[0..n]).unwrap_or("").split_whitespace();
-
-                    if parts.next().unwrap_or("") == "HASHRES" {
-                        let res_hash = parts.next().unwrap_or("");
-
-                        debug!(
-                            "got hasher response: {} and expecting: {}",
-                            res_hash, test_hash
-                        );
-
-                        // Validate hash
-                        if !res_hash.is_empty() && res_hash == test_hash {
-                            return Ok(None);
-                        }
-
-                        return Err(ControlHandleError::IncompatibleHasher);
-                    }
-
-                    return Err(ControlHandleError::NotRecognized);
+                    return Err(ControlHandleError::IncompatibleHasher);
                 }
-                Err(err) => {
-                    let err_reason = match err.kind() {
-                        ErrorKind::TimedOut => ControlHandleError::TimedOut,
-                        ErrorKind::ConnectionAborted => ControlHandleError::ConnectionAborted,
-                        ErrorKind::Interrupted => ControlHandleError::Interrupted,
-                        _ => ControlHandleError::Unknown,
-                    };
 
-                    return Err(err_reason);
-                }
+                Err(ControlHandleError::NotRecognized)
+            }
+            Err(err) => {
+                let err_reason = match err.kind() {
+                    ErrorKind::TimedOut => ControlHandleError::TimedOut,
+                    ErrorKind::ConnectionAborted => ControlHandleError::ConnectionAborted,
+                    ErrorKind::Interrupted => ControlHandleError::Interrupted,
+                    _ => ControlHandleError::Unknown,
+                };
+
+                Err(err_reason)
             }
         }
     }
@@ -226,8 +228,7 @@ impl ControlHandle {
 
         let mut result = ControlHandleMessageResult::Continue;
 
-        let response = match Self::handle_message(shard, message) {
-            Ok(resp) => match resp {
+        let response = Self::handle_message(shard, message).map_or_else(|_| ControlCommandResponse::Err.to_str(), |resp| match resp {
                 ControlCommandResponse::Ok
                 | ControlCommandResponse::Pong
                 | ControlCommandResponse::Ended
@@ -238,10 +239,8 @@ impl ControlHandle {
                     }
                     resp.to_str()
                 }
-                _ => ControlCommandResponse::Err.to_str(),
-            },
-            _ => ControlCommandResponse::Err.to_str(),
-        };
+                ControlCommandResponse::Err => ControlCommandResponse::Err.to_str(),
+            });
 
         if !response.is_empty() {
             write!(stream, "{response}{LINE_FEED}").expect("write failed");

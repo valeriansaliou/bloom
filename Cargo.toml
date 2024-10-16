@@ -32,7 +32,7 @@ r2d2 = "0.8"
 redis = { version = "0.27", features = ["r2d2"] }
 farmhash = "1.1"
 brotli = "7"
-rand = "0.7"
+rand = "0.8"
 unicase = "2.6"
 regex = "1.8"
 itertools = "0.10"
