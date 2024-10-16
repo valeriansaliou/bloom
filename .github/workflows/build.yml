@@ -64,7 +64,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-args: "CPU_TARGET=neoverse-n1"
+          build-args: "CPU_TARGET=neoverse"
           platforms: linux/arm64
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}

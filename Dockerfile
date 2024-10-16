@@ -1,4 +1,4 @@
-FROM rust:1.81-slim-buster AS build
+FROM rust:1.81-slim-bookworm AS build
 ARG CPU_TARGET
 WORKDIR /app
 COPY . /app
