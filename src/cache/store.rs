@@ -8,7 +8,6 @@ use brotli::{CompressorReader as BrotliCompressor, Decompressor as BrotliDecompr
 use futures::future::Future;
 use futures_cpupool::CpuPool;
 use r2d2::Pool;
-use r2d2_redis::RedisConnectionManager;
 use redis::{self, Commands, Value};
 use std::cmp;
 use std::io::Read;
@@ -31,7 +30,7 @@ lazy_static! {
 pub struct CacheStoreBuilder;
 
 pub struct CacheStore {
-    pool: Pool<RedisConnectionManager>,
+    pool: Pool<redis::Client>,
 }
 
 #[derive(Debug)]
@@ -55,16 +54,17 @@ type CacheWriteResultFuture = Box<dyn Future<Item = CacheWriteResult, Error = ()
 type CachePurgeResult = Result<(), CacheStoreError>;
 
 impl CacheStoreBuilder {
-    pub fn new() -> CacheStore {
+    pub fn create() -> CacheStore {
         info!(
             "binding to store backend at {}:{}",
             APP_CONF.redis.host, APP_CONF.redis.port
         );
 
-        let addr_auth = match APP_CONF.redis.password {
-            Some(ref password) => format!(":{password}@"),
-            None => String::new(),
-        };
+        let addr_auth = APP_CONF
+            .redis
+            .password
+            .as_ref()
+            .map_or_else(String::new, |password| format!(":{password}@"));
 
         let tcp_addr_raw = format!(
             "redis://{}{}:{}/{}",
@@ -73,7 +73,7 @@ impl CacheStoreBuilder {
 
         debug!("will connect to redis at: {}", tcp_addr_raw);
 
-        match RedisConnectionManager::new(tcp_addr_raw.as_ref()) {
+        match redis::Client::open(tcp_addr_raw.as_ref()) {
             Ok(manager) => {
                 let builder = Pool::builder()
                     .test_on_check_out(false)

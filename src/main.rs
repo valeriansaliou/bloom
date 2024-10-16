@@ -18,8 +18,6 @@ extern crate futures;
 extern crate futures_cpupool;
 extern crate httparse;
 extern crate hyper;
-extern crate r2d2;
-extern crate r2d2_redis;
 extern crate rand;
 extern crate redis;
 extern crate regex;
@@ -61,7 +59,7 @@ pub static THREAD_NAME_CONTROL_CLIENT: &str = "bloom-control-client";
 lazy_static! {
     static ref APP_ARGS: AppArgs = make_app_args();
     static ref APP_CONF: Config = ConfigReader::make();
-    static ref APP_CACHE_STORE: CacheStore = CacheStoreBuilder::new();
+    static ref APP_CACHE_STORE: CacheStore = CacheStoreBuilder::create();
 }
 
 fn make_app_args() -> AppArgs {
