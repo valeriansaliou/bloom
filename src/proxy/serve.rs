@@ -97,7 +97,9 @@ impl ProxyServe {
         headers: &Headers,
     ) -> ProxyServeResultFuture {
         // Clone inner If-None-Match header value (pass it to future)
-        let header_if_none_match = headers.get::<IfNoneMatch>().map(std::borrow::ToOwned::to_owned);
+        let header_if_none_match = headers
+            .get::<IfNoneMatch>()
+            .map(std::borrow::ToOwned::to_owned);
         let ns_string = ns.to_string();
 
         Box::new(
@@ -162,7 +164,8 @@ impl ProxyServe {
         Box::new(
             body_fetcher
                 .and_then(|body_result| {
-                    body_result.map_err(|_| ())
+                    body_result
+                        .map_err(|_| ())
                         .map(|body| Ok((fingerprint, body)))
                 })
                 .or_else(|e| {
@@ -351,15 +354,13 @@ impl ProxyServe {
         // Scan response lines
         let lines = res_string_value.lines().with_position();
 
-        for line_with_position in lines {
-            let line = line_with_position.into_inner();
-
+        for (position, line) in lines {
             if !body.is_empty() || is_last_line_empty {
                 // Append line to body
                 body.push_str(line);
 
                 // Append line feed character?
-                if let Position::First(_) | Position::Middle(_) = line_with_position {
+                if matches!(position, Position::First | Position::Middle) {
                     body.push_str(LINE_FEED);
                 }
             }
