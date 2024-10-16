@@ -31,7 +31,7 @@ tokio-core = "0.1"
 r2d2 = "0.8"
 redis = { version = "0.27", features = ["r2d2"] }
 farmhash = "1.1"
-brotli = "3.3"
+brotli = "7"
 rand = "0.7"
 unicase = "2.6"
 regex = "1.8"
