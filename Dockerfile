@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly-bookworm-slim AS build
+FROM rustlang/rust:nightly-trixie-slim AS build
 
 RUN apt-get update
 RUN apt-get install -y musl-tools
