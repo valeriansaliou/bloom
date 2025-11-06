@@ -1,7 +1,7 @@
 Bloom
 =====
 
-[![Test and Build](https://github.com/valeriansaliou/bloom/workflows/Test%20and%20Build/badge.svg?branch=master)](https://github.com/valeriansaliou/bloom/actions?query=workflow%3A%22Test+and+Build%22) [![Build and Release](https://github.com/valeriansaliou/bloom/workflows/Build%20and%20Release/badge.svg)](https://github.com/valeriansaliou/bloom/actions?query=workflow%3A%22Build+and+Release%22) [![dependency status](https://deps.rs/repo/github/valeriansaliou/bloom/status.svg)](https://deps.rs/repo/github/valeriansaliou/bloom) [![Buy Me A Coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg)](https://www.buymeacoffee.com/valeriansaliou)
+[![Test and Build](https://github.com/valeriansaliou/bloom/actions/workflows/test.yml/badge.svg)](https://github.com/valeriansaliou/bloom/actions/workflows/test.yml) [![Build and Release](https://github.com/valeriansaliou/bloom/actions/workflows/build.yml/badge.svg)](https://github.com/valeriansaliou/bloom/actions/workflows/build.yml) [![dependency status](https://deps.rs/repo/github/valeriansaliou/bloom/status.svg)](https://deps.rs/repo/github/valeriansaliou/bloom) [![Buy Me A Coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg)](https://www.buymeacoffee.com/valeriansaliou)
 
 **Bloom is a REST API caching middleware, acting as a reverse proxy between your load balancers and your REST API workers.**
 
