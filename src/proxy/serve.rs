@@ -352,15 +352,13 @@ impl ProxyServe {
         // Scan response lines
         let lines = res_string_value.lines().with_position();
 
-        for line_with_position in lines {
-            let line = line_with_position.into_inner();
-
+        for (position, line) in lines {
             if body.is_empty() == false || is_last_line_empty == true {
                 // Append line to body
                 body.push_str(line);
 
                 // Append line feed character?
-                if let Position::First(_) | Position::Middle(_) = line_with_position {
+                if let Position::First | Position::Middle = position {
                     body.push_str(LINE_FEED);
                 }
             }

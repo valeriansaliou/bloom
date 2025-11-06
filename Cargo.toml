@@ -36,7 +36,7 @@ brotli = "3.3"
 rand = "0.9"
 unicase = "2.6"
 regex = "1.8"
-itertools = "0.10"
+itertools = "0.14"
 
 [profile.dev]
 opt-level = 0
