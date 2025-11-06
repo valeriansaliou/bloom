@@ -9,7 +9,7 @@ use futures::future::Future;
 use futures_cpupool::CpuPool;
 use r2d2::Pool;
 use r2d2_redis::RedisConnectionManager;
-use redis::{self, Commands, PipelineCommands, Value};
+use redis::{self, Commands, Value};
 use std::cmp;
 use std::io::Read;
 use std::time::Duration;
