@@ -854,9 +854,9 @@ dependencies = [
 
 [[package]]
 name = "r2d2_redis"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ad2dd88958026b1447971f96463e229b20dc01eb41985efec617ebd13bbeb9f"
+checksum = "1d8ff6a258769033b4e3c1e895f9f8b0aa47b6f49403e54591745e8a943e1a67"
 dependencies = [
  "r2d2",
  "redis",
@@ -940,9 +940,9 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "292057bfe9f60d877816c916630c957460fbe30b15f26103702f6ac2a2358a35"
+checksum = "9bb1079bc5692c03e1479bb7086ac870ac2aaf7115b5e72d314c01368f1a747e"
 dependencies = [
  "bytes",
  "combine",
