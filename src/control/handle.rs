@@ -4,8 +4,8 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use rand::distributions::Alphanumeric;
-use rand::{thread_rng, Rng};
+use rand::distr::Alphanumeric;
+use rand::{self, Rng};
 use std::io::{ErrorKind, Read, Write};
 use std::net::TcpStream;
 use std::result::Result;
@@ -163,9 +163,10 @@ impl ControlHandle {
     }
 
     fn ensure_hasher(mut stream: &TcpStream) -> Result<Option<()>, ControlHandleError> {
-        let test_value: String = thread_rng()
+        let test_value: String = rand::rng()
             .sample_iter(&Alphanumeric)
             .take(HASH_VALUE_SIZE)
+            .map(char::from)
             .collect();
         let test_hash = CacheRoute::hash(test_value.as_str());
 
