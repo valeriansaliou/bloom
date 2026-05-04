@@ -42,10 +42,6 @@ pub fn cache_ttl_default() -> usize {
     600
 }
 
-pub fn cache_executor_pool() -> u16 {
-    64
-}
-
 pub fn cache_disable_read() -> bool {
     false
 }

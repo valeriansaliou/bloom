@@ -5,8 +5,7 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use farmhash;
-use hyper::header::Origin;
-use hyper::{HttpVersion, Method};
+use http::{Method, Version};
 
 pub struct CacheRoute;
 
@@ -40,19 +39,28 @@ impl CacheRoute {
     pub fn gen_key_cache(
         shard: u8,
         auth_hash: &str,
-        version: HttpVersion,
+        version: Version,
         method: &Method,
         path: &str,
         query: Option<&str>,
-        origin: Option<&Origin>,
+        origin: Option<&str>,
     ) -> (String, String) {
+        let version_str = match version {
+            Version::HTTP_09 => "HTTP/0.9",
+            Version::HTTP_10 => "HTTP/1.0",
+            Version::HTTP_11 => "HTTP/1.1",
+            Version::HTTP_2 => "h2",
+            Version::HTTP_3 => "h3",
+            _ => "HTTP/1.1",
+        };
+
         let bucket_raw = format!(
             "[{}|{}|{}|{}|{}]",
-            version,
+            version_str,
             method,
             path,
             query.unwrap_or(""),
-            origin.unwrap_or(&Origin::null()),
+            origin.unwrap_or("null"),
         );
 
         let route_hash = Self::hash(&bucket_raw);
@@ -79,8 +87,8 @@ mod tests {
             CacheRoute::gen_key_cache(
                 0,
                 "dc56d17a",
-                HttpVersion::Http11,
-                &Method::Get,
+                Version::HTTP_11,
+                &Method::GET,
                 "/",
                 Some(""),
                 None,
@@ -95,8 +103,8 @@ mod tests {
             CacheRoute::gen_key_cache(
                 0,
                 "dc56d17a",
-                HttpVersion::Http11,
-                &Method::Post,
+                Version::HTTP_11,
+                &Method::POST,
                 "/login",
                 Some(""),
                 None,
@@ -111,8 +119,8 @@ mod tests {
             CacheRoute::gen_key_cache(
                 7,
                 "6d0f1448",
-                HttpVersion::Http11,
-                &Method::Options,
+                Version::HTTP_11,
+                &Method::OPTIONS,
                 "/feed",
                 Some(""),
                 None,
@@ -127,11 +135,11 @@ mod tests {
             CacheRoute::gen_key_cache(
                 80,
                 "d73f0f31",
-                HttpVersion::H2,
-                &Method::Head,
+                Version::HTTP_2,
+                &Method::HEAD,
                 "/user",
                 Some("u=1"),
-                Some(&Origin::new("https", "valeriansaliou.name", None)),
+                Some("https://valeriansaliou.name"),
             ),
             (
                 "bloom:80:c:d73f0f31:e186dab7".to_string(),

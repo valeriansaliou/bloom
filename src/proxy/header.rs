@@ -4,40 +4,36 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::header::{ETag, Header, Vary};
-use hyper::Headers;
-use std::str::from_utf8;
-use unicase::Ascii;
+use http::header::{HeaderMap, HeaderValue, AUTHORIZATION, ETAG, VARY};
 
 use super::defaults;
-use crate::{header::request_shard::HeaderRequestBloomRequestShard, APP_CONF};
+use crate::header::request_shard;
+use crate::APP_CONF;
 
 pub struct ProxyHeader;
 
 impl ProxyHeader {
-    pub fn parse_from_request(headers: Headers) -> (Headers, String, u8) {
-        // Request header: 'Authorization'
-        let auth = match headers.get_raw("authorization") {
-            None => defaults::REQUEST_AUTHORIZATION_DEFAULT,
-            Some(value) => from_utf8(value.one().unwrap_or(&[]))
-                .unwrap_or(defaults::REQUEST_AUTHORIZATION_DEFAULT),
-        }
-        .to_string();
+    pub fn parse_from_request(headers: &HeaderMap) -> (String, u8) {
+        let auth = headers
+            .get(AUTHORIZATION)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or(defaults::REQUEST_AUTHORIZATION_DEFAULT)
+            .to_string();
 
-        // Request header: 'Bloom-Request-Shard'
-        let shard = match headers.get::<HeaderRequestBloomRequestShard>() {
-            None => APP_CONF.proxy.shard_default,
-            Some(value) => value.0,
-        };
+        let shard = headers
+            .get(request_shard::HEADER_NAME)
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| request_shard::parse_shard(v))
+            .unwrap_or(APP_CONF.proxy.shard_default);
 
-        (headers, auth, shard)
+        (auth, shard)
     }
 
-    pub fn set_etag(headers: &mut Headers, etag: ETag) {
-        headers.set::<Vary>(Vary::Items(vec![Ascii::new(
-            ETag::header_name().to_string(),
-        )]));
+    pub fn set_etag(headers: &mut HeaderMap, etag: &str) {
+        headers.insert(VARY, HeaderValue::from_static("etag"));
 
-        headers.set::<ETag>(etag);
+        if let Ok(value) = HeaderValue::from_str(&format!("\"{}\"", etag)) {
+            headers.insert(ETAG, value);
+        }
     }
 }

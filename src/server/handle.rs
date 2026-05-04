@@ -4,22 +4,19 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper;
-use hyper::server::{Request, Response, Service};
+use http_body_util::Full;
+use hyper::body::{Bytes, Incoming};
+use hyper::{Request, Response};
+use std::convert::Infallible;
 
-use crate::proxy::serve::{ProxyServe, ProxyServeResponseFuture};
+use crate::proxy::serve::ProxyServe;
 
-pub struct ServerRequestHandle;
+pub type BoxBody = Full<Bytes>;
 
-impl Service for ServerRequestHandle {
-    type Request = Request;
-    type Response = Response;
-    type Error = hyper::Error;
-    type Future = ProxyServeResponseFuture;
+pub async fn handle_request(
+    req: Request<Incoming>,
+) -> Result<Response<BoxBody>, Infallible> {
+    debug!("called proxy serve");
 
-    fn call(&self, req: Request) -> ProxyServeResponseFuture {
-        debug!("called proxy serve");
-
-        ProxyServe::handle(req)
-    }
+    Ok(ProxyServe::handle(req).await)
 }

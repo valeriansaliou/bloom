@@ -4,10 +4,10 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::header::{Formatter, Header, Raw};
-use hyper::{Error, Result};
+use http::header::HeaderValue;
 use std::fmt;
-use std::str;
+
+pub const HEADER_NAME: &str = "bloom-status";
 
 #[derive(Clone)]
 pub enum HeaderBloomStatusValue {
@@ -22,7 +22,7 @@ pub enum HeaderBloomStatusValue {
 pub struct HeaderBloomStatus(pub HeaderBloomStatusValue);
 
 impl HeaderBloomStatusValue {
-    fn to_str(&self) -> &str {
+    pub fn to_str(&self) -> &str {
         match *self {
             HeaderBloomStatusValue::Hit => "HIT",
             HeaderBloomStatusValue::Miss => "MISS",
@@ -33,27 +33,15 @@ impl HeaderBloomStatusValue {
     }
 }
 
-impl Header for HeaderBloomStatus {
-    fn header_name() -> &'static str {
-        "Bloom-Status"
-    }
-
-    fn parse_header(raw: &Raw) -> Result<HeaderBloomStatus> {
-        match raw.one() {
-            Some(header_raw) => match str::from_utf8(header_raw) {
-                Ok("HIT") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Hit)),
-                Ok("MISS") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Miss)),
-                Ok("DIRECT") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Direct)),
-                Ok("REJECT") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Reject)),
-                Ok("OFFLINE") => Ok(HeaderBloomStatus(HeaderBloomStatusValue::Offline)),
-                _ => Err(Error::Header),
-            },
-            _ => Err(Error::Header),
+impl HeaderBloomStatus {
+    pub fn to_header_value(&self) -> HeaderValue {
+        match self.0 {
+            HeaderBloomStatusValue::Hit => HeaderValue::from_static("HIT"),
+            HeaderBloomStatusValue::Miss => HeaderValue::from_static("MISS"),
+            HeaderBloomStatusValue::Direct => HeaderValue::from_static("DIRECT"),
+            HeaderBloomStatusValue::Reject => HeaderValue::from_static("REJECT"),
+            HeaderBloomStatusValue::Offline => HeaderValue::from_static("OFFLINE"),
         }
-    }
-
-    fn fmt_header(&self, f: &mut Formatter) -> fmt::Result {
-        f.fmt_line(self)
     }
 }
 

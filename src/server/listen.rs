@@ -4,18 +4,14 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-use hyper::server::Http;
-use std::cell::Cell;
-use std::sync::{Arc, Mutex};
-use tokio_core::reactor::Remote;
+use hyper::server::conn::http1;
+use hyper::service::service_fn;
+use hyper_util::rt::TokioIo;
+use std::net::SocketAddr;
+use tokio::net::TcpListener;
 
-use super::handle::ServerRequestHandle;
+use super::handle::handle_request;
 use crate::APP_CONF;
-
-lazy_static! {
-    pub static ref LISTEN_REMOTE: Arc<Mutex<Cell<Option<Remote>>>> =
-        Arc::new(Mutex::new(Cell::new(None)));
-}
 
 pub struct ServerListenBuilder;
 pub struct ServerListen;
@@ -28,23 +24,42 @@ impl ServerListenBuilder {
 
 impl ServerListen {
     pub fn run(&self) {
-        let addr = APP_CONF.server.inet;
-        let server = Http::new()
-            .bind(&addr, move || {
-                debug!("handled new request");
+        let addr: SocketAddr = APP_CONF.server.inet;
 
-                Ok(ServerRequestHandle)
-            })
-            .expect("error binding server");
+        let runtime = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
 
-        // Assign remote, used later on by the proxy client
-        LISTEN_REMOTE
-            .lock()
-            .unwrap()
-            .set(Some(server.handle().remote().to_owned()));
+        runtime.block_on(async move {
+            let listener = TcpListener::bind(addr)
+                .await
+                .expect("failed to bind server");
 
-        info!("listening on http://{}", server.local_addr().unwrap());
+            info!("listening on http://{}", addr);
 
-        server.run().expect("error running server");
+            loop {
+                match listener.accept().await {
+                    Ok((stream, _remote_addr)) => {
+                        let io = TokioIo::new(stream);
+
+                        tokio::spawn(async move {
+                            let service = service_fn(move |req| {
+                                let fut = handle_request(req);
+                                async move { fut.await }
+                            });
+
+                            if let Err(err) = http1::Builder::new()
+                                .keep_alive(true)
+                                .serve_connection(io, service)
+                                .await
+                            {
+                                debug!("connection error: {:?}", err);
+                            }
+                        });
+                    }
+                    Err(err) => {
+                        warn!("accept error: {}", err);
+                    }
+                }
+            }
+        });
     }
 }
