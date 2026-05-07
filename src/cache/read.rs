@@ -46,6 +46,7 @@ impl CacheRead {
             }
         } else {
             debug!("key: {} not cacheable, ignoring (will pass through)", &key);
+
             Ok(Err(CacheReadError::PassThrough))
         }
     }
