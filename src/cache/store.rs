@@ -5,10 +5,8 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::cmp;
-use std::io::Read;
 use std::time::Duration;
 
-use brotli::{CompressorReader as BrotliCompressor, Decompressor as BrotliDecompressor};
 use redis::aio::ConnectionManager;
 use redis::{self, AsyncCommands, Client, Value};
 use tokio::sync::OnceCell;
@@ -16,7 +14,7 @@ use tokio::sync::OnceCell;
 use super::route::ROUTE_PREFIX;
 use crate::APP_CONF;
 
-pub const BODY_COMPRESS_RATIO: u32 = 5;
+pub const BODY_COMPRESS_LEVEL: i32 = 3;
 
 static KEY_BODY: &'static str = "b";
 static KEY_FINGERPRINT: &'static str = "f";
@@ -169,17 +167,19 @@ impl CacheStore {
                 Value::BulkString(body_bytes_raw) => {
                     let body_bytes_result = if APP_CONF.cache.compress_body == true {
                         // Decompress raw bytes
-                        let mut decompressor = BrotliDecompressor::new(&body_bytes_raw[..], 4096);
-
-                        let mut decompress_bytes = Vec::new();
-
-                        match decompressor.read_to_end(&mut decompress_bytes) {
-                            Ok(_) => {
+                        match zstd::decode_all(&body_bytes_raw[..]) {
+                            Ok(decompress_bytes) => {
                                 if body_bytes_raw.len() > 0 && decompress_bytes.len() == 0 {
                                     error!("decompressed store value has empty body");
 
                                     Err(())
                                 } else {
+                                    debug!(
+                                        "decompressed store value from {} bytes to {} bytes",
+                                        body_bytes_raw.len(),
+                                        decompress_bytes.len()
+                                    );
+
                                     Ok(decompress_bytes)
                                 }
                             }
@@ -230,19 +230,7 @@ impl CacheStore {
 
         // Compress value?
         let store_value_bytes_result = if APP_CONF.cache.compress_body == true {
-            let mut compressor =
-                BrotliCompressor::new(value.as_bytes(), 4096, BODY_COMPRESS_RATIO, 22);
-
-            let mut compress_bytes = Vec::new();
-
-            match compressor.read_to_end(&mut compress_bytes) {
-                Ok(_) => Ok(compress_bytes),
-                Err(err) => {
-                    error!("error compressing store value: {}", err);
-
-                    Err(())
-                }
-            }
+            zstd::encode_all(value.as_bytes(), BODY_COMPRESS_LEVEL)
         } else {
             Ok(value.into_bytes())
         };

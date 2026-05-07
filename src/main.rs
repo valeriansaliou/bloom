@@ -10,7 +10,6 @@ extern crate log;
 extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
-extern crate brotli;
 extern crate farmhash;
 extern crate futures;
 extern crate httparse;
@@ -20,6 +19,7 @@ extern crate redis;
 extern crate regex;
 extern crate toml;
 extern crate unicase;
+extern crate zstd;
 
 mod cache;
 mod config;
