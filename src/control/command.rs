@@ -94,7 +94,15 @@ impl ControlCommand {
     ) -> ControlResult {
         debug!("attempting to flush {:?} for pattern: {}", variant, pattern);
 
-        match APP_CACHE_STORE.purge_tag(&variant, *shard, pattern) {
+        // Call async tag purge
+        // Notice: the control channel is synchronous, as one Bloom Control \
+        //   TCP connection equals one dedicated thread. We therefore need to \
+        //   block on the asynchronous store access, which is safe in this \
+        //   context as it does only block the current Bloom Control dedicated \
+        //   thread w/o affecting eg. the main HTTP proxy event loop.
+        let handle = tokio::runtime::Handle::current();
+
+        match handle.block_on(APP_CACHE_STORE.purge_tag(&variant, *shard, pattern)) {
             Ok(_) => {
                 info!("flushed {:?} for pattern: {}", variant, pattern);
 

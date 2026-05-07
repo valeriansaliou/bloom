@@ -28,7 +28,12 @@ pub struct CacheStoreBuilder;
 pub struct CacheStore {
     client: Client,
     timeout: Duration,
-    connection: OnceCell<ConnectionManager>,
+    connections: CacheStoreConnections,
+}
+
+pub struct CacheStoreConnections {
+    main: OnceCell<ConnectionManager>,
+    scripts: OnceCell<ConnectionManager>,
 }
 
 #[derive(Debug)]
@@ -75,7 +80,10 @@ impl CacheStoreBuilder {
         CacheStore {
             client,
             timeout: Duration::from_secs(APP_CONF.redis.connection_timeout_seconds),
-            connection: OnceCell::new(),
+            connections: CacheStoreConnections {
+                main: OnceCell::new(),
+                scripts: OnceCell::new(),
+            },
         }
     }
 }
@@ -86,7 +94,7 @@ impl CacheStore {
         shard: u8,
         key: String,
     ) -> Result<Option<(String, bool)>, CacheStoreError> {
-        let mut connection = self.connection().await?;
+        let mut connection = self.get_main_conn_unreliable().await?;
 
         match connection
             .hmget::<_, _, Vec<Value>>(&key, &[KEY_FINGERPRINT, KEY_COMPRESSED, KEY_TAGS])
@@ -178,7 +186,7 @@ impl CacheStore {
         key: String,
         compressed: bool,
     ) -> Result<Option<String>, CacheStoreError> {
-        let mut connection = self.connection().await?;
+        let mut connection = self.get_main_conn_unreliable().await?;
 
         match connection.hget::<_, _, Value>(&key, KEY_BODY).await {
             Ok(value) => match value {
@@ -314,7 +322,7 @@ impl CacheStore {
             pipeline.expire(&key_tag.0, APP_CONF.redis.max_key_expiration as i64);
         }
 
-        match self.connection().await {
+        match self.get_main_conn_unreliable().await {
             Ok(mut connection) => match pipeline.query_async::<()>(&mut connection).await {
                 Ok(_) => Ok(fingerprint),
                 Err(err) => {
@@ -327,37 +335,38 @@ impl CacheStore {
         }
     }
 
-    pub fn purge_tag(
+    pub async fn purge_tag(
         &self,
         variant: &CachePurgeVariant,
         shard: u8,
         key_tag: &str,
     ) -> CachePurgeResult {
-        match self.client.get_connection() {
-            Ok(mut client) => {
-                let result = redis::Script::new(variant.get_script())
-                    .arg(ROUTE_PREFIX)
-                    .arg(shard)
-                    .arg(key_tag)
-                    .invoke::<()>(&mut client);
+        let mut connection = self.get_scripts_conn().await?;
 
-                result.and(Ok(())).or(Err(CacheStoreError::Failed))
-            }
-            Err(err) => {
-                error!(
-                    "failed getting a cache store client for purge, because: {}",
-                    err
-                );
+        let script_result = redis::Script::new(variant.get_script())
+            .arg(ROUTE_PREFIX)
+            .arg(shard)
+            .arg(key_tag)
+            .invoke_async::<()>(&mut connection)
+            .await;
 
-                Err(CacheStoreError::Disconnected)
-            }
-        }
+        script_result.or(Err(CacheStoreError::Failed))
     }
 
-    async fn connection(&self) -> Result<ConnectionManager, CacheStoreError> {
-        self.connection
+    async fn get_main_conn_unreliable(&self) -> Result<ConnectionManager, CacheStoreError> {
+        // In the event of a Redis failure, 'get_main_conn_unreliable' allows \
+        //   a full pass-through to be performed, thus ensuring service \
+        //   continuity with degraded performance. If a reliable pool was \
+        //   used there, then if the Redis server was down then it would block \
+        //   for quite some time, meaning it would disrupt Bloom proxying \
+        //   service (we need to be able to run in DIRECT mode with no cache \
+        //   if Redis is down).
+        self.connections
+            .main
             .get_or_try_init(|| async {
-                debug!("attempting to initialize redis connection manager...");
+                debug!(
+                    "attempting to initialize main redis connection manager (unreliable mode)..."
+                );
 
                 // Important: entirely disable the retry algorithm, otherwise \
                 //   a down Redis server will cause ingress HTTP connections \
@@ -370,12 +379,52 @@ impl CacheStore {
 
                 match ConnectionManager::new_lazy_with_config(self.client.clone(), config) {
                     Ok(connection) => {
-                        debug!("initialized redis connection manager");
+                        debug!("initialized main redis connection manager (unreliable mode)");
 
                         Ok(connection)
                     }
                     Err(err) => {
-                        error!("could not create redis connection manager: {}", err);
+                        error!(
+                            "could not create main redis connection manager: {} (unreliable mode)",
+                            err
+                        );
+
+                        Err(CacheStoreError::Disconnected)
+                    }
+                }
+            })
+            .await
+            .map(|connection| connection.clone())
+    }
+
+    async fn get_scripts_conn(&self) -> Result<ConnectionManager, CacheStoreError> {
+        // 'get' is used as an alternative to 'try_get', when there is no \
+        //   choice but to ensure an operation succeeds, even if it means \
+        //   blocking for some time until the Redis server is available (eg. \
+        //   for cache purges).
+        self.connections
+            .scripts
+            .get_or_try_init(|| async {
+                debug!("attempting to initialize scripts redis connection manager...");
+
+                // Notice: configure the connection manager to retry \
+                //   connecting to the Redis server if it is down. This will \
+                //   block commands issued through this connection for some \
+                //   time if the server is down, and only error out if all \
+                //   attempts have been exhausted.
+                let config = redis::aio::ConnectionManagerConfig::new()
+                    .set_connection_timeout(Some(self.timeout))
+                    .set_response_timeout(Some(self.timeout))
+                    .set_number_of_retries(3);
+
+                match ConnectionManager::new_lazy_with_config(self.client.clone(), config) {
+                    Ok(connection) => {
+                        debug!("initialized scripts redis connection manager");
+
+                        Ok(connection)
+                    }
+                    Err(err) => {
+                        error!("could not create scripts redis connection manager: {}", err);
 
                         Err(CacheStoreError::Disconnected)
                     }
