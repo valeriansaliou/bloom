@@ -251,11 +251,6 @@ impl CacheStore {
         // Cap TTL to 'max_key_expiration'
         let ttl_cap = cmp::min(ttl, APP_CONF.redis.max_key_expiration);
 
-        // Ensure value is not larger than 'max_key_size'
-        if body_size > APP_CONF.redis.max_key_size {
-            return Err((CacheStoreError::TooLarge, fingerprint));
-        }
-
         // Check if we should compress the body
         let compress_body =
             APP_CONF.cache.compress_body && body_size >= APP_CONF.cache.compress_above_bytes;
@@ -285,6 +280,15 @@ impl CacheStore {
                 return Err((CacheStoreError::Failed, fingerprint));
             }
         };
+
+        // Ensure value is not larger than 'max_key_size'
+        // Important: assert this AFTER possibly compressing the body. We want \
+        //   this maximum size to act as a safety limit for the storage, so \
+        //   we need to check on the final binary data that will be sent off \
+        //   to the storage.
+        if store_value_bytes.len() > APP_CONF.redis.max_key_size {
+            return Err((CacheStoreError::TooLarge, fingerprint));
+        }
 
         // Generate compress value
         let compress_value_bytes = if compress_body {
