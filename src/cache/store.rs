@@ -359,9 +359,14 @@ impl CacheStore {
             .get_or_try_init(|| async {
                 debug!("attempting to initialize redis connection manager...");
 
+                // Important: entirely disable the retry algorithm, otherwise \
+                //   a down Redis server will cause ingress HTTP connections \
+                //   to wait for a very long time, until all retry attempts \
+                //   have been exhausted.
                 let config = redis::aio::ConnectionManagerConfig::new()
                     .set_connection_timeout(Some(self.timeout))
-                    .set_response_timeout(Some(self.timeout));
+                    .set_response_timeout(Some(self.timeout))
+                    .set_number_of_retries(0);
 
                 match ConnectionManager::new_lazy_with_config(self.client.clone(), config) {
                     Ok(connection) => {
