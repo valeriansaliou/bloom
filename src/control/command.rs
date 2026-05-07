@@ -7,6 +7,7 @@
 use std::str::SplitWhitespace;
 
 use super::handle::ControlShard;
+use super::listen::CONTROL_RUNTIME;
 use crate::cache::route::CacheRoute;
 use crate::cache::store::CachePurgeVariant;
 use crate::APP_CACHE_STORE;
@@ -100,9 +101,7 @@ impl ControlCommand {
         //   block on the asynchronous store access, which is safe in this \
         //   context as it does only block the current Bloom Control dedicated \
         //   thread w/o affecting eg. the main HTTP proxy event loop.
-        let handle = tokio::runtime::Handle::current();
-
-        match handle.block_on(APP_CACHE_STORE.purge_tag(&variant, *shard, pattern)) {
+        match CONTROL_RUNTIME.block_on(APP_CACHE_STORE.purge_tag(&variant, *shard, pattern)) {
             Ok(_) => {
                 info!("flushed {:?} for pattern: {}", variant, pattern);
 

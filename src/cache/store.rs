@@ -343,14 +343,13 @@ impl CacheStore {
     ) -> CachePurgeResult {
         let mut connection = self.get_scripts_conn().await?;
 
-        let script_result = redis::Script::new(variant.get_script())
+        redis::Script::new(variant.get_script())
             .arg(ROUTE_PREFIX)
             .arg(shard)
             .arg(key_tag)
             .invoke_async::<()>(&mut connection)
-            .await;
-
-        script_result.or(Err(CacheStoreError::Failed))
+            .await
+            .or(Err(CacheStoreError::Failed))
     }
 
     async fn get_main_conn_unreliable(&self) -> Result<ConnectionManager, CacheStoreError> {

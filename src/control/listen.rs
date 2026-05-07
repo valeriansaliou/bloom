@@ -8,8 +8,17 @@ use std::net::TcpListener;
 use std::process;
 use std::thread;
 
+use tokio::runtime::Runtime;
+
 use super::handle::ControlHandle;
 use crate::{APP_CONF, THREAD_NAME_CONTROL_CLIENT, THREAD_NAME_CONTROL_MASTER};
+
+lazy_static! {
+    // Spawn an event loop runtime dedicated to control channels, which is \
+    //   used to interface with asynchronous code.
+    pub static ref CONTROL_RUNTIME: Runtime =
+        Runtime::new().expect("could not create control runtime");
+}
 
 pub struct ControlListenBuilder;
 pub struct ControlListen;
