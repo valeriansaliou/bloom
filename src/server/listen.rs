@@ -44,7 +44,7 @@ impl ServerListen {
                                     .serve_connection(io, ServerRequestHandle)
                                     .await
                                 {
-                                    error!("server connection error: {}", err);
+                                    debug!("server client connection dropped: {}", err);
                                 }
                             });
                         }
