@@ -133,7 +133,7 @@ impl ProxyServe {
         let ns_string = ns.to_string();
 
         match CacheRead::acquire_meta(shard, ns, method).await {
-            Ok(Ok(fingerprint)) => {
+            Ok(Ok((fingerprint, is_body_compressed))) => {
                 debug!(
                     "got fingerprint for cached data = {} on ns = {}",
                     &fingerprint, &ns_string
@@ -152,7 +152,13 @@ impl ProxyServe {
                     &isnt_modified, &ns_string
                 );
 
-                Self::fetch_cached_data_body(ns_string, fingerprint, !isnt_modified).await
+                Self::fetch_cached_data_body(
+                    ns_string,
+                    fingerprint,
+                    !isnt_modified,
+                    is_body_compressed,
+                )
+                .await
             }
             Ok(Err(_)) => Ok(Err(())),
             Err(_) => {
@@ -167,6 +173,7 @@ impl ProxyServe {
         ns: String,
         fingerprint: String,
         do_acquire_body: bool,
+        is_body_compressed: bool,
     ) -> Result<Result<(String, Option<String>), ()>, ()> {
         // Do not acquire body? (not modified)
         if do_acquire_body == false {
@@ -174,7 +181,7 @@ impl ProxyServe {
         }
 
         // Will acquire body (modified)
-        match CacheRead::acquire_body(&ns).await {
+        match CacheRead::acquire_body(&ns, is_body_compressed).await {
             Ok(Ok(body)) => Ok(Ok((fingerprint, body))),
             Ok(Err(_)) => {
                 error!("failed fetching cached data body");

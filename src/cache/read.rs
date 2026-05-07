@@ -19,7 +19,7 @@ pub enum CacheReadError {
     StoreFailure,
 }
 
-type CacheReadResult = Result<String, CacheReadError>;
+type CacheReadResult = Result<(String, bool), CacheReadError>;
 type CacheReadOptionalResult = Result<Option<String>, CacheReadError>;
 
 impl CacheRead {
@@ -50,8 +50,8 @@ impl CacheRead {
         }
     }
 
-    pub async fn acquire_body(key: &str) -> Result<CacheReadOptionalResult, ()> {
-        match APP_CACHE_STORE.get_body(key.to_string()).await {
+    pub async fn acquire_body(key: &str, compressed: bool) -> Result<CacheReadOptionalResult, ()> {
+        match APP_CACHE_STORE.get_body(key.to_string(), compressed).await {
             Ok(Some(result)) => Ok(Ok(Some(result))),
             Ok(None) => {
                 info!("acquired empty body value from cache");
@@ -84,8 +84,10 @@ mod tests {
     #[tokio::test]
     #[should_panic]
     async fn it_fails_acquiring_cache_body() {
-        assert!(CacheRead::acquire_body("bloom:0:c:90d52bc6:f773d6f1")
-            .await
-            .is_err());
+        assert!(
+            CacheRead::acquire_body("bloom:0:c:90d52bc6:f773d6f1", false)
+                .await
+                .is_err()
+        );
     }
 }

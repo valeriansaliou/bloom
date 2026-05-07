@@ -14,12 +14,14 @@ use tokio::sync::OnceCell;
 use super::route::ROUTE_PREFIX;
 use crate::APP_CONF;
 
-pub const BODY_COMPRESS_LEVEL: i32 = 3;
-
 static KEY_BODY: &'static str = "b";
 static KEY_FINGERPRINT: &'static str = "f";
+static KEY_COMPRESSED: &'static str = "c";
 static KEY_TAGS: &'static str = "t";
 static KEY_TAGS_SEPARATOR: &'static str = ",";
+
+static VALUE_COMPRESSED_YES: &'static [u8] = "1".as_bytes();
+static VALUE_COMPRESSED_NO: &'static [u8] = "0".as_bytes();
 
 pub struct CacheStoreBuilder;
 
@@ -83,18 +85,30 @@ impl CacheStore {
         &self,
         shard: u8,
         key: String,
-    ) -> Result<Option<String>, CacheStoreError> {
+    ) -> Result<Option<(String, bool)>, CacheStoreError> {
         let mut connection = self.connection().await?;
 
         match connection
-            .hmget::<_, _, Vec<Value>>(&key, &[KEY_FINGERPRINT, KEY_TAGS])
+            .hmget::<_, _, Vec<Value>>(&key, &[KEY_FINGERPRINT, KEY_COMPRESSED, KEY_TAGS])
             .await
         {
             Ok(values) => {
                 let mut values_iter = values.into_iter();
 
-                match (values_iter.next(), values_iter.next()) {
-                    (Some(Value::BulkString(fingerprint_bytes)), Some(tags_bytes)) => {
+                match (values_iter.next(), values_iter.next(), values_iter.next()) {
+                    (
+                        Some(Value::BulkString(fingerprint_bytes)),
+                        Some(compressed_bytes),
+                        Some(tags_bytes),
+                    ) => {
+                        // Parse compressed flag value (if any)
+                        let compressed =
+                            if let Value::BulkString(compressed_value) = compressed_bytes {
+                                compressed_value == VALUE_COMPRESSED_YES
+                            } else {
+                                false
+                            };
+
                         // Parse tags and bump their last access time
                         if let Value::BulkString(tags_bytes_data) = tags_bytes {
                             if let Ok(tags_data) = String::from_utf8(tags_bytes_data) {
@@ -146,12 +160,12 @@ impl CacheStore {
 
                         // Decode raw bytes to string
                         if let Ok(fingerprint) = String::from_utf8(fingerprint_bytes) {
-                            Ok(Some(fingerprint))
+                            Ok(Some((fingerprint, compressed)))
                         } else {
                             Err(CacheStoreError::Corrupted)
                         }
                     }
-                    (Some(Value::Nil), _) | (None, _) => Ok(None),
+                    (Some(Value::Nil), _, _) | (None, _, _) => Ok(None),
                     _ => Err(CacheStoreError::Invalid),
                 }
             }
@@ -159,13 +173,17 @@ impl CacheStore {
         }
     }
 
-    pub async fn get_body(&self, key: String) -> Result<Option<String>, CacheStoreError> {
+    pub async fn get_body(
+        &self,
+        key: String,
+        compressed: bool,
+    ) -> Result<Option<String>, CacheStoreError> {
         let mut connection = self.connection().await?;
 
         match connection.hget::<_, _, Value>(&key, KEY_BODY).await {
             Ok(value) => match value {
                 Value::BulkString(body_bytes_raw) => {
-                    let body_bytes_result = if APP_CONF.cache.compress_body == true {
+                    let body_bytes_result = if compressed {
                         // Decompress raw bytes
                         match zstd::decode_all(&body_bytes_raw[..]) {
                             Ok(decompress_bytes) => {
@@ -220,28 +238,51 @@ impl CacheStore {
         ttl: usize,
         key_tags: Vec<(String, String)>,
     ) -> CacheWriteResult {
+        let body_size = value.len();
+
         // Cap TTL to 'max_key_expiration'
         let ttl_cap = cmp::min(ttl, APP_CONF.redis.max_key_expiration);
 
         // Ensure value is not larger than 'max_key_size'
-        if value.len() > APP_CONF.redis.max_key_size {
+        if body_size > APP_CONF.redis.max_key_size {
             return Err((CacheStoreError::TooLarge, fingerprint));
         }
 
+        // Check if we should compress the body
+        let compress_body =
+            APP_CONF.cache.compress_body && body_size >= APP_CONF.cache.compress_above_bytes;
+
         // Compress value?
-        let store_value_bytes_result = if APP_CONF.cache.compress_body == true {
-            zstd::encode_all(value.as_bytes(), BODY_COMPRESS_LEVEL)
+        let store_value_bytes_result = if compress_body == true {
+            zstd::encode_all(value.as_bytes(), APP_CONF.cache.compress_level)
         } else {
             Ok(value.into_bytes())
         };
 
         let store_value_bytes = match store_value_bytes_result {
-            Ok(bytes) => bytes,
+            Ok(bytes) => {
+                if compress_body == true {
+                    debug!(
+                        "compressed store value from {} bytes to {} bytes",
+                        body_size,
+                        bytes.len()
+                    );
+                }
+
+                bytes
+            }
             Err(_) => {
                 error!("error generating store value");
 
                 return Err((CacheStoreError::Failed, fingerprint));
             }
+        };
+
+        // Generate compress value
+        let compress_value_bytes = if compress_body {
+            VALUE_COMPRESSED_YES
+        } else {
+            VALUE_COMPRESSED_NO
         };
 
         let mut pipeline = redis::pipe();
@@ -259,6 +300,7 @@ impl CacheStore {
                     &[
                         (KEY_FINGERPRINT, fingerprint.as_bytes()),
                         (KEY_TAGS, key_tag_masks.join(KEY_TAGS_SEPARATOR).as_bytes()),
+                        (KEY_COMPRESSED, compress_value_bytes),
                         (KEY_BODY, &store_value_bytes),
                     ],
                 )

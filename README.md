@@ -155,6 +155,8 @@ Available configuration options are commented below, with allowed values:
 * `disable_read` (type: _boolean_, allowed: `true`, `false`, default: `false`) — Whether to disable cache reads (useful for testing)
 * `disable_write` (type: _boolean_, allowed: `true`, `false`, default: `false`) — Whether to disable cache writes (useful for testing)
 * `compress_body` (type: _boolean_, allowed: `true`, `false`, default: `true`) — Whether to compress body upon store (using zstd; usually reduces body size by 50%)
+* `compress_level` (type: _integer_, allowed: `-7` to `22`, default: `3`) — Compression level to use for zstd compression (if body compression is enabled)
+* `compress_above_bytes` (type: _integer_, allowed: bytes, default: `1024`) — Minimum body size in bytes to compress (below this size, compression is skipped)
 
 **[redis]**
 

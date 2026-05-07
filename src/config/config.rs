@@ -90,6 +90,12 @@ pub struct ConfigCache {
         deserialize_with = "env_var::bool"
     )]
     pub compress_body: bool,
+
+    #[serde(default = "defaults::cache_compress_level")]
+    pub compress_level: i32,
+
+    #[serde(default = "defaults::cache_compress_above_bytes")]
+    pub compress_above_bytes: usize,
 }
 
 #[derive(Deserialize)]

@@ -53,6 +53,15 @@ pub fn cache_disable_write() -> bool {
 pub fn cache_compress_body() -> bool {
     true
 }
+
+pub fn cache_compress_level() -> i32 {
+    3
+}
+
+pub fn cache_compress_above_bytes() -> usize {
+    1024
+}
+
 pub fn redis_host() -> String {
     "localhost".to_string()
 }
