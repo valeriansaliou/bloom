@@ -357,16 +357,24 @@ impl CacheStore {
     async fn connection(&self) -> Result<ConnectionManager, CacheStoreError> {
         self.connection
             .get_or_try_init(|| async {
-                let config = redis::aio::ConnectionManagerConfig::new()
-                    .set_connection_timeout(Some(self.timeout));
+                debug!("attempting to initialize redis connection manager...");
 
-                ConnectionManager::new_lazy_with_config(self.client.clone(), config).map_err(
-                    |err| {
+                let config = redis::aio::ConnectionManagerConfig::new()
+                    .set_connection_timeout(Some(self.timeout))
+                    .set_response_timeout(Some(self.timeout));
+
+                match ConnectionManager::new_lazy_with_config(self.client.clone(), config) {
+                    Ok(connection) => {
+                        debug!("initialized redis connection manager");
+
+                        Ok(connection)
+                    }
+                    Err(err) => {
                         error!("could not create redis connection manager: {}", err);
 
-                        CacheStoreError::Disconnected
-                    },
-                )
+                        Err(CacheStoreError::Disconnected)
+                    }
+                }
             })
             .await
             .map(|connection| connection.clone())
