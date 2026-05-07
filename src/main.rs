@@ -11,14 +11,12 @@ extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
 extern crate farmhash;
-extern crate futures;
 extern crate httparse;
 extern crate hyper;
 extern crate rand;
 extern crate redis;
 extern crate regex;
 extern crate toml;
-extern crate unicase;
 extern crate zstd;
 
 mod cache;
