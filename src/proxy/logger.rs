@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
+use bytes::Bytes;
 use hyper::header::HeaderMap;
 use time_format;
 
@@ -20,8 +21,8 @@ pub struct ProxyLoggerBuilder;
 pub struct ProxyLoggerRequest {
     pub method: String,
     pub uri: String,
-    pub shard: u8,
     pub headers: HeaderMap,
+    pub body: Option<Bytes>,
 }
 
 pub type ProxyLogger = Sender<ProxyLoggerRequest>;
@@ -66,9 +67,8 @@ impl ProxyLoggerBuilder {
 
             // Format request metadata
             let mut line = format!(
-                "\n[{}] [SHARD{}] {} {}\n\n",
+                "\n[{}] {} {}\n\n",
                 time_format::format_iso8601_utc(now_time).unwrap(),
-                entry.shard,
                 entry.method,
                 entry.uri
             );
@@ -79,6 +79,15 @@ impl ProxyLoggerBuilder {
                 line.push_str(": ");
                 line.push_str(value.to_str().unwrap_or("<binary>"));
                 line.push('\n');
+            }
+
+            // Append request body? (if any)
+            if let Some(ref body) = entry.body {
+                if !body.is_empty() {
+                    line.push('\n');
+                    line.push_str(&String::from_utf8_lossy(body));
+                    line.push('\n');
+                }
             }
 
             // Append request separator

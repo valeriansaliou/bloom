@@ -9,7 +9,7 @@ use std::pin::Pin;
 use std::time::Duration;
 
 use bytes::Bytes;
-use http_body_util::{combinators::BoxBody, BodyExt, Empty};
+use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use hyper::body::Incoming;
 use hyper::header::HeaderMap;
 use hyper::{Method, Request, Response, Uri};
@@ -82,6 +82,7 @@ impl ProxyTunnel {
             // Route to target shard
             match SHARD_REGISTER[shard as usize] {
                 Some(ref shard_uri) => {
+                    // Format the original request URI into the downstream API server URI
                     let mut tunnel_uri = format!(
                         "{}://{}{}",
                         shard_uri
@@ -101,48 +102,17 @@ impl ProxyTunnel {
                     }
 
                     match tunnel_uri.parse::<Uri>() {
-                        Ok(tunnel_uri) => {
-                            // Forward body?
-                            // Notice: HTTP DELETE is not forbidden per-spec to hold a request \
-                            //   body, even if it is not commonly used. Hence why we forward it.
-                            let req_body: ProxyTunnelRequestBody = match method {
-                                &Method::POST | &Method::PATCH | &Method::PUT | &Method::DELETE => {
-                                    body.map_err(|err| Box::new(err) as ProxyServeError).boxed()
-                                }
-                                _ => Empty::new().map_err(|_| unreachable!()).boxed(),
-                            };
-
-                            let mut tunnel_req = Request::new(req_body);
-
-                            // Forward URI and method
-                            *tunnel_req.method_mut() = method.clone();
-                            *tunnel_req.uri_mut() = tunnel_uri;
-
-                            // Forward headers
-                            *tunnel_req.headers_mut() = headers.clone();
-
-                            // Send request to request log? (if logger is enabled)
-                            if let Some(ref proxy_logger) = *APP_PROXY_LOGGER {
-                                proxy_logger
-                                    .send(ProxyLoggerRequest {
-                                        method: method.to_string(),
-                                        uri: uri.to_string(),
-                                        shard,
-                                        headers: headers.clone(),
-                                    })
-                                    .ok();
-                            }
-
-                            TUNNEL_CLIENT.with(|client| {
-                                let request = client.request(tunnel_req);
-
-                                Box::pin(async move {
-                                    request
-                                        .await
-                                        .map_err(|err| -> ProxyServeError { Box::new(err) })
-                                }) as ProxyTunnelFuture
-                            })
-                        }
+                        Ok(tunnel_uri) => TUNNEL_CLIENT.with(|client| {
+                            // Dispatch original request to downstream API server
+                            Box::pin(Self::dispatch_to(
+                                client.clone(),
+                                method.clone(),
+                                tunnel_uri,
+                                uri.to_string(),
+                                headers.clone(),
+                                body,
+                            )) as ProxyTunnelFuture
+                        }),
                         Err(_) => {
                             Box::pin(async move { Err(Self::make_proxy_err("invalid tunnel uri")) })
                         }
@@ -154,6 +124,64 @@ impl ProxyTunnel {
             // Shard out of bounds
             Box::pin(async move { Err(Self::make_proxy_err("shard out of bounds")) })
         }
+    }
+
+    async fn dispatch_to(
+        client: Client<HttpConnector, ProxyTunnelRequestBody>,
+        method: Method,
+        tunnel_uri: Uri,
+        original_uri: String,
+        headers: HeaderMap,
+        body: Incoming,
+    ) -> Result<Response<Incoming>, ProxyServeError> {
+        // Collect request body for methods that can come with a body.
+        // Notice #1: buffer body upfront by draining its bytes, so that we can send it one-shot \
+        //   to the downstream API server. The goal is to decouple the slow inbound client \
+        //   connection from the backend connection and not hoard on downstream API server \
+        //   resources (NGINX proxy does that too).
+        // Notice #2: HTTP DELETE is not forbidden per-spec to hold a request body, even if it is \
+        //   not commonly used. Hence why we forward it.
+        let body_bytes: Option<Bytes> = if matches!(
+            method,
+            Method::POST | Method::PATCH | Method::PUT | Method::DELETE
+        ) {
+            Some(
+                body.collect()
+                    .await
+                    .map_err(|err| -> ProxyServeError { Box::new(err) })?
+                    .to_bytes(),
+            )
+        } else {
+            None
+        };
+
+        // Send request to request log? (if logger is enabled)
+        // Notice: this does nothing (costs nothing) if the proxy logger is disabled.
+        if let Some(ref proxy_logger) = *APP_PROXY_LOGGER {
+            proxy_logger
+                .send(ProxyLoggerRequest {
+                    method: method.to_string(),
+                    uri: original_uri,
+                    headers: headers.clone(),
+                    body: body_bytes.as_ref().cloned(),
+                })
+                .ok();
+        }
+
+        // Build and forward proxied request
+        let mut tunnel_req = Request::new(match body_bytes {
+            Some(bytes) => Full::new(bytes).map_err(|_| unreachable!()).boxed(),
+            None => Empty::new().map_err(|_| unreachable!()).boxed(),
+        });
+
+        *tunnel_req.method_mut() = method;
+        *tunnel_req.uri_mut() = tunnel_uri;
+        *tunnel_req.headers_mut() = headers;
+
+        client
+            .request(tunnel_req)
+            .await
+            .map_err(|err| -> ProxyServeError { Box::new(err) })
     }
 
     fn make_proxy_err(msg: &'static str) -> ProxyServeError {
