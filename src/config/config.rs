@@ -5,6 +5,7 @@
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
 use std::net::SocketAddr;
+use std::path::PathBuf;
 
 use super::defaults;
 use super::env_var;
@@ -51,6 +52,8 @@ pub struct ConfigProxy {
     pub shard_default: u8,
 
     pub shard: Vec<ConfigProxyShard>,
+
+    pub request_log: Option<PathBuf>,
 }
 
 #[derive(Deserialize)]

@@ -139,6 +139,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_derive",
+ "time-format",
  "tokio",
  "toml",
  "zstd",
@@ -1022,6 +1023,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "time-format"
+version = "1.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "caa08af685f978227b475da86d38312cd1acd5024338bf53a1ab9a799219507d"
 
 [[package]]
 name = "tinystr"

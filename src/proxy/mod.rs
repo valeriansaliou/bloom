@@ -7,5 +7,6 @@
 mod defaults;
 mod header;
 
+pub mod logger;
 pub mod serve;
 pub mod tunnel;

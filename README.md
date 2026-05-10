@@ -142,6 +142,7 @@ Available configuration options are commented below, with allowed values:
 **[proxy]**
 
 * `shard_default` (type: _integer_, allowed: `0` to `15`, default: `0`) — Default shard index to use when no shard is specified in proxied HTTP requests
+* `request_log` (type: _string_, allowed: UNIX file path, default: none) — Path to a file in which to record all incoming requests (_this should be used for temporary debugging purposes only!_)
 
 **[[proxy.shard]]**
 

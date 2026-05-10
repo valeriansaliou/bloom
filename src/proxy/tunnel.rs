@@ -17,8 +17,9 @@ use hyper_util::client::legacy::connect::HttpConnector;
 use hyper_util::client::legacy::Client;
 use hyper_util::rt::TokioExecutor;
 
+use super::logger::ProxyLoggerRequest;
 use super::serve::ProxyServeError;
-use crate::APP_CONF;
+use crate::{APP_CONF, APP_PROXY_LOGGER};
 
 const MAX_SHARDS: u8 = 16;
 const CLIENT_KEEP_ALIVE_TIMEOUT_SECONDS: u64 = 30;
@@ -119,6 +120,17 @@ impl ProxyTunnel {
 
                             // Forward headers
                             *tunnel_req.headers_mut() = headers.clone();
+
+                            // Send request to request log? (if logger is enabled)
+                            if let Some(ref proxy_logger) = *APP_PROXY_LOGGER {
+                                proxy_logger
+                                    .send(ProxyLoggerRequest {
+                                        method: method.to_string(),
+                                        uri: uri.to_string(),
+                                        shard,
+                                    })
+                                    .ok();
+                            }
 
                             TUNNEL_CLIENT.with(|client| {
                                 let request = client.request(tunnel_req);

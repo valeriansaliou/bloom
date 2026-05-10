@@ -16,6 +16,7 @@ extern crate hyper;
 extern crate rand;
 extern crate redis;
 extern crate regex;
+extern crate time_format;
 extern crate toml;
 extern crate zstd;
 
@@ -39,6 +40,7 @@ use config::config::Config;
 use config::logger::ConfigLogger;
 use config::reader::ConfigReader;
 use control::listen::ControlListenBuilder;
+use proxy::logger::{ProxyLogger, ProxyLoggerBuilder};
 use server::listen::ServerListenBuilder;
 
 struct AppArgs {
@@ -50,11 +52,13 @@ pub static LINE_FEED: &'static str = "\r\n";
 pub static THREAD_NAME_WORKER: &'static str = "bloom-worker";
 pub static THREAD_NAME_CONTROL_MASTER: &'static str = "bloom-control-master";
 pub static THREAD_NAME_CONTROL_CLIENT: &'static str = "bloom-control-client";
+pub static THREAD_NAME_PROXY_LOGGER: &'static str = "bloom-proxy-logger";
 
 lazy_static! {
     static ref APP_ARGS: AppArgs = make_app_args();
     static ref APP_CONF: Config = ConfigReader::make();
     static ref APP_CACHE_STORE: CacheStore = CacheStoreBuilder::new();
+    static ref APP_PROXY_LOGGER: Option<ProxyLogger> = ProxyLoggerBuilder::new();
 }
 
 fn make_app_args() -> AppArgs {
@@ -82,7 +86,12 @@ fn make_app_args() -> AppArgs {
 
 fn ensure_states() {
     // Ensure all statics are valid (a `deref` is enough to lazily initialize them)
-    let (_, _, _) = (APP_ARGS.deref(), APP_CONF.deref(), APP_CACHE_STORE.deref());
+    let (_, _, _, _) = (
+        APP_ARGS.deref(),
+        APP_CONF.deref(),
+        APP_CACHE_STORE.deref(),
+        APP_PROXY_LOGGER.deref(),
+    );
 }
 
 fn spawn_worker() {
