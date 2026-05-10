@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
+use hyper::header::HeaderMap;
 use time_format;
 
 use crate::{APP_CONF, THREAD_NAME_PROXY_LOGGER};
@@ -20,6 +21,7 @@ pub struct ProxyLoggerRequest {
     pub method: String,
     pub uri: String,
     pub shard: u8,
+    pub headers: HeaderMap,
 }
 
 pub type ProxyLogger = Sender<ProxyLoggerRequest>;
@@ -62,14 +64,27 @@ impl ProxyLoggerBuilder {
         while let Ok(entry) = receiver.recv() {
             let now_time = time_format::now().unwrap_or_default();
 
-            let line = format!(
-                "[{}] [SHARD{}] {} {}\n\n",
+            // Format request metadata
+            let mut line = format!(
+                "\n[{}] [SHARD{}] {} {}\n\n",
                 time_format::format_iso8601_utc(now_time).unwrap(),
                 entry.shard,
                 entry.method,
                 entry.uri
             );
 
+            // Append all request headers
+            for (name, value) in &entry.headers {
+                line.push_str(name.as_str());
+                line.push_str(": ");
+                line.push_str(value.to_str().unwrap_or("<binary>"));
+                line.push('\n');
+            }
+
+            // Append request separator
+            line.push_str("\n---\n");
+
+            // Write request log to log file
             if let Err(err) = log_file.write_all(line.as_bytes()) {
                 error!("could not write to proxy request log: {}", err);
             }

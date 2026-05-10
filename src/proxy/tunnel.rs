@@ -128,6 +128,7 @@ impl ProxyTunnel {
                                         method: method.to_string(),
                                         uri: uri.to_string(),
                                         shard,
+                                        headers: headers.clone(),
                                     })
                                     .ok();
                             }
