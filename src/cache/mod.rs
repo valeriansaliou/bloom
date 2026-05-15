@@ -4,8 +4,7 @@
 // Copyright: 2017, Valerian Saliou <valerian@valeriansaliou.name>
 // License: Mozilla Public License v2.0 (MPL v2.0)
 
-mod check;
-
+pub mod check;
 pub mod read;
 pub mod route;
 pub mod store;

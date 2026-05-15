@@ -54,6 +54,14 @@ pub struct ConfigProxy {
     pub shard: Vec<ConfigProxyShard>,
 
     pub request_log: Option<PathBuf>,
+
+    #[serde(
+        default = "defaults::proxy_lock_tunnel_path",
+        deserialize_with = "env_var::bool"
+    )]
+    pub lock_tunnel_path: bool,
+
+    pub lock_slowlog_millis: Option<u64>,
 }
 
 #[derive(Deserialize)]

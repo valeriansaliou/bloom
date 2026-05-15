@@ -6,6 +6,7 @@
 
 mod defaults;
 mod header;
+mod lock;
 
 pub mod logger;
 pub mod serve;

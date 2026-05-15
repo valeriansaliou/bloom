@@ -38,6 +38,10 @@ pub fn proxy_shard_port() -> u16 {
     3000
 }
 
+pub fn proxy_lock_tunnel_path() -> bool {
+    false
+}
+
 pub fn cache_ttl_default() -> usize {
     600
 }

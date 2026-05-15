@@ -6,6 +6,7 @@
 
 use std::future::Future;
 use std::pin::Pin;
+use std::time::Instant;
 
 use bytes::Bytes;
 use http_body_util::Full;
@@ -16,13 +17,15 @@ use hyper::{Method, Request, Response, StatusCode, Uri, Version};
 use itertools::{Itertools, Position};
 
 use super::header::ProxyHeader;
+use super::lock::ProxyLock;
 use super::tunnel::ProxyTunnel;
+use crate::cache::check::CacheCheck;
 use crate::cache::read::CacheRead;
 use crate::cache::route::CacheRoute;
 use crate::cache::write::CacheWrite;
 use crate::header::janitor::HeaderJanitor;
 use crate::header::status::{HeaderBloomStatus, HeaderBloomStatusValue};
-use crate::LINE_FEED;
+use crate::{APP_CONF, LINE_FEED};
 
 pub struct ProxyServe;
 
@@ -110,7 +113,7 @@ impl ProxyServe {
                     .await
                 }
                 Err(_) => {
-                    Self::tunnel_over_proxy(
+                    Self::queue_tunnel_over_proxy(
                         shard, ns, ns_mask, auth_hash, method, uri, version, headers, body,
                     )
                     .await
@@ -196,7 +199,112 @@ impl ProxyServe {
         }
     }
 
-    async fn tunnel_over_proxy(
+    async fn queue_tunnel_over_proxy(
+        shard: u8,
+        ns: String,
+        ns_mask: String,
+        auth_hash: String,
+        method: Method,
+        uri: Uri,
+        version: Version,
+        headers: HeaderMap,
+        body: Incoming,
+    ) -> Result<Response<Full<Bytes>>, ProxyServeError> {
+        debug!("queue request for tunnelling with ns = {}", ns);
+
+        // Acquire per-cache namespace lock so parallel requests on the same \
+        //   path queue up; the lock is held until the first tunnelling \
+        //   completes and hopefully leads to cached data being written,
+        //   ensuring subsequent queued requests get a cache hit.
+        // Important #1: only for cacheable requests! It is pointless to hoard \
+        //   on locks for non-cacheable requests, those can safely be \
+        //   performed in parallel since there is no benefit in locking here.
+        // Important #2: the lock guard HAS TO BE RETURNED so that it is not \
+        //   immediately dropped. We need the drop to occur when this method \
+        //   returns. It is NOT used, ONLY returned for ownership reasons.
+        let _lock_guard = if APP_CONF.proxy.lock_tunnel_path == true
+            && CacheCheck::from_request(&method) == true
+        {
+            // Acquire slowlog vector (start time and slowlog threshold, if \
+            //   enabled)
+            let slowlog_vector = if let Some(slowlog_millis) = APP_CONF.proxy.lock_slowlog_millis {
+                Some((Instant::now(), slowlog_millis))
+            } else {
+                None
+            };
+
+            // Acquire the proxy lock (and wait if locked)
+            let (lock_guard, had_to_wait_for_lock) = ProxyLock::acquire(&ns).await;
+
+            debug!(
+                "request obtained queue lock for immediate tunnelling for ns = {} (queued: {})",
+                ns, had_to_wait_for_lock
+            );
+
+            // Check if should log to slowlog?
+            if let Some((wait_start, slowlog_millis)) = slowlog_vector {
+                let waited_millis = wait_start.elapsed().as_millis() as u64;
+
+                // Log request to slow log? (because it spent a long time in \
+                //   queue, waiting for a previous request to complete)
+                if waited_millis > slowlog_millis {
+                    warn!(
+                        "slow request — waited {}ms in queue for ns = ${}, path: {}",
+                        waited_millis,
+                        ns,
+                        uri.path()
+                    );
+                }
+            }
+
+            // Double-check cache if we had to wait for lock; cause that means \
+            //   a previous request may have already populated the Bloom cache \
+            //   while we were queued. Skip if we were first (lock was free) \
+            //   since the cache is guaranteed empty and we want to spare a \
+            //   roundtrip to Redis.
+            if had_to_wait_for_lock == true {
+                let fetch_result_recheck = Self::fetch_cached_data(shard, &ns, &method, &headers)
+                    .await
+                    .map_err(|_| Self::make_proxy_error("fetch error (re-check)"))?;
+
+                // Cache has been populated while waiting? Serve from cache!
+                if let Ok(value) = fetch_result_recheck {
+                    debug!(
+                        "response for queued request is now in cache for ns = {}",
+                        ns
+                    );
+
+                    return Self::dispatch_cached(
+                        shard, ns, ns_mask, auth_hash, method, uri, version, headers, body,
+                        value.0, value.1,
+                    )
+                    .await;
+                } else {
+                    debug!(
+                        "response for queued request is still not in cache for ns = {}",
+                        ns
+                    );
+                }
+            }
+
+            Some(lock_guard)
+        } else {
+            debug!(
+                "request will be sent for immediate tunnelling for ns = {}",
+                ns
+            );
+
+            None
+        };
+
+        // Dispatch request to the downstream API server
+        Self::dispatch_tunnel(
+            shard, ns, ns_mask, auth_hash, method, uri, version, headers, body,
+        )
+        .await
+    }
+
+    async fn dispatch_tunnel(
         shard: u8,
         ns: String,
         ns_mask: String,
@@ -322,7 +430,7 @@ impl ProxyServe {
                 Err(err) => {
                     error!("failed parsing cached response: {}", err);
 
-                    Self::tunnel_over_proxy(
+                    Self::dispatch_tunnel(
                         shard,
                         ns,
                         ns_mask,
