@@ -43,8 +43,9 @@ debug = true
 debug-assertions = true
 
 [profile.release]
-opt-level = "s"
-lto = true
+opt-level = 3
+lto = "fat"
+codegen-units = 1
 debug = false
 debug-assertions = false
 strip = true
