@@ -46,7 +46,7 @@ _👋 You use Bloom and you want to be listed there? [Contact me](https://valeri
   * Specify caching TTL in seconds for an API route with `Bloom-Response-TTL` (other than default TTL, number in seconds).
 * **Serve `304 Not Modified` to non-modified route contents**, lowering bandwidth usage and speeding up requests to your users.
 * **Tooling is provided**, to serve your production needs:
-  * Analyze Bloom request logs: [bloom-log-analyzer](https://github.com/valeriansaliou/bloom-log-analyzer)
+  * Analyze Bloom request logs with [bloom-log-analyzer](https://github.com/valeriansaliou/bloom-log-analyzer)
 
 ## The Bloom Approach
 
