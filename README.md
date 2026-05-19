@@ -45,6 +45,8 @@ _👋 You use Bloom and you want to be listed there? [Contact me](https://valeri
   * Specify caching buckets for an API route with `Bloom-Response-Buckets` (comma-separated if multiple buckets).
   * Specify caching TTL in seconds for an API route with `Bloom-Response-TTL` (other than default TTL, number in seconds).
 * **Serve `304 Not Modified` to non-modified route contents**, lowering bandwidth usage and speeding up requests to your users.
+* **Tooling is provided**, to serve your production needs:
+  * Analyze Bloom request logs: [bloom-log-analyzer](https://github.com/valeriansaliou/bloom-log-analyzer)
 
 ## The Bloom Approach
 
@@ -142,7 +144,7 @@ Available configuration options are commented below, with allowed values:
 **[proxy]**
 
 * `shard_default` (type: _integer_, allowed: `0` to `15`, default: `0`) — Default shard index to use when no shard is specified in proxied HTTP requests
-* `request_log` (type: _string_, allowed: UNIX file path, default: none) — Path to a file in which to record all incoming requests (_this should be used for temporary debugging purposes only!_)
+* `request_log` (type: _string_, allowed: UNIX file path, default: none) — Path to a file in which to record all incoming requests (_this should be used for temporary debugging purposes only!_ — analyze your log file with the [bloom-log-analyzer](https://github.com/valeriansaliou/bloom-log-analyzer) CLI)
 * `lock_tunnel_path` (type: _boolean_, allowed: `true`, `false`, default: `false`) — Whether to queue cacheable requests with no cache yet, queued by their resulting cache namespace (this prevents identical parallel requests from hitting the downstream API server more than needed when the cache is not yet populated — _note that the lock is local to the running Bloom, and thus it is not shared over Redis across all Bloom replicas_)
 * `lock_slowlog_millis` (type: _integer_, allowed: milliseconds, default: none) — After how much time spent waiting for the proxy lock a slow log warning should be logged (logged when the lock could be acquired for a queued request)
 
