@@ -284,7 +284,6 @@ By default, Bloom retains all responses that are safe to cache, as long as they 
 * `Permanent Redirect`
 * `Unauthorized`
 * `Payment Required`
-* `Forbidden`
 * `Not Found`
 * `Method Not Allowed`
 * `Gone`

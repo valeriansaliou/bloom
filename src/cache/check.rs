@@ -44,7 +44,6 @@ impl CacheCheck {
             | StatusCode::PERMANENT_REDIRECT
             | StatusCode::UNAUTHORIZED
             | StatusCode::PAYMENT_REQUIRED
-            | StatusCode::FORBIDDEN
             | StatusCode::NOT_FOUND
             | StatusCode::METHOD_NOT_ALLOWED
             | StatusCode::GONE
